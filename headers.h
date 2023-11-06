@@ -8,6 +8,11 @@
 #include <errno.h>
 #include <netinet/in.h>
 #include <pthread.h>
+
+
+#include "trie.h"
+
+
 #define nms_ss_port 10045
 #define nms_client_port 10059
 #define ip_address "127.0.0.1"
