@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <commit message here>"
+    exit 1
+fi
+commit_message="$1"
+git add .
+git commit -m "$commit_message"
+git pull
+git push
+if [ $? -eq 0 ]; then
+    echo "Git commands executed successfully."
+else
+    echo "An error occurred during Git operations."
+fi
