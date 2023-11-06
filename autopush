@@ -1,9 +1,10 @@
 #!/bin/bash
 
-if [ $# -ne 1 ]; then
-    echo "Usage: $0 <commit message here>"
+if [ $# -lt 2 ]; then
+    echo "Usage: $0 <commit_message>"
     exit 1
 fi
+commit_message="${@:2}"
 commit_message="$1"
 git add .
 git commit -m "$commit_message"
