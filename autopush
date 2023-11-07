@@ -6,9 +6,9 @@ if [ $# -lt 1 ]; then
 fi
 commit_message="${@:-1}"
 echo $commit_message
+git pull
 git add .
 git commit -m "$commit_message"
-git pull
 git push
 if [ $? -eq 0 ]; then
     echo "Git commands executed successfully."
