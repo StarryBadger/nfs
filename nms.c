@@ -1,10 +1,12 @@
 #include "headers.h"
 
 char buffer[1024];
+sem_t initial_lock;
 struct ss_list
 {
     int index;
-    int ss_port;
+    int ssToc_port;
+    int ssTonms_port;
     struct ss_list *next;
     struct ss_list *prev;
 };
@@ -13,7 +15,8 @@ struct ss_list *init_server_list_head()
     struct ss_list *head = (struct ss_list *)malloc(sizeof(struct ss_list));
     head->next = NULL;
     head->prev = NULL;
-    head->ss_port = -1;
+    head->ssToc_port = -1;
+    head->ssTonms_port=-1;
     return head;
 }
 struct storage_servers_node{
@@ -27,9 +30,10 @@ void init_storage_servers()
 {
     storage_servers->head=init_server_list_head();
     storage_servers->total_servers=0;
+    sem_post(&initial_lock);
 }
 
-void InsertNewSS(int portNo)
+void InsertNewSS(int ssTocPortNo,int ssTonmsPortNo)
 {
     struct ss_list* temp;
     temp=storage_servers->head;
@@ -41,10 +45,11 @@ void InsertNewSS(int portNo)
     temp->next=new;
     new->index=storage_servers->total_servers+1;
     storage_servers->total_servers++;
-    new->ss_port=portNo;
+    new->ssToc_port=ssTocPortNo;
+    new->ssTonms_port=ssTonmsPortNo;
     return;
 }
-void RemoveSS(int portNo)
+void RemoveSS(int index)
 {
     if(storage_servers->total_servers==0)
     return;
@@ -52,17 +57,25 @@ void RemoveSS(int portNo)
     temp=storage_servers->head->next;
     while(temp!=NULL)
     {
-        if(temp->ss_port==portNo)
+        if(temp->index==index)
         {
+            if(temp->prev!=NULL)
             temp->prev->next=temp->next;
+            if(temp->next!=NULL)
             temp->next->prev=temp->prev;
             storage_servers->total_servers--;
-            break;
+            struct ss_list* temp2;
+            temp2=temp;
+            temp=temp->next;
+            free(temp2);
+            continue;
+        }
+        else if(temp->index>index)
+        {
+            temp->index--;
         }
         temp=temp->next;
     }
-    if(temp!=NULL)
-    free(temp);
     return;
 }
 int close_signal=0;
@@ -98,14 +111,25 @@ void *ss_port_worker(void *arg)
         close(server_sock);
         exit(1);
     }
-    // printf("[+]Bind to the port number: %d\n", nms_ss_port);
+    printf("[+]Bind to the port number: %d\n", nms_ss_port);
     if (listen(server_sock, 5) < 0)
     {
         fprintf(stderr, "[-]Listen error: %s\n", strerror(errno));
         close(server_sock);
         exit(1);
     }
-    // printf("Listening...\n");
+    printf("Listening...\n");
+    addr_size = sizeof(client_addr);
+    client_sock = accept(server_sock, (struct sockaddr*)&client_addr, &addr_size);
+    if(client_sock<0)
+    {
+      fprintf(stderr,"[-]Accept error: %s\n",strerror(errno));
+      if(close(server_sock)<0)
+      fprintf(stderr,"[-]Error closing socket: %s\n",strerror(errno));
+      exit(1);
+    }
+    printf("[+]Storage server connected.\n");
+
      bzero(buffer, 1024);
     if(recv(client_sock, buffer, sizeof(buffer), 0)<0)
     {
@@ -116,6 +140,7 @@ void *ss_port_worker(void *arg)
       fprintf(stderr,"[-]Error closing socket: %s\n",strerror(errno));
       exit(1);
     }
+    printf("%s\n",buffer);
 }
 
 void ss_is_alive_checker()
@@ -143,12 +168,12 @@ void ss_is_alive_checker()
 
         memset(&addr, '\0', sizeof(addr));
         addr.sin_family = AF_INET;
-        addr.sin_port = nms_ss_port;
+        addr.sin_port = temp->ssTonms_port;
         addr.sin_addr.s_addr = inet_addr(ip_address);
 
         if (connect(shrey_sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
         {
-            fprintf(stderr, "[-]Connection lost from storage server with port %d: %s\n",temp->ss_port, strerror(errno));
+            fprintf(stderr, "[-]Connection lost from storage server with port %d: %s\n",temp->ssTonms_port, strerror(errno));
             // exit(1);
         }
         temp=temp->next;
@@ -156,15 +181,24 @@ void ss_is_alive_checker()
 }
 void* ss_is_alive_worker(void* arg)
 {
+    sem_wait(&initial_lock);
     while(1)
     {
         ss_is_alive_checker();
         if(close_signal==1)
-        return;
+        return NULL;
     }
+    return NULL;
 }
 int main(int argc, char *argv[])
 {
-
+    sem_init(&initial_lock,0,0);
+    storage_servers=(struct storage_servers_node*)malloc(sizeof(struct storage_servers_node));
     pthread_t ss_port, ss_is_alive, client_connection;
+    pthread_create(&ss_port,NULL,ss_port_worker,NULL);
+    pthread_create(&ss_is_alive,NULL,ss_is_alive_worker,NULL);
+    while(1)
+    {
+
+    }
 }

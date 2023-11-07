@@ -8,7 +8,7 @@
 #include <errno.h>
 #include <netinet/in.h>
 #include <pthread.h>
-
+#include <semaphore.h>
 
 #include "trie.h"
 
