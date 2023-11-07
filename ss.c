@@ -96,10 +96,14 @@ void *naming_server_informer_worker(void *arg)
     printf("Connected to the server.\n");
 
     bzero(buffer, 1024);
-    sprintf(buffer,"%d,%d",port_for_clients,port_for_naming_server);
-    printf("Sending message to server: %s\n", buffer);
+    // sprintf(buffer,"%d,%d",port_for_clients,port_for_naming_server);
+    MessageSS2NM message;
+    strcpy(message.buffer, "storage_server_1");
+    message.port_for_clients = port_for_clients;
+    message.port_for_naming_server = port_for_naming_server;
+    printf("Sending message to server: %s\n", message.buffer);
 
-    if (send(ss_sock, buffer, strlen(buffer), 0) < 0)
+    if (send(ss_sock, &message, sizeof(message), 0) < 0)
     {
         fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
         if (close(ss_sock) < 0)

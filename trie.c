@@ -1,17 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
-#include <unistd.h>
-#include <pthread.h>
-
-typedef struct TrieNode
-{
-    char directory[100];
-    struct TrieNode *firstChild;
-    struct TrieNode *sibling;
-    int isFile;
-}TrieNode;
+#include "headers.h"
 
 TrieNode *root = NULL;
 

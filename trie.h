@@ -17,4 +17,8 @@ void DeleteTrie(char *directory);
 
 void PrintTrie(struct TrieNode *root);
 
+void TrieToString(struct TrieNode *root, char *str);
+
+TrieNode* StringToTrie(char *str);
+
 #endif

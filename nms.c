@@ -1,6 +1,6 @@
 #include "headers.h"
 
-char buffer[1024];
+char buffer[MAX_PATH_LENGTH];
 sem_t initial_lock;
 struct ss_list
 {
@@ -9,7 +9,9 @@ struct ss_list
     int ssTonms_port;
     struct ss_list *next;
     struct ss_list *prev;
+    TrieNode *root;
 };
+
 struct ss_list *init_server_list_head()
 {
     struct ss_list *head = (struct ss_list *)malloc(sizeof(struct ss_list));
@@ -17,8 +19,11 @@ struct ss_list *init_server_list_head()
     head->prev = NULL;
     head->ssToc_port = -1;
     head->ssTonms_port=-1;
+    head->index = -1;
+    head->root = NULL;
     return head;
 }
+
 struct storage_servers_node{
     struct ss_list* head;
     int total_servers;   
@@ -33,7 +38,7 @@ void init_storage_servers()
     sem_post(&initial_lock);
 }
 
-void InsertNewSS(int ssTocPortNo,int ssTonmsPortNo)
+void InsertNewSS(int ssTocPortNo,int ssTonmsPortNo,TrieNode* ssRoot)
 {
     struct ss_list* temp;
     temp=storage_servers->head;
@@ -47,6 +52,7 @@ void InsertNewSS(int ssTocPortNo,int ssTonmsPortNo)
     storage_servers->total_servers++;
     new->ssToc_port=ssTocPortNo;
     new->ssTonms_port=ssTonmsPortNo;
+    new->root=ssRoot;
     return;
 }
 void RemoveSS(int index)
@@ -84,7 +90,7 @@ void *ss_port_worker(void *arg)
     int server_sock, client_sock;
     struct sockaddr_in server_addr, client_addr;
     socklen_t addr_size;
-    //   char buffer[1024];
+    //   char buffer[MAX_PATH_LENGTH];
     int n;
     // char port_str[6];
     // strcpy(port_str, argv[1]);
@@ -130,8 +136,9 @@ void *ss_port_worker(void *arg)
     }
     printf("[+]Storage server connected.\n");
 
-     bzero(buffer, 1024);
-    if(recv(client_sock, buffer, sizeof(buffer), 0)<0)
+    bzero(buffer, MAX_PATH_LENGTH);
+    MessageSS2NM message;
+    if(recv(client_sock,&message,sizeof(message),0)<0)
     {
       fprintf(stderr,"[-]Receive error: %s\n",strerror(errno));
       if(close(client_sock)<0)
@@ -140,7 +147,10 @@ void *ss_port_worker(void *arg)
       fprintf(stderr,"[-]Error closing socket: %s\n",strerror(errno));
       exit(1);
     }
-    printf("%s\n",buffer);
+    printf("Message from storage server: %s\n",message.buffer);
+    printf("Port for clients: %d\n",message.port_for_clients);
+    printf("Port for nms: %d\n",message.port_for_naming_server);
+    
 }
 
 void ss_is_alive_checker()
@@ -154,7 +164,7 @@ void ss_is_alive_checker()
         int shrey_sock;
         struct sockaddr_in addr;
         socklen_t addr_size;
-        // char buffer[1024];
+        // char buffer[MAX_PATH_LENGTH];
         int n;
 
         shrey_sock = socket(AF_INET, SOCK_STREAM, 0);
