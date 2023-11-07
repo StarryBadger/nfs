@@ -1,7 +1,7 @@
 #include "headers.h"
 
 char buffer[MAX_PATH_LENGTH];
-sem_t initial_lock;
+int can_enter=0;
 struct ss_list
 {
     int index;
@@ -35,7 +35,8 @@ void init_storage_servers()
 {
     storage_servers->head=init_server_list_head();
     storage_servers->total_servers=0;
-    sem_post(&initial_lock);
+    // sem_post(&initial_lock);
+    can_enter=1;
 }
 
 void InsertNewSS(int ssTocPortNo,int ssTonmsPortNo,TrieNode* ssRoot)
@@ -87,6 +88,12 @@ void RemoveSS(int index)
 int close_signal=0;
 void *ss_port_worker(void *arg)
 {
+ // sem_wait(&initial_lock);
+    while(1)
+    {
+        if(can_enter==1)
+        break;
+    }
     int server_sock, client_sock;
     struct sockaddr_in server_addr, client_addr;
     socklen_t addr_size;
@@ -150,6 +157,7 @@ void *ss_port_worker(void *arg)
     printf("Message from storage server: %s\n",message.buffer);
     printf("Port for clients: %d\n",message.port_for_clients);
     printf("Port for nms: %d\n",message.port_for_naming_server);
+    InsertNewSS(message.port_for_clients,message.port_for_naming_server,NULL);
     
 }
 
@@ -161,14 +169,14 @@ void ss_is_alive_checker()
     temp = storage_servers->head->next;
     while (temp != NULL)
     {
-        int shrey_sock;
+        int sock;
         struct sockaddr_in addr;
         socklen_t addr_size;
         // char buffer[MAX_PATH_LENGTH];
         int n;
 
-        shrey_sock = socket(AF_INET, SOCK_STREAM, 0);
-        if (shrey_sock < 0)
+        sock = socket(AF_INET, SOCK_STREAM, 0);
+        if (sock < 0)
         {
             fprintf(stderr, "[-]Socket creation error: %s\n", strerror(errno));
 
@@ -178,20 +186,34 @@ void ss_is_alive_checker()
 
         memset(&addr, '\0', sizeof(addr));
         addr.sin_family = AF_INET;
+        // printf("%d\n",temp->ssTonms_port);
         addr.sin_port = temp->ssTonms_port;
         addr.sin_addr.s_addr = inet_addr(ip_address);
 
-        if (connect(shrey_sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+        if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
         {
             fprintf(stderr, "[-]Connection lost from storage server with port %d: %s\n",temp->ssTonms_port, strerror(errno));
             // exit(1);
         }
+        // else{
+        //  printf("pinged storage server with port %d once\n",temp->ssTonms_port);   
+        // }
+        close(sock);
         temp=temp->next;
     }
 }
 void* ss_is_alive_worker(void* arg)
 {
-    sem_wait(&initial_lock);
+    while(1)
+    {
+        
+        if(can_enter==1)
+        {
+            break;
+        }
+        
+
+    }
     while(1)
     {
         ss_is_alive_checker();
@@ -202,8 +224,8 @@ void* ss_is_alive_worker(void* arg)
 }
 int main(int argc, char *argv[])
 {
-    sem_init(&initial_lock,0,0);
     storage_servers=(struct storage_servers_node*)malloc(sizeof(struct storage_servers_node));
+    init_storage_servers();
     pthread_t ss_port, ss_is_alive, client_connection;
     pthread_create(&ss_port,NULL,ss_port_worker,NULL);
     pthread_create(&ss_is_alive,NULL,ss_is_alive_worker,NULL);
