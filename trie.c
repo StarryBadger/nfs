@@ -1,6 +1,6 @@
 #include "headers.h"
 
-TrieNode *root = NULL;
+// TrieNode *root = NULL;
 
 TrieNode *createNode(char *directory)
 {
@@ -12,7 +12,7 @@ TrieNode *createNode(char *directory)
     return newNode;
 }
 
-void InsertTrie(char *directory)
+void InsertTrie(char *directory,TrieNode* root)
 {
     char *directory_copy = strdup(directory); 
     char *token = strtok(directory_copy, "/");
@@ -45,7 +45,7 @@ void InsertTrie(char *directory)
     temp->isFile = 1;
 } 
 
-TrieNode* SearchTrie(char *directory)
+TrieNode* SearchTrie(char *directory,TrieNode* root)
 {
     char *directory_copy = strdup(directory); 
     char *token = strtok(directory_copy, "/");
@@ -66,7 +66,7 @@ TrieNode* SearchTrie(char *directory)
     return temp;
 }
 
-void DeleteTrie(char *directory)
+void DeleteTrie(char *directory,TrieNode* root)
 {
     char *directory_copy = strdup(directory); 
     char *token = strtok(directory_copy, "/");
@@ -157,7 +157,7 @@ TrieNode* StringToTrie(char *str) {
 //     InsertTrie("root/dir2/dir6/dir9");
 //     InsertTrie("root/dir2/dir6/dir10");
 
-//     // InsertTrie("a/b/e");
+//     // InsertTrie("a/b/e", root);
 //     // InsertTrie("a/c");
 //     // InsertTrie("a/d/f");
 //     // InsertTrie("a/d/g");

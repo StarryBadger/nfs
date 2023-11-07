@@ -5,13 +5,15 @@ int port_for_naming_server;
 sem_t portc_lock;
 sem_t portnms_lock;
 int close_flag = 0;
+TrieNode* ssTrie = NULL;
+
 void *naming_server_responder_worker(void *arg)
 {
 
     int server_sock, client_sock;
     struct sockaddr_in server_addr, client_addr;
     socklen_t addr_size;
-    // char buffer[1024];
+    // char buffer[MAX_PATH_LENGTH];
     int n;
 
     server_sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -64,6 +66,7 @@ void *naming_server_responder_worker(void *arg)
     }
     return NULL;
 }
+
 void *naming_server_informer_worker(void *arg)
 {
     sem_wait(&portc_lock);
@@ -71,7 +74,7 @@ void *naming_server_informer_worker(void *arg)
     int ss_sock;
     struct sockaddr_in addr;
     socklen_t addr_size;
-    char buffer[1024];
+    char buffer[MAX_PATH_LENGTH];
     int n;
 
     ss_sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -95,10 +98,19 @@ void *naming_server_informer_worker(void *arg)
     }
     printf("Connected to the server.\n");
 
-    bzero(buffer, 1024);
+    // ssTrie = createNode("storage_server_1");
+    // InsertTrie("root/dir1/dir2/dir3",ssTrie);
+    // InsertTrie("root/dir1/dir5/dir6",ssTrie);
+    // InsertTrie("root/dir1/dir2/dir4",ssTrie);
+    // InsertTrie("root/dir1/dir5/dir7",ssTrie);
+    // InsertTrie("root/dir2/dir6/dir9",ssTrie);
+    // InsertTrie("root/dir2/dir6/dir10",ssTrie);
+
+    // bzero(buffer, MAX_PATH_LENGTH);
     // sprintf(buffer,"%d,%d",port_for_clients,port_for_naming_server);
     MessageSS2NM message;
-    strcpy(message.buffer, "storage_server_1");
+    // strcpy(message.buffer, "storage_server_1");
+    TrieToString(ssTrie, message.buffer);
     message.port_for_clients = port_for_clients;
     message.port_for_naming_server = port_for_naming_server;
     printf("Sending message to server: %s\n", message.buffer);
@@ -119,7 +131,7 @@ void* clients_handler_worker(void* arg)
     int server_sock, client_sock;
     struct sockaddr_in server_addr, client_addr;
     socklen_t addr_size;
-    // char buffer[1024];
+    // char buffer[MAX_PATH_LENGTH];
     int n;
 
     server_sock = socket(AF_INET, SOCK_STREAM, 0);

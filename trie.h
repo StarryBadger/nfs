@@ -9,11 +9,11 @@ typedef struct TrieNode
 
 TrieNode *createNode(char *directory);
 
-void InsertTrie(char *directory);
+void InsertTrie(char *directory,TrieNode* root);
 
-TrieNode* SearchTrie(char *directory);
+TrieNode* SearchTrie(char *directory,TrieNode* root);
 
-void DeleteTrie(char *directory);
+void DeleteTrie(char *directory,TrieNode* root);
 
 void PrintTrie(struct TrieNode *root);
 
