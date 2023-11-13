@@ -1,4 +1,6 @@
-#ifndef TRIE_H
+#ifndef __TRIE_H
+#define __TRIE_H
+
 typedef struct TrieNode
 {
     char directory[100];

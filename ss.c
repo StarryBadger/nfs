@@ -195,9 +195,39 @@ void *clients_handler_worker(void *arg)
     return NULL;
 }
 
+void GetAccessiblePaths()
+{
+    printf("Enter 1 to make all paths accessible\n");
+    printf("Enter 2 to make some paths accessible\n");
+    int choice;
+    scanf("%d", &choice);
+    if (choice == 1)
+    {
+        //get current directory storage server is in
+        char current_directory[MAX_PATH_LENGTH];
+        getcwd(current_directory, sizeof(current_directory));
+        printf("Current directory: %s\n", current_directory);
+        // append ss1 to cwdd
+        sprintf(current_directory, "%s/%s", current_directory, "ss1");
+        ssTrie = createNode("ss1");
+        lookFor(current_directory, strlen(current_directory), ssTrie);
+        printf("All paths are accessible\n");
+    }
+    else if (choice == 2)
+    {
+        // make some paths accessible
+    }
+    else
+    {
+        printf("Invalid choice\n");     //ERROR HANDLING
+        // GetAccessiblePaths();
+    }
+}
+
 int main()
 {
-    pthread_t clients_handler, naming_server_informer, naming_server_responder;
+    GetAccessiblePaths();
+    pthread_t clients_handler, naming_server_informer, naming_server_responder; 
     sem_init(&portc_lock, 0, 0);
     sem_init(&portnms_lock, 0, 0);
     pthread_create(&clients_handler, NULL, clients_handler_worker, NULL);

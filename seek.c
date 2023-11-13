@@ -1,6 +1,6 @@
 #include "headers.h"
-int pathlength;
-void lookFor(char *path)
+
+void lookFor(char *path, int pathlength, TrieNode* root)
 {
     DIR *directory = opendir(path);
     if (directory == NULL)
@@ -25,22 +25,25 @@ void lookFor(char *path)
             continue;
         if (S_ISDIR(st.st_mode))
         {
-            // printf("%s\n", pathBranch + pathlength);
-            printf("%s\n", pathBranch);
-            lookFor(pathBranch);
+            printf("%s\n", pathBranch + pathlength);
+            InsertTrie(pathBranch + pathlength ,root);
+            // printf("%s\n", pathBranch);
+            lookFor(pathBranch, pathlength, root);
         }
         else if (S_ISREG(st.st_mode))
         {
-            // printf("%s\n", pathBranch + pathlength);
-            printf("%s\n", pathBranch);
+            printf("%s\n", pathBranch + pathlength );
+            InsertTrie(pathBranch + pathlength ,root);
+            
+            // printf("%s\n", pathBranch);
         }
     }
     closedir(directory);
 }
-void main()
-{
-    char path[PATH_MAX];
-    scanf("%s", path);
-    pathlength = strlen(path);
-    lookFor(path);
-}
+// void seek()
+// {
+//     char path[PATH_MAX];
+//     scanf("%s", path);
+//     int pathlength = strlen(path);
+//     lookFor(path,pathlength,ssTrie);
+// }
