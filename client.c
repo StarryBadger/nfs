@@ -8,8 +8,7 @@ void client()
     char buffer[1024];
     buffer[0] = '\0';
     int n;
-    
-    printf("[+]TCP socket created.\n");
+    mySocket=initSocket();
     memset(&addr, '\0', sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_port = nms_client_port;

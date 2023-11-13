@@ -1,0 +1,9 @@
+#!/bin/bash
+echo "Everyone's commits"
+git shortlog
+echo -e "\nShaunak:"
+git log --author='StarryBadger' --pretty=tformat: --numstat
+echo -e "\nShreyansh:"
+git log --author='Shreyansh Bhanu' --pretty=tformat: --numstat
+echo -e "\nSiddharth:"
+git log --author='siddharth-ag2004' --pretty=tformat: --numstat

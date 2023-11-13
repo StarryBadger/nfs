@@ -5,14 +5,16 @@ void closeSocket(int socketToClose)
     {
         fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
     }
-    exit(1);
+    exit(SOCKET_CLOSE_ERROR);
 }
 int initSocket()
 {
-    int mySocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (mySocket < 0)
+    int socketCreated = socket(AF_INET, SOCK_STREAM, 0);
+    if (socketCreated < 0)
     {
         fprintf(stderr, "[-]Socket creation error: %s\n", strerror(errno));
-        exit(1);
+        exit(SOCKET_INIT_ERROR);
     }
+    printf("[+]TCP socket created.\n");
+    return socketCreated;
 }
