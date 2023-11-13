@@ -1,5 +1,6 @@
 #include "headers.h"
-int main()
+
+void client()
 {
     int mySocket;
     struct sockaddr_in addr;
@@ -7,12 +8,7 @@ int main()
     char buffer[1024];
     buffer[0] = '\0';
     int n;
-    mySocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (mySocket < 0)
-    {
-        fprintf(stderr, "[-]Socket creation error: %s\n", strerror(errno));
-        exit(1);
-    }
+    
     printf("[+]TCP socket created.\n");
     memset(&addr, '\0', sizeof(addr));
     addr.sin_family = AF_INET;
@@ -24,20 +20,17 @@ int main()
         exit(1);
     }
     printf("Connected to the server.\n");
-    printf("Enter message to send: ");
-    if (scanf("%1023[^\n]", buffer) != 1)
-    {
-        fprintf(stderr, "[-]Error reading input");
-        exit(1);
-    }
-    printf("Message being sent to server: %s\n", buffer);
-    if (send(mySocket, buffer, strlen(buffer), 0) < 0)
+    // Sending initial request to server
+    const char *initialRequest = "INITIAL_REQUEST";
+    if (send(mySocket, initialRequest, strlen(initialRequest), 0) < 0)
     {
         fprintf(stderr, "[-]Send error: %s\n", strerror(errno));
         if (close(mySocket) < 0)
             fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
         exit(1);
     }
+
+    // Receive acknowledgment
     bzero(buffer, 1024);
     if (recv(mySocket, buffer, sizeof(buffer), 0) < 0)
     {
@@ -46,12 +39,36 @@ int main()
             fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
         exit(1);
     }
-    printf("Message received from server: %s\n", buffer);
+    printf("Acknowledgment received from server: %s\n", buffer);
 
+    // Prompt user for operation number (1 through 6)
+    int operationNumber;
+    printf("Enter operation number (1-6): ");
+    if (scanf("%d", &operationNumber) != 1 || operationNumber < 1 || operationNumber > 6)
+    {
+        fprintf(stderr, "[-]Invalid operation number\n");
+        if (close(mySocket) < 0)
+            fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+        exit(1);
+    }
+
+    // Send operation number to the server
+    if (send(mySocket, &operationNumber, sizeof(operationNumber), 0) < 0)
+    {
+        fprintf(stderr, "[-]Send error: %s\n", strerror(errno));
+        if (close(mySocket) < 0)
+            fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+        exit(1);
+    }
+
+    // Add logic here to handle the various operations on the server side based on operationNumber
+
+    // Close the socket
     if (close(mySocket) < 0)
     {
         fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
         exit(1);
     }
+
     return 0;
 }

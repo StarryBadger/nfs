@@ -1,4 +1,3 @@
-typedef int errcode
 typedef int errcode;
 
 // General Errors
@@ -41,4 +40,8 @@ typedef int errcode;
 // Search and Optimization Errors
 #define SEARCH_ERROR 60
 #define LRU_CACHE_ERROR 61
+
+//Socket errors
+#define SOCKET_INIT_ERROR 70
+#define SOCKET_CLOSE_ERROR 71
 
