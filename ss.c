@@ -80,6 +80,7 @@ void *naming_server_responder_worker(void *arg)
         // {
         //     printf("Naming server pinged once\n");
         // }
+        close(client_sock);
         if (close_flag == 1)
             return NULL;
     }
@@ -204,18 +205,51 @@ void GetAccessiblePaths()
     if (choice == 1)
     {
         //get current directory storage server is in
+        printf("All paths are accessible\n");
         char current_directory[MAX_PATH_LENGTH];
         getcwd(current_directory, sizeof(current_directory));
         printf("Current directory: %s\n", current_directory);
         // append ss1 to cwdd
-        sprintf(current_directory, "%s/%s", current_directory, "ss1");
+        // sprintf(current_directory, "%s/%s", current_directory, "ss1");
         ssTrie = createNode("ss1");
         lookFor(current_directory, strlen(current_directory), ssTrie);
-        printf("All paths are accessible\n");
     }
     else if (choice == 2)
     {
         // make some paths accessible
+        printf("Enter the number of directory paths you want to make accessible\n");
+        int num_directory;
+        scanf("%d", &num_directory);
+        printf("Enter the paths for directories\n");
+        char paths[num_directory][MAX_PATH_LENGTH];
+        for (int i = 0; i < num_directory; i++)
+        {
+            scanf("%s", paths[i]);
+        }
+        ssTrie = createNode("ss1");
+        for (int i = 0; i < num_directory; i++)
+        {
+            InsertTrie(paths[i], ssTrie);
+            lookFor(paths[i], strlen(paths[i]), ssTrie);
+        }
+
+        printf("Enter the number of files you want to make accessible\n");
+        int num_files;
+        scanf("%d", &num_files);
+        printf("Enter the paths for files\n");
+        char files[num_files][MAX_PATH_LENGTH];
+        for (int i = 0; i < num_files; i++)
+        {
+            scanf("%s", files[i]);
+        }
+        for (int i = 0; i < num_files; i++)
+        {
+            InsertTrie(files[i], ssTrie);
+        }
+
+
+        // PrintTrie(ssTrie);
+
     }
     else
     {

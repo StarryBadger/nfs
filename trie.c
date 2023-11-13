@@ -1,6 +1,5 @@
 #include "headers.h"
 
-// TrieNode *root = NULL;
 
 TrieNode *createNode(char *directory)
 {
@@ -14,6 +13,10 @@ TrieNode *createNode(char *directory)
 
 void InsertTrie(char *directory,TrieNode* root)
 {
+    if(SearchTrie(directory,root)!=NULL)
+    {
+        return;
+    }
     char *directory_copy = strdup(directory); 
     char *token = strtok(directory_copy, "/");
     TrieNode *temp = root;
@@ -148,14 +151,15 @@ TrieNode* StringToTrie(char *str) {
 
 // int main()
 // {
+//     TrieNode *root = NULL;
 
-//     root = createNode("storage_server_1");
-//     InsertTrie("root/dir1/dir2/dir3");
-//     InsertTrie("root/dir1/dir5/dir6");
-//     InsertTrie("root/dir1/dir2/dir4");
-//     InsertTrie("root/dir1/dir5/dir7");
-//     InsertTrie("root/dir2/dir6/dir9");
-//     InsertTrie("root/dir2/dir6/dir10");
+//     root = createNode("ss1");
+//     InsertTrie("root/dir1/dir2/dir3",root);
+//     InsertTrie("root/dir1/dir5/dir6",root);
+//     InsertTrie("root/dir1/dir2/dir4",root);
+//     InsertTrie("root/dir1/dir5/dir7",root);
+//     InsertTrie("root/dir2/dir6/dir9",root);
+//     InsertTrie("root/dir2/dir6/dir10",root);
 
 //     // InsertTrie("a/b/e", root);
 //     // InsertTrie("a/c");

@@ -15,6 +15,11 @@ void lookFor(char *path, int pathlength, TrieNode* root)
         {
             continue;
         }
+        // hidden files should not be consdiered
+        if (entry->d_name[0] == '.' || (strlen(entry->d_name) > 1 && entry->d_name[1] == '.' ))
+        {
+            continue;
+        }
         char pathBranch[PATH_MAX];
         strcpy(pathBranch, path);
         if (pathBranch[strlen(pathBranch) - 1] != '/')
@@ -28,7 +33,7 @@ void lookFor(char *path, int pathlength, TrieNode* root)
             printf("%s\n", pathBranch + pathlength);
             InsertTrie(pathBranch + pathlength ,root);
             // printf("%s\n", pathBranch);
-            lookFor(pathBranch, pathlength, root);
+            lookFor(pathBranch, pathlength, root);       
         }
         else if (S_ISREG(st.st_mode))
         {

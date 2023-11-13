@@ -157,8 +157,9 @@ void *ss_port_worker(void *arg)
     printf("Message from storage server: %s\n",message.buffer);
     printf("Port for clients: %d\n",message.port_for_clients);
     printf("Port for nms: %d\n",message.port_for_naming_server);
-    InsertNewSS(message.port_for_clients,message.port_for_naming_server,NULL);
-    
+
+    // PrintTrie(StringToTrie(message.buffer));
+    InsertNewSS(message.port_for_clients,message.port_for_naming_server,StringToTrie(message.buffer));
 }
 
 void ss_is_alive_checker()
