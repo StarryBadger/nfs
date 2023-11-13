@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 #include "trie.h"
+#include "seek.h"
 
 #define MAX_PATH_LENGTH 1024
 #define nms_ss_port 10045
