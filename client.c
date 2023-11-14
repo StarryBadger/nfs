@@ -1,12 +1,8 @@
 #include "headers.h"
 #include "requestProtocols.h"
-void main()
+int main()
 {
     struct sockaddr_in addr;
-    socklen_t addr_size;
-    char buffer[1024];
-    buffer[0] = '\0';
-    int n;
     int mySocket = initSocket();
     memset(&addr, '\0', sizeof(addr));
     addr.sin_family = AF_INET;
