@@ -25,6 +25,7 @@
 
 #include "trie.h"
 #include "seek.h"
+#include "socketAPI.h"
 #include "errorHandler.h"
 
 #define MAX_PATH_LENGTH 1024
@@ -32,9 +33,22 @@
 #define nms_client_port 10059
 #define ip_address "127.0.0.1"
 
+#define CREATE 1
+#define READ 2
+#define WRITE 3
+#define DELETE 4
+#define OPEN 5
+#define METADATA 6
+
 typedef struct MessageSS2NM
 {
     char buffer[MAX_PATH_LENGTH];
     int port_for_clients;
     int port_for_naming_server;
 } MessageSS2NM;
+
+typedef struct MessageClient2SS
+{
+    char buffer[MAX_PATH_LENGTH];
+    int operation;
+} MessageClient2SS;

@@ -146,6 +146,54 @@ void *naming_server_informer_worker(void *arg)
     return NULL;
 }
 
+void* CLientServerConnection(void* arg)
+{
+    int client_sock = *(int*)arg;
+    MessageClient2SS message;
+    bzero(message.buffer, MAX_PATH_LENGTH);
+
+    if (recv(client_sock, &message, sizeof(message), 0) < 0)
+    {
+        fprintf(stderr, "[-]Receive error: %s\n", strerror(errno));         //ERROR HANDLING
+        if (close(client_sock) < 0)
+            fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); //ERROR HANDLING
+        exit(1);
+    }
+
+    if(message.operation == CREATE)
+    {
+        int fd = open(message.buffer, O_CREAT | O_WRONLY, 0644);
+        if (fd == -1)
+        {
+            fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); //ERROR HANDLING
+            return NULL;
+        }
+        InsertTrie(message.buffer, ssTrie);
+        closeSocket(fd);
+    }
+
+    if(message.operation == READ)
+    {
+        int fd = open(message.buffer, O_RDONLY);
+        if (fd == -1)
+        {
+            fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); //ERROR HANDLING
+            return NULL;
+        }
+        char buffer[1024];
+        int bytes_read;
+        while ((bytes_read = read(fd, buffer, 1024)) > 0)
+        {
+            buffer[bytes_read] = '\0';
+            printf("%s", buffer);
+        }
+        printf("\n");
+        closeSocket(fd);
+    
+    }
+
+}
+
 void *clients_handler_worker(void *arg)
 {
     int server_sock, client_sock;
