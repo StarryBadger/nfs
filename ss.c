@@ -250,12 +250,12 @@ void GetAccessiblePaths()
     printf("Enter 2 to make some paths accessible\n");
     int choice;
     scanf("%d", &choice);
+    char current_directory[MAX_PATH_LENGTH];
+    getcwd(current_directory, sizeof(current_directory));
     if (choice == 1)
     {
-        //get current directory storage server is in
         printf("All paths are accessible\n");
-        char current_directory[MAX_PATH_LENGTH];
-        getcwd(current_directory, sizeof(current_directory));
+        //get current directory storage server is in
         printf("Current directory: %s\n", current_directory);
         // append ss1 to cwdd
         // sprintf(current_directory, "%s/%s", current_directory, "ss1");
@@ -277,8 +277,8 @@ void GetAccessiblePaths()
         ssTrie = createNode("ss1");
         for (int i = 0; i < num_directory; i++)
         {
-            InsertTrie(paths[i], ssTrie);
-            lookFor(paths[i], strlen(paths[i]), ssTrie);
+            InsertTrie(paths[i]+strlen(current_directory), ssTrie);
+            lookFor(paths[i], strlen(current_directory), ssTrie);
         }
 
         printf("Enter the number of files you want to make accessible\n");

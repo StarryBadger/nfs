@@ -32,15 +32,13 @@ void lookFor(char *path, int pathlength, TrieNode* root)
         {
             printf("%s\n", pathBranch + pathlength);
             InsertTrie(pathBranch + pathlength ,root);
-            // printf("%s\n", pathBranch);
             lookFor(pathBranch, pathlength, root);       
         }
         else if (S_ISREG(st.st_mode))
         {
             printf("%s\n", pathBranch + pathlength );
             InsertTrie(pathBranch + pathlength ,root);
-            
-            // printf("%s\n", pathBranch);
+
         }
     }
     closedir(directory);
