@@ -20,7 +20,7 @@ void client()
     printf("Connected to the server.\n");
     // Sending initial request to server
     int initialRequest = INITIAL_MESSAGE;
-    if (send(mySocket, initialRequest, strlen(initialRequest), 0) < 0)
+    if (send(mySocket, initialRequest, sizeof(initialRequest), 0) < 0)
     {
         fprintf(stderr, "[-]Send error: %s\n", strerror(errno));
         if (close(mySocket) < 0)
