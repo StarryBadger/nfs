@@ -34,6 +34,10 @@ int main()
         exit(1);
     }
     printf("Acknowledgment received from server: %d\n", initialAck);
+    while(1)
+    {
+        
+    }
     // while (1)
     // {
     //     // We prompt user for operation number (1 through 6)
@@ -61,5 +65,5 @@ int main()
     //         exit(1);
     //     }
     // }
-    closeSocket(mySocket);
+    // closeSocket(mySocket);
 }

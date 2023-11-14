@@ -240,7 +240,8 @@ void *client_handler(void *arg)
         return NULL;
     }
     printf("Acknowledgment sent to client: %d\n", initialAck);
-    close(clientSocket);
+    while(1);
+    // close(clientSocket);
 
     return NULL;
 }
