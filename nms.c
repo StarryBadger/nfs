@@ -162,7 +162,6 @@ void *ss_port_worker(void *arg)
     // PrintTrie(StringToTrie(message.buffer));
     InsertNewSS(message.port_for_clients, message.port_for_naming_server, StringToTrie(message.buffer));
 }
-
 void ss_is_alive_checker()
 {
     // struct ss_list*ss_list_head;
@@ -245,7 +244,6 @@ void *client_handler(void *arg)
 
     return NULL;
 }
-
 void *client_connection_worker(void *arg)
 {
     int serverSocket, clientSocket;
@@ -283,10 +281,6 @@ void *client_connection_worker(void *arg)
     close(serverSocket);
     return NULL;
 }
-
-
-// Function to handle communication with a client
-
 int main(int argc, char *argv[])
 {
     storage_servers = (struct storage_servers_node *)malloc(sizeof(struct storage_servers_node));
