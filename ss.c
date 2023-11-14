@@ -9,7 +9,7 @@ TrieNode *ssTrie = NULL;
 
 void *naming_server_responder_worker(void *arg)
 {
-     printf("here i am\n");
+    printf("here i am\n");
     int server_sock, client_sock;
     struct sockaddr_in server_addr, client_addr;
     socklen_t addr_size;
@@ -51,7 +51,7 @@ void *naming_server_responder_worker(void *arg)
     }
     // port_for_naming_server = ntohs(sin.sin_port);
     // printf("port extracted is %d\n",sin.sin_port);
-    port_for_naming_server=sin.sin_port;
+    port_for_naming_server = sin.sin_port;
     sem_post(&portnms_lock);
     // printf("[+]Bind to the port number: %d\n", port_for_naming_server);
     if (listen(server_sock, 5) < 0)
@@ -133,8 +133,8 @@ void *naming_server_informer_worker(void *arg)
     TrieToString(ssTrie, message.buffer);
     message.port_for_clients = port_for_clients;
     message.port_for_naming_server = port_for_naming_server;
-    
-    printf("Sending message to server: %d %d\n", message.port_for_clients,message.port_for_naming_server);
+
+    printf("Sending message to server: %d %d\n", message.port_for_clients, message.port_for_naming_server);
 
     if (send(ss_sock, &message, sizeof(message), 0) < 0)
     {
@@ -146,38 +146,38 @@ void *naming_server_informer_worker(void *arg)
     return NULL;
 }
 
-void* CLientServerConnection(void* arg)
+void *CLientServerConnection(void *arg)
 {
-    int client_sock = *(int*)arg;
+    int client_sock = *(int *)arg;
     MessageClient2SS message;
     bzero(message.buffer, MAX_PATH_LENGTH);
 
     if (recv(client_sock, &message, sizeof(message), 0) < 0)
     {
-        fprintf(stderr, "[-]Receive error: %s\n", strerror(errno));         //ERROR HANDLING
+        fprintf(stderr, "[-]Receive error: %s\n", strerror(errno)); // ERROR HANDLING
         if (close(client_sock) < 0)
-            fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); //ERROR HANDLING
+            fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
         exit(1);
     }
 
-    if(message.operation == CREATE)
+    if (message.operation == CREATE)
     {
         int fd = open(message.buffer, O_CREAT | O_WRONLY, 0644);
         if (fd == -1)
         {
-            fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); //ERROR HANDLING
+            fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
             return NULL;
         }
         InsertTrie(message.buffer, ssTrie);
         closeSocket(fd);
     }
 
-    if(message.operation == READ)
+    if (message.operation == READ)
     {
         int fd = open(message.buffer, O_RDONLY);
         if (fd == -1)
         {
-            fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); //ERROR HANDLING
+            fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
             return NULL;
         }
         char buffer[1024];
@@ -189,9 +189,7 @@ void* CLientServerConnection(void* arg)
         }
         printf("\n");
         closeSocket(fd);
-    
     }
-
 }
 
 void *clients_handler_worker(void *arg)
@@ -251,11 +249,12 @@ void GetAccessiblePaths()
     int choice;
     scanf("%d", &choice);
     char current_directory[MAX_PATH_LENGTH];
+    char TEMPBUFF[MAX_PATH_LENGTH];
     getcwd(current_directory, sizeof(current_directory));
     if (choice == 1)
     {
         printf("All paths are accessible\n");
-        //get current directory storage server is in
+        // get current directory storage server is in
         printf("Current directory: %s\n", current_directory);
         // append ss1 to cwdd
         // sprintf(current_directory, "%s/%s", current_directory, "ss1");
@@ -273,11 +272,20 @@ void GetAccessiblePaths()
         for (int i = 0; i < num_directory; i++)
         {
             scanf("%s", paths[i]);
+            //handle paths being relative
+            TEMPBUFF[0] = '\0';
+            strcat(TEMPBUFF, current_directory);
+            if (paths[i][0] != '/')
+            {
+                strcat(TEMPBUFF, "/");
+            }
+            strcat(TEMPBUFF, paths[i]);
+            strcpy(paths[i], TEMPBUFF);
         }
         ssTrie = createNode("ss1");
         for (int i = 0; i < num_directory; i++)
         {
-            InsertTrie(paths[i]+strlen(current_directory), ssTrie);
+            InsertTrie(paths[i] + strlen(current_directory), ssTrie);
             lookFor(paths[i], strlen(current_directory), ssTrie);
         }
 
@@ -295,21 +303,18 @@ void GetAccessiblePaths()
             InsertTrie(files[i], ssTrie);
         }
 
-
         // PrintTrie(ssTrie);
-
     }
     else
     {
-        printf("Invalid choice\n");     //ERROR HANDLING
+        printf("Invalid choice\n"); // ERROR HANDLING
         // GetAccessiblePaths();
     }
 }
-
 int main()
 {
     GetAccessiblePaths();
-    pthread_t clients_handler, naming_server_informer, naming_server_responder; 
+    pthread_t clients_handler, naming_server_informer, naming_server_responder;
     sem_init(&portc_lock, 0, 0);
     sem_init(&portnms_lock, 0, 0);
     pthread_create(&clients_handler, NULL, clients_handler_worker, NULL);
