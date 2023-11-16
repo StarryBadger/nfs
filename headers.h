@@ -27,18 +27,12 @@
 #include "seek.h"
 #include "socketAPI.h"
 #include "errorHandler.h"
+#include "requestProtocols.h"
 
 #define MAX_PATH_LENGTH 1024
 #define nms_ss_port 10045
 #define nms_client_port 10059
 #define ip_address "127.0.0.1"
-
-#define CREATE 1
-#define READ 2
-#define WRITE 3
-#define DELETE 4
-#define OPEN 5
-#define METADATA 6
 
 typedef struct MessageSS2NM
 {

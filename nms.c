@@ -172,10 +172,6 @@ void ss_is_alive_checker()
     {
         int sock;
         struct sockaddr_in addr;
-        socklen_t addr_size;
-        // char buffer[MAX_PATH_LENGTH];
-        int n;
-
         sock = socket(AF_INET, SOCK_STREAM, 0);
         if (sock < 0)
         {
@@ -224,7 +220,9 @@ void *ss_is_alive_worker(void *arg)
 void *client_handler(void *arg)
 {
     int clientSocket = *((int *)arg);
-    int initialRequest;
+    int initialRequest,initialAck;
+    int operationNumber=7;
+    int terminateConnectionFlag = 0;
     if (recv(clientSocket, &initialRequest, sizeof(initialRequest), 0) < 0)
     {
         fprintf(stderr, "[-]Receive error: %s\n", strerror(errno));
@@ -232,7 +230,16 @@ void *client_handler(void *arg)
         return NULL;
     }
     printf("Initial Request received from client: %d\n", initialRequest);
-    int initialAck = initialRequest;
+    if (initialRequest == INITIAL_MESSAGE)
+    {
+        initialAck = INITIAL_ACK_ACCEPT;
+    }
+    else
+    {
+        initialAck = INITIAL_ACK_UNSUPPORTED_CLIENT;
+        terminateConnectionFlag = 1;
+    }
+    // add no ss case
     if (send(clientSocket, &initialAck, sizeof(initialAck), 0) < 0)
     {
         fprintf(stderr, "[-]Send error: %s\n", strerror(errno));
@@ -240,9 +247,23 @@ void *client_handler(void *arg)
         return NULL;
     }
     printf("Acknowledgment sent to client: %d\n", initialAck);
-    while(1);
-    // close(clientSocket);
-
+    while (!terminateConnectionFlag)
+    {
+        if (recv(clientSocket, &operationNumber, sizeof(operationNumber), 0) < 0)
+        {
+            fprintf(stderr, "[-]Receive error: %s\n", strerror(errno));
+            close(clientSocket);
+            return NULL;
+        }
+        if (operationNumber>=7||operationNumber<1)
+        {
+            terminateConnectionFlag=1;
+        }
+        printf("Client said %d\n",operationNumber);
+        //add send code here
+    }
+    close(clientSocket);
+    printf("Client disconnected\n");
     return NULL;
 }
 void *client_connection_worker(void *arg)
