@@ -190,6 +190,43 @@ void *CLientServerConnection(void *arg)
         printf("\n");
         closeSocket(fd);
     }
+
+    if (message.operation == WRITE)
+    {
+        int fd = open(message.buffer, O_WRONLY);
+        if (fd == -1)
+        {
+            fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
+            return NULL;
+        }
+        char buffer[1024];
+        int bytes_read;
+        while ((bytes_read = read(fd, buffer, 1024)) > 0)
+        {
+            buffer[bytes_read] = '\0';
+            printf("%s", buffer);
+        }
+        printf("\n");
+        closeSocket(fd);
+    }
+
+    if (message.operation == DELETE)
+    {
+        int fd = open(message.buffer, O_RDONLY);
+        if (fd == -1)
+        {
+                (stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
+            return NULL;
+        }
+        closeSocket(fd);
+        if (remove(message.buffer) == 0)
+        {
+            printf("\x1b[32mDeleted %s successfully\n\n\x1b[0m", message.buffer);
+            DeleteTrie(message.buffer, ssTrie);
+        }
+        else
+            printf("\x1b[31mCould not delete %s\n\n\x1b[0m", message.buffer);
+    }
 }
 
 void *clients_handler_worker(void *arg)
