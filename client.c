@@ -26,6 +26,24 @@ void printOperationMessage(int operationNumber)
         printf("Invalid Operation Number\n");
     }
 }
+int printConnectionRequest(int acknowledgement)
+{
+    switch (acknowledgement)
+    {
+    case INITIAL_ACK_ACCEPT:
+        printf("Server has accepted the connection request. Connection established!\n");
+        return 1;
+    case INITIAL_ACK_UNSUPPORTED_CLIENT:
+        printf("Server has rejected the connection request. The client is not supported.\n");
+        return 0;
+    case INITIAL_ACK_NO_SS_CONNECTED:
+        printf("Server has acknowledged the connection, but no Storage Server is currently connected.\n");
+        return 0;
+    default:
+        printf("Unable to infer the server's response. Terminating connection...\n");
+    }
+    return 0;
+}
 int main()
 {
     struct sockaddr_in addr;
@@ -40,7 +58,7 @@ int main()
         exit(1);
     }
     printf("Connected to the server.\n");
-    // Sending initial request to server
+    // initial request to server
     int initialRequest = INITIAL_MESSAGE;
     if (send(mySocket, &initialRequest, sizeof(initialRequest), 0) < 0)
     {
@@ -49,8 +67,7 @@ int main()
             fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
         exit(1);
     }
-
-    // Receive acknowledgment
+    // acknowledgment
     int initialAck;
     if (recv(mySocket, &initialAck, sizeof(initialAck), 0) < 0)
     {
@@ -59,8 +76,11 @@ int main()
             fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
         exit(1);
     }
-    printf("Acknowledgment received from server: %d\n", initialAck);
-
+    if (!printConnectionRequest(initialAck))
+    {
+        closeSocket(mySocket);
+        return 0;
+    }
     while (1)
     {
         // We prompt user for operation number (1 through 6)
@@ -95,4 +115,5 @@ int main()
         }
     }
     closeSocket(mySocket);
+    return 0;
 }
