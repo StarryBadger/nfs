@@ -215,7 +215,7 @@ void *CLientServerConnection(void *arg)
         int fd = open(message.buffer, O_RDONLY);
         if (fd == -1)
         {
-                (stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
+            fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
             return NULL;
         }
         closeSocket(fd);
