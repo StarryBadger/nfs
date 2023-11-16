@@ -22,27 +22,9 @@
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
-
+#include<stdint.h>
 #include "trie.h"
 #include "seek.h"
 #include "socketAPI.h"
 #include "errorHandler.h"
-#include "requestProtocols.h"
-
-#define MAX_PATH_LENGTH 1024
-#define nms_ss_port 10045
-#define nms_client_port 10059
-#define ip_address "127.0.0.1"
-
-typedef struct MessageSS2NM
-{
-    char buffer[MAX_PATH_LENGTH];
-    int port_for_clients;
-    int port_for_naming_server;
-} MessageSS2NM;
-
-typedef struct MessageClient2SS
-{
-    char buffer[MAX_PATH_LENGTH];
-    int operation;
-} MessageClient2SS;
+#include "communicationProtocols.h"
