@@ -44,6 +44,37 @@ int printConnectionRequest(int acknowledgement)
     }
     return 0;
 }
+errcode handleSSCommunication(int socketNM, MessageClient2SS message)
+{
+    int ss_client_port;
+    if (recv(socketNM, &ss_client_port, sizeof(ss_client_port), 0) < 0)
+    {
+        fprintf(stderr, "[-]Receive error: %s\n", strerror(errno));
+        return NETWORK_ERROR;
+    }
+    if (ss_client_port==NO_SUCH_PATH)
+    {
+        return FILE_NOT_FOUND;
+    }
+    struct sockaddr_in addr;
+    int socketSS = initSocket();
+    memset(&addr, '\0', sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = ss_client_port;
+    addr.sin_addr.s_addr = inet_addr(ip_address);
+    if (connect(socketSS, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+    {
+        fprintf(stderr, "[-]Connection error: %s\n", strerror(errno));
+        return NETWORK_ERROR;
+    }
+    printf("Connected to the storage server.\n");
+    if (send(socketSS, &message, sizeof(message), 0) < 0)
+    {
+        fprintf(stderr, "[-]Send error: %s\n", strerror(errno));
+        return NETWORK_ERROR;
+    }
+    return NO_ERROR;
+}
 int main()
 {
     struct sockaddr_in addr;
@@ -116,16 +147,12 @@ int main()
             break;
         }
 
-        if (recv(mySocket, &initialAck, sizeof(initialAck), 0) < 0)
-        {
-            fprintf(stderr, "[-]Receive error: %s\n", strerror(errno));
-            if (close(mySocket) < 0)
-                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-            exit(1);
-        }
         if (message.operation == READ || message.operation == WRITE || message.operation == METADATA)
         {
-            
+            if (handleSSCommunication(mySocket, message)!=NO_ERROR)
+            {
+                //do something
+            }
         }
     }
     closeSocket(mySocket);
