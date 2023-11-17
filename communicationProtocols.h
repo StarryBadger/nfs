@@ -15,6 +15,8 @@
 #define INITIAL_ACK_UNSUPPORTED_CLIENT 13
 #define INITIAL_ACK_NO_SS_CONNECTED 14
 
+#define NO_SUCH_PATH 20
+
 #define MAX_PATH_LENGTH 1024
 #define nms_ss_port 10045
 #define nms_client_port 10059

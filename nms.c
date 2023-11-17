@@ -30,6 +30,20 @@ struct storage_servers_node
     int total_servers;
 };
 
+int search_port(MessageClient2NM *msg)
+{
+    struct ss_list *temp;
+    temp = storage_servers->head->next;
+    while (temp != NULL)
+    {
+        if (SearchTrie(msg->buffer, temp->root) != NULL)
+        {
+            return temp->ssToc_port;
+        }
+        temp = temp->next;
+    }
+    return -1;
+}
 struct storage_servers_node *storage_servers;
 
 void init_storage_servers()
@@ -255,7 +269,7 @@ void *client_handler(void *arg)
             close(clientSocket);
             return NULL;
         }
-        printf("received %s %d\n",message.buffer, message.operation);
+        printf("received %s %d\n", message.buffer, message.operation);
         if (message.operation >= 7 || message.operation < 1)
         {
             terminateConnectionFlag = 1;
@@ -264,6 +278,35 @@ void *client_handler(void *arg)
         if (terminateConnectionFlag)
         {
             break;
+        }
+        int port_to_send;
+        if (message.operation == 2 || message.operation == 3 || message.operation == 6)
+        {
+            port_to_send = search_port(&message);
+            if (port_to_send == -1)
+            {
+                port_to_send=NO_SUCH_PATH;
+                if (send(clientSocket, port_to_send, sizeof(port_to_send), 0) < 0)
+                {
+                    fprintf(stderr, "[-]Sendtime error: %s\n", strerror(errno));
+                    if (close(clientSocket) < 0)
+                        fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+                    // if (close() < 0)
+                    //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+                    // exit(1);
+                }
+            }
+            else{
+                if (send(clientSocket, port_to_send, sizeof(port_to_send), 0) < 0)
+                {
+                    fprintf(stderr, "[-]Sendtime error: %s\n", strerror(errno));
+                    if (close(clientSocket) < 0)
+                        fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+                    // if (close() < 0)
+                    //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+                    // exit(1);
+                }
+            }
         }
     }
     close(clientSocket);

@@ -309,7 +309,9 @@ void GetAccessiblePaths()
         printf("Current directory: %s\n", current_directory);
         // append ss1 to cwdd
         // sprintf(current_directory, "%s/%s", current_directory, "ss1");
-        ssTrie = createNode("ss1");
+        char port_in_string[10];
+        sprintf(port_in_string,"%d",port_for_clients);
+        ssTrie = createNode(port_in_string);
         lookFor(current_directory, strlen(current_directory), ssTrie);
     }
     else if (choice == 2)
@@ -333,7 +335,9 @@ void GetAccessiblePaths()
             strcat(TEMPBUFF, paths[i]);
             strcpy(paths[i], TEMPBUFF);
         }
-        ssTrie = createNode("ss1");
+        char port_in_string[10];
+        sprintf(port_in_string,"%d",port_for_clients);
+        ssTrie = createNode(port_in_string);
         for (int i = 0; i < num_directory; i++)
         {
             InsertTrie(paths[i] + strlen(current_directory), ssTrie);
