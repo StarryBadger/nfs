@@ -27,12 +27,13 @@ typedef struct MessageSS2NM
     int port_for_naming_server;
 } MessageSS2NM;
 
-typedef struct MessageClient2SS
+typedef struct MessageClient
 {
     char buffer[MAX_PATH_LENGTH];
     int operation;
-} MessageClient2SS;
-
+} MessageClient;
+typedef MessageClient MessageClient2SS;
+typedef MessageClient MessageClient2NM;
 typedef struct metadata
 {
     uint64_t fileSize;    // Size of the file in bytes
