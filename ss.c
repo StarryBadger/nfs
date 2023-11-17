@@ -270,7 +270,7 @@ void *clients_handler_worker(void *arg)
         else
             break;
     }
-    port_for_clients = ntohs(sin.sin_port);
+    port_for_clients = sin.sin_port;
     sem_post(&portc_lock);
     // listen for new clients and make a new thread if a client is found and do ss-client communication part in the worker function of that new thread
     while (1)
