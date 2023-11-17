@@ -101,7 +101,9 @@ void RemoveSS(int index)
     }
     return;
 }
+
 int close_signal = 0;
+
 void *ss_port_worker(void *arg)
 {
     // sem_wait(&initial_lock);
@@ -180,6 +182,7 @@ void *ss_port_worker(void *arg)
         InsertNewSS(message.port_for_clients, message.port_for_naming_server, StringToTrie(message.buffer));
     }
 }
+
 void ss_is_alive_checker()
 {
     // struct ss_list*ss_list_head;
@@ -218,6 +221,7 @@ void ss_is_alive_checker()
         temp = temp->next;
     }
 }
+
 void *ss_is_alive_worker(void *arg)
 {
     while (1)
@@ -236,6 +240,10 @@ void *ss_is_alive_worker(void *arg)
     }
     return NULL;
 }
+
+void CopyPath2Path(char* src_path, char* dest_path)
+{}
+
 void *client_handler(void *arg)
 {
     int clientSocket = *((int *)arg);
@@ -349,11 +357,16 @@ void *client_handler(void *arg)
                 }
             }
         }
+        else if( message.operation == COPY)
+        {
+            // CopyPath2Path(message.buffer,);
+        }
     }
     close(clientSocket);
     printf("Client disconnected\n");
     return NULL;
 }
+
 void *client_connection_worker(void *arg)
 {
     int serverSocket, clientSocket;
@@ -391,6 +404,7 @@ void *client_connection_worker(void *arg)
     close(serverSocket);
     return NULL;
 }
+
 int main(int argc, char *argv[])
 {
     storage_servers = (struct storage_servers_node *)malloc(sizeof(struct storage_servers_node));
