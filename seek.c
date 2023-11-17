@@ -46,7 +46,7 @@ void lookFor(char *path, int pathlength, TrieNode *root)
         {
             printf("%s\n", pathBranch + pathlength);
             strcpy(TEMP_BUFF,pathBranch + pathlength);
-            appendCharToFront(TEMP_BUFF,'D');
+            // appendCharToFront(TEMP_BUFF,'D');
             InsertTrie(TEMP_BUFF, root);
             lookFor(pathBranch, pathlength, root);
         }
@@ -54,7 +54,7 @@ void lookFor(char *path, int pathlength, TrieNode *root)
         {
             printf("%s\n", pathBranch + pathlength);
             strcpy(TEMP_BUFF,pathBranch + pathlength);
-            appendCharToFront(TEMP_BUFF,'F');
+            // appendCharToFront(TEMP_BUFF,'F');
             InsertTrie(TEMP_BUFF, root);
         }
     }
