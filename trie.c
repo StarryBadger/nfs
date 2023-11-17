@@ -154,6 +154,14 @@ TrieNode* StringToTrie(char *str) {
     return newRoot;
 }
 
+// TrieNode* StringToTrie(char* str)
+// {
+//     TrieNode* newRoot = NULL;
+//     TrieNode* current = NULL;
+//     // char* token = strtok_r(str, "()", &str);
+    
+// }
+
 // int main()
 // {
 //     TrieNode *root = NULL;
@@ -172,9 +180,9 @@ TrieNode* StringToTrie(char *str) {
 //     // InsertTrie("a/d/g");
 //     PrintTrie(root);
 
-//     SearchTrie("root/dir1/dir2/dir3",root) == NULL ? printf("Not Found\n") : printf("Found\n");
-//     DeleteTrie("root/dir1/dir2/dir3",root);
-//     SearchTrie("root/dir1/dir2/dir3",root) == NULL ? printf("Not Found\n") : printf("Found\n");
+//     // SearchTrie("root/dir1/dir2/dir3",root) == NULL ? printf("Not Found\n") : printf("Found\n");
+//     // DeleteTrie("root/dir1/dir2/dir3",root);
+//     // SearchTrie("root/dir1/dir2/dir3",root) == NULL ? printf("Not Found\n") : printf("Found\n");
 
 //     char str[1000] = "";
 //     TrieToString(root, str);

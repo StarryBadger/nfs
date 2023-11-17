@@ -2,6 +2,7 @@
 #define __REQUEST_PROTOCOLS_H
 #include <stdint.h>
 // operations
+#define NOT_RECEIVED -1
 #define CREATE 1
 #define READ 2
 #define WRITE 3
@@ -15,7 +16,7 @@
 #define INITIAL_ACK_UNSUPPORTED_CLIENT 13
 #define INITIAL_ACK_NO_SS_CONNECTED 14
 
-#define NO_SUCH_PATH 20
+#define NO_SUCH_PATH -20
 
 #define MAX_PATH_LENGTH 1024
 #define nms_ss_port 10045

@@ -264,6 +264,7 @@ void *client_handler(void *arg)
     printf("Acknowledgment sent to client: %d\n", initialAck);
     while (1)
     {
+        message.operation=NOT_RECEIVED;
         if (recv(clientSocket, &message, sizeof(message), 0) < 0)
         {
             fprintf(stderr, "[-]Receive error: %s\n", strerror(errno));
