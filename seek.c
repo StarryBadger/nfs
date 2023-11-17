@@ -2,7 +2,7 @@
 void appendCharToFront(char *str, char character)
 {
     int length = strlen(str);
-    for (int i = length-1; i >= 0; i--)
+    for (int i = length; i >= 0; i--)
     {
         str[i + 1] = str[i];
     }
@@ -11,7 +11,7 @@ void appendCharToFront(char *str, char character)
 void lookFor(char *path, int pathlength, TrieNode *root)
 {
     DIR *directory = opendir(path);
-    char TEMP_BUFF[PATH_MAX];
+    char TEMP_BUFF[PATH_MAX+1];
     if (directory == NULL)
     {
         fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", path);

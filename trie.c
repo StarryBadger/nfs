@@ -27,7 +27,10 @@ void InsertTrie(char *directory, TrieNode *root)
     {
         return;
     }
-    char *directory_copy = strdup(directory);
+    // char *directory_copy = strdup(directory);
+    // char *directory_copy = (char *)malloc(sizeof(char) * 1000); 
+    char directory_copy[100];
+    strcpy(directory_copy, directory);
     char *token = strtok(directory_copy, "/");
     TrieNode *temp = root;
     while (token != NULL)
@@ -60,7 +63,9 @@ void InsertTrie(char *directory, TrieNode *root)
 
 TrieNode *SearchTrie(char *directory, TrieNode *root)
 {
-    char *directory_copy = strdup(directory);
+    // char *directory_copy = strdup(directory);
+    char directory_copy[100];
+    strcpy(directory_copy,directory);
     char *token = strtok(directory_copy, "/");
     struct TrieNode *temp = root;
     while (token != NULL)
