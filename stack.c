@@ -1,19 +1,19 @@
 #include "headers.h"
 
-void push(Stack **head, TrieNode *node)
+void push(Stack *head, TrieNode *node)
 {
-    Stack *newNode = (Stack *)malloc(sizeof(Stack));
+    Stack *newNode = (Stack*)malloc(sizeof(Stack));
     newNode->node = node;
-    newNode->next = *head;
-    *head = newNode;
+    newNode->next = head;
+    head = newNode;
 }
 
-TrieNode *pop(Stack **head)
+TrieNode *pop(Stack *head)
 {
-    if (*head == NULL)
+    if (head == NULL)
         return NULL;
-    Stack *temp = *head;
-    *head = (*head)->next;
+    Stack *temp = head;
+    head = (head)->next;
     TrieNode *node = temp->node;
     free(temp);
     return node;
