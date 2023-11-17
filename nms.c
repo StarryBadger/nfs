@@ -44,7 +44,7 @@ int search_port(MessageClient2NM *msg)
         }
         temp = temp->next;
     }
-    return -1;
+    return NO_SUCH_PATH;
 }
 
 void init_storage_servers()
@@ -290,10 +290,6 @@ void *client_handler(void *arg)
         {
             port_to_send = search_port(&message);
             printf("port to send:%d\n", port_to_send);
-            if (port_to_send == -1)
-            {
-                port_to_send = NO_SUCH_PATH;
-            }
             if (send(clientSocket, port_to_send, sizeof(port_to_send), 0) < 0)
             {
                 fprintf(stderr, "[-]Sendtime error: %s\n", strerror(errno));

@@ -123,6 +123,10 @@ int main()
                 fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
             exit(1);
         }
+        if (message.operation == READ || message.operation == WRITE || message.operation == METADATA)
+        {
+            
+        }
     }
     closeSocket(mySocket);
     return 0;
