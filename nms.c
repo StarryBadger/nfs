@@ -285,6 +285,7 @@ void *client_handler(void *arg)
         if (message.operation == READ || message.operation == WRITE || message.operation == METADATA)
         {
             port_to_send = search_port(&message);
+            printf("port to send:%d\n",port_to_send);
             if (port_to_send == -1)
             {
                 port_to_send=NO_SUCH_PATH;

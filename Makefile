@@ -3,8 +3,8 @@ CFLAGS = -Wall -Wextra -pthread
 LDFLAGS = -lm
 
 CLIENT_SOURCES = socketAPI.c client.c
-NMS_SOURCES = socketAPI.c nms.c trie.c
-SS_SOURCES=ss.c trie.c seek.c socketAPI.c
+NMS_SOURCES = socketAPI.c nms.c trie.c 
+SS_SOURCES = ss.c trie.c seek.c socketAPI.c
 
 CLIENT_EXECUTABLE = client
 NMS_EXECUTABLE = nms

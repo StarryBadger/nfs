@@ -9,6 +9,18 @@ typedef struct TrieNode
     int isFile;
 }TrieNode;
 
+typedef struct Stack
+{
+    TrieNode *node;
+    struct Stack *next;
+} Stack;
+
+void push(Stack **head, TrieNode *node);
+
+TrieNode *pop(Stack **head);
+
+int isEmpty(Stack *head);
+
 TrieNode *createNode(char *directory);
 
 void InsertTrie(char *directory,TrieNode* root);

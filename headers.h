@@ -25,7 +25,7 @@
 #include<stdint.h>
 
 #include "trie.h"
-#include "stack.h"
+// #include "stack.h"
 #include "seek.h"
 #include "socketAPI.h"
 #include "errorHandler.h"
