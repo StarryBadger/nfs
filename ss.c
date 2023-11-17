@@ -74,12 +74,9 @@ void *naming_server_responder_worker(void *arg)
             fprintf(stderr, "[-]Accept error: %s\n", strerror(errno));
             if (close(server_sock) < 0)
                 fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-            exit(1);
+            // exit(1);
         }
-        // else
-        // {
-        //     printf("Naming server pinged once\n");
-        // }
+                      
         close(client_sock);
         if (close_flag == 1)
             return NULL;
