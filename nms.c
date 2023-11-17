@@ -32,13 +32,13 @@ struct storage_servers_node
 
 struct storage_servers_node *storage_servers;
 
-int search_port(MessageClient2NM *msg)
+int search_port(char* buffer)
 {
     struct ss_list *temp;
     temp = storage_servers->head->next;
     while (temp != NULL)
     {
-        if (SearchTrie(msg->buffer, temp->root) != NULL)
+        if (SearchTrie(buffer, temp->root) != NULL)
         {
             return temp->ssToc_port;
         }
@@ -241,8 +241,54 @@ void *ss_is_alive_worker(void *arg)
     return NULL;
 }
 
-void CopyPath2Path(char* src_path, char* dest_path)
-{}
+void CopyPath2Path(char *src_path, char *dest_path)
+{
+    int sock,sock2;
+    int port1,port2;
+    port1=search_port(src_path);
+    port2=search_port(dest_path);
+    struct sockaddr_in addr,addr2;
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    sock2= socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0)
+    {
+        fprintf(stderr, "[-]Socket creation error: %s\n", strerror(errno));
+
+        exit(1);
+    }
+     if (sock2 < 0)
+    {
+        fprintf(stderr, "[-]Socket creation error: %s\n", strerror(errno));
+
+        exit(1);
+    }
+    
+    // printf("[+]TCP server socket created.\n");
+
+    memset(&addr, '\0', sizeof(addr));
+    addr.sin_family = AF_INET;
+    // printf("%d\n",temp->ssTonms_port);
+    addr.sin_port = port1;
+    addr.sin_addr.s_addr = inet_addr(ip_address);
+    
+    memset(&addr2, '\0', sizeof(addr2));
+    addr2.sin_family = AF_INET;
+    // printf("%d\n",temp->ssTonms_port);
+    addr2.sin_port = port2;
+    addr2.sin_addr.s_addr = inet_addr(ip_address);
+    if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+    {
+        fprintf(stderr, "[-]Couldn't connect to storage server 1: %s\n", strerror(errno));
+        exit(1);
+    }
+     if (connect(sock2, (struct sockaddr *)&addr2, sizeof(addr2)) < 0)
+    {
+        fprintf(stderr, "[-]Couldn't connect to storage server 2: %s\n", strerror(errno));
+        exit(1);
+    }
+
+    
+}
 
 void *client_handler(void *arg)
 {
@@ -357,7 +403,7 @@ void *client_handler(void *arg)
                 }
             }
         }
-        else if( message.operation == COPY)
+        else if (message.operation == COPY)
         {
             // CopyPath2Path(message.buffer,);
         }
