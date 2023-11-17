@@ -20,6 +20,7 @@ typedef int errcode;
 #define FILE_NOT_READABLE 23
 #define FILE_SIZE_EXCEEDED 24  
 #define FILE_UNABLE_TO_CREATE 25
+#define DIRECTORY_UNABLE_TO_CREATE 26
 
 
 // Client Request Errors

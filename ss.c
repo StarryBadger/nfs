@@ -184,6 +184,30 @@ void *CLientServerConnection(void *arg)
         close(fd);
     }
 
+    if (message.operation == CREATE_DIR)
+    {
+        int err_code;
+        if (mkdir(message.buffer, 0777) == -1)
+        {
+            fprintf(stderr, "\x1b[31mCould not create %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
+            err_code = DIRECTORY_UNABLE_TO_CREATE;
+            // return NULL;
+        }
+        InsertTrie(message.buffer, ssTrie);
+        err_code = NO_ERROR;
+        
+        if (send(client_sock,&err_code, sizeof(err_code), 0) < 0)
+        {
+            fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+            if (close(client_sock) < 0)
+                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+            exit(1);
+        }
+
+        if (err_code == DIRECTORY_UNABLE_TO_CREATE)
+            return NULL;
+    }
+
     if (message.operation == READ)
     {
         int fd = open(message.buffer, O_RDONLY);
@@ -263,6 +287,11 @@ void *CLientServerConnection(void *arg)
         }
         else
             printf("\x1b[31mCould not delete %s\n\n\x1b[0m", message.buffer);
+    }
+
+    if (message.operation == COPY)
+    {
+         
     }
 }
 

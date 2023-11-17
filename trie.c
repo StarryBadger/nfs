@@ -65,9 +65,9 @@ TrieNode *SearchTrie(char *directory, TrieNode *root)
     struct TrieNode *temp = root;
     while (token != NULL)
     {
-        printf("token : %s\n", token);
+        // printf("token : %s\n", token);
         temp = temp->firstChild;
-        printf("temp : %s\n", temp->directory);
+        // printf("temp : %s\n", temp->directory);
         while (temp != NULL)
         {
             // printf("comparing %s and %s\n",temp->directory,token);

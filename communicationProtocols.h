@@ -10,6 +10,7 @@
 #define COPY 5
 #define METADATA 6
 #define TERMINATE 7
+#define CREATE_DIR 8
 
 // initial comm
 #define INITIAL_MESSAGE 10
