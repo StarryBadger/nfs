@@ -290,7 +290,7 @@ void *client_handler(void *arg)
         {
             port_to_send = search_port(&message);
             printf("port to send:%d\n", port_to_send);
-            if (send(clientSocket, port_to_send, sizeof(port_to_send), 0) < 0)
+            if (send(clientSocket, &port_to_send, sizeof(port_to_send), 0) < 0)
             {
                 fprintf(stderr, "[-]Sendtime error: %s\n", strerror(errno));
             }

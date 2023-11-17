@@ -162,30 +162,70 @@ void *CLientServerConnection(void *arg)
 
     if (message.operation == CREATE)
     {
+        int err_code;
         int fd = open(message.buffer, O_CREAT | O_WRONLY, 0644);
         if (fd == -1)
         {
             fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
-            return NULL;
+            err_code = FILE_UNABLE_TO_CREATE;
+            // return NULL;
         }
         InsertTrie(message.buffer, ssTrie);
+        err_code = NO_ERROR;
+        
+        if (send(client_sock,&err_code, sizeof(err_code), 0) < 0)
+        {
+            fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+            if (close(client_sock) < 0)
+                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+            exit(1);
+        }
+
+        if (err_code == FILE_UNABLE_TO_CREATE)
+            return NULL;
+
         close(fd);
     }
 
     if (message.operation == READ)
     {
         int fd = open(message.buffer, O_RDONLY);
+        int err_code;
+        err_code = NO_ERROR;
         if (fd == -1)
         {
             fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
-            return NULL;
+            err_code = FILE_NOT_READABLE;
+            // return NULL;
+        }  
+
+        
+        if (send(client_sock,&err_code, sizeof(err_code), 0) < 0)
+        {
+            fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+            if (close(client_sock) < 0)
+                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+            exit(1);
         }
+
+        if (err_code == FILE_NOT_READABLE)
+            return NULL;
+
         char buffer[1024];
         int bytes_read;
+
+
         while ((bytes_read = read(fd, buffer, 1024)) > 0)
         {
             buffer[bytes_read] = '\0';
-            printf("%s", buffer);
+            printf("Sending message to client: %s\n", buffer);
+            if (send(client_sock, buffer, strlen(buffer), 0) < 0)
+            {
+                fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+                if (close(client_sock) < 0)
+                    fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+                exit(1);
+            }
         }
         printf("\n");
         close(fd);

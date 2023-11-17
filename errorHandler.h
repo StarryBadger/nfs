@@ -18,7 +18,9 @@ typedef int errcode;
 #define FILE_ALREADY_EXISTS 21
 #define FILE_NOT_WRITABLE 22
 #define FILE_NOT_READABLE 23
-#define FILE_SIZE_EXCEEDED 24   
+#define FILE_SIZE_EXCEEDED 24  
+#define FILE_UNABLE_TO_CREATE 25
+
 
 // Client Request Errors
 #define INVALID_OPERATION 30

@@ -189,7 +189,8 @@ void DeleteTrie(char *directory, TrieNode *root)
     free(temp);
 }
 
-char* PathParent(char* filePath) {
+char* PathParent(char* filePath) 
+{
     char* parentPath = (char*)malloc(sizeof(char) * 1000);
     char* lastSlash = strrchr(filePath, '/');
 

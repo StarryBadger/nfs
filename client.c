@@ -73,6 +73,23 @@ errcode handleSSCommunication(int socketNM, MessageClient2SS message)
         fprintf(stderr, "[-]Send error: %s\n", strerror(errno));
         return NETWORK_ERROR;
     }
+
+    int err_code;
+    if (recv(socketSS, &err_code, sizeof(err_code), 0) < 0)
+    {
+        fprintf(stderr, "[-]Receive error: %s\n", strerror(errno));
+        return NETWORK_ERROR;
+    }
+    if (err_code!=NO_ERROR)
+    {
+        printf("Error code: %d\n", err_code);
+        return err_code;
+    }
+    else
+    {
+        printf("Operation successful\n");
+    }
+
     return NO_ERROR;
 }
 int main()
