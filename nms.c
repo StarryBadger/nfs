@@ -220,8 +220,8 @@ void *ss_is_alive_worker(void *arg)
 void *client_handler(void *arg)
 {
     int clientSocket = *((int *)arg);
-    int initialRequest,initialAck;
-    int operationNumber=7;
+    int initialRequest, initialAck;
+    int operationNumber = 7;
     int terminateConnectionFlag = 0;
     if (recv(clientSocket, &initialRequest, sizeof(initialRequest), 0) < 0)
     {
@@ -247,7 +247,7 @@ void *client_handler(void *arg)
         return NULL;
     }
     printf("Acknowledgment sent to client: %d\n", initialAck);
-    while (!terminateConnectionFlag)
+    while (1)
     {
         if (recv(clientSocket, &operationNumber, sizeof(operationNumber), 0) < 0)
         {
@@ -255,12 +255,19 @@ void *client_handler(void *arg)
             close(clientSocket);
             return NULL;
         }
-        if (operationNumber>=7||operationNumber<1)
+        printf("received %d\n",operationNumber);
+        if (operationNumber >= 7 || operationNumber < 1)
         {
-            terminateConnectionFlag=1;
+            terminateConnectionFlag = 1;
+            printf("received %d %d\n",operationNumber,terminateConnectionFlag);
         }
-        printf("Client said %d\n",operationNumber);
-        //add send code here
+        printf("**%d terminateStat\n",terminateConnectionFlag);
+
+        // add send code here
+        if (terminateConnectionFlag)
+        {
+            break;
+        }
     }
     close(clientSocket);
     printf("Client disconnected\n");

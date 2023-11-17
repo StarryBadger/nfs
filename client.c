@@ -96,9 +96,7 @@ int main()
         if (scanf("%d", &operationNumber) != 1 || operationNumber < 1 || operationNumber > 7)
         {
             fprintf(stderr, "[-]Invalid operation number\n");
-            if (close(mySocket) < 0)
-                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-            exit(1);
+            continue;
         }
         printOperationMessage(operationNumber);
         // Send operation number to the server
