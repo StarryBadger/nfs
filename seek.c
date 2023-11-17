@@ -2,11 +2,16 @@
 void appendCharToFront(char *str, char character)
 {
     int length = strlen(str);
-    for (int i = length; i >= 0; i--)
+    int i;
+    for (i = length; i >= 0; i--)
     {
+        if (str[i]='/')
+        {
+            break;
+        }
         str[i + 1] = str[i];
     }
-    str[0] = character;
+    str[i+1] = character;
 }
 void lookFor(char *path, int pathlength, TrieNode *root)
 {
