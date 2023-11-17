@@ -55,9 +55,12 @@ TrieNode* SearchTrie(char *directory,TrieNode* root)
     struct TrieNode *temp = root;
     while (token != NULL)
     {
+        printf("token : %s\n",token);
         temp = temp->firstChild;
+        printf("temp : %s\n",temp->directory);
         while (temp != NULL)
         {
+            // printf("comparing %s and %s\n",temp->directory,token);
             if (strcmp(temp->directory, token) == 0)
                 break;
             temp = temp->sibling;
@@ -68,6 +71,8 @@ TrieNode* SearchTrie(char *directory,TrieNode* root)
     }
     return temp;
 }
+
+// TrieNode* SearchParentTrie
 
 void DeleteTrie(char *directory,TrieNode* root)
 {
@@ -167,9 +172,9 @@ TrieNode* StringToTrie(char *str) {
 //     // InsertTrie("a/d/g");
 //     PrintTrie(root);
 
-//     // SearchTrie("root/dir1/dir2/dir3") == NULL ? printf("Not Found\n") : printf("Found\n");
-//     // DeleteTrie("root/dir1/dir2/dir3");
-//     // SearchTrie("root/dir1/dir2/dir3") == NULL ? printf("Not Found\n") : printf("Found\n");
+//     SearchTrie("root/dir1/dir2/dir3",root) == NULL ? printf("Not Found\n") : printf("Found\n");
+//     DeleteTrie("root/dir1/dir2/dir3",root);
+//     SearchTrie("root/dir1/dir2/dir3",root) == NULL ? printf("Not Found\n") : printf("Found\n");
 
 //     char str[1000] = "";
 //     TrieToString(root, str);

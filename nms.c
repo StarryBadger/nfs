@@ -30,6 +30,8 @@ struct storage_servers_node
     int total_servers;
 };
 
+struct storage_servers_node *storage_servers;
+
 int search_port(MessageClient2NM *msg)
 {
     struct ss_list *temp;
@@ -44,7 +46,6 @@ int search_port(MessageClient2NM *msg)
     }
     return -1;
 }
-struct storage_servers_node *storage_servers;
 
 void init_storage_servers()
 {

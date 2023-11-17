@@ -271,24 +271,25 @@ void *clients_handler_worker(void *arg)
             break;
     }
     port_for_clients = sin.sin_port;
+    // printf("port extracted is %d\n", port_for_clients);
     sem_post(&portc_lock);
     // listen for new clients and make a new thread if a client is found and do ss-client communication part in the worker function of that new thread
     while (1)
     {
-        addr_size = sizeof(client_addr);
-        // printf("1\n");
-        // printf("%d\n",port_for_naming_server);
-        client_sock = accept(server_sock, (struct sockaddr *)&client_addr, &addr_size);
-        // printf("2\n");
-        if (client_sock < 0)
-        {
-            fprintf(stderr, "[-]Accept error: %s\n", strerror(errno));
-            if (close(server_sock) < 0)
-                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-            exit(1);
-        }
-        pthread_t client_service_thread;
-        pthread_create(&client_service_thread,NULL,CLientServerConnection,(void*)&client_sock);
+        // addr_size = sizeof(client_addr);
+        // // printf("1\n");
+        // // printf("%d\n",port_for_naming_server);
+        // client_sock = accept(server_sock, (struct sockaddr *)&client_addr, &addr_size);
+        // // printf("2\n");
+        // if (client_sock < 0)
+        // {
+        //     fprintf(stderr, "[-]Accept error: %s\n", strerror(errno));
+        //     if (close(server_sock) < 0)
+        //         fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+        //     exit(1);
+        // }
+        // pthread_t client_service_thread;
+        // pthread_create(&client_service_thread,NULL,CLientServerConnection,(void*)&client_sock);
     }
     return NULL;
 }
