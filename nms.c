@@ -316,6 +316,10 @@ void *client_handler(void *arg)
                 }
             }
         }
+        else if (message.operation == CREATE)
+        {
+        }
+        
     }
     close(clientSocket);
     printf("Client disconnected\n");

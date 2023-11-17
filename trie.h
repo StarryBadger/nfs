@@ -35,4 +35,6 @@ void TrieToString(struct TrieNode *root, char *str);
 
 TrieNode* StringToTrie(char *str);
 
+char* PathParent(char* path);
+
 #endif

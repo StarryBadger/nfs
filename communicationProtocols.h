@@ -7,7 +7,7 @@
 #define READ 2
 #define WRITE 3
 #define DELETE 4
-#define OPEN 5
+#define COPY 5
 #define METADATA 6
 
 // initial comm
