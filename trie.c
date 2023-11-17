@@ -215,41 +215,41 @@ void PrintTrie(struct TrieNode *root)
     PrintTrie(root->sibling);
 }
 
-int main()
-{
-    TrieNode *root = NULL;
+// int main()
+// {
+//     TrieNode *root = NULL;
 
-    root = createNode("ss1");
-    InsertTrie("root/dir1/dir2/dir3",root);
-    InsertTrie("root/dir1/dir5/dir6",root);
-    InsertTrie("root/dir1/dir2/dir4",root);
-    InsertTrie("root/dir1/dir5/dir7",root);
-    InsertTrie("root/dir2/dir6/dir9",root);
-    InsertTrie("root/dir2/dir6/dir10",root);
+//     root = createNode("ss1");
+//     InsertTrie("root/dir1/dir2/dir3",root);
+//     InsertTrie("root/dir1/dir5/dir6",root);
+//     InsertTrie("root/dir1/dir2/dir4",root);
+//     InsertTrie("root/dir1/dir5/dir7",root);
+//     InsertTrie("root/dir2/dir6/dir9",root);
+//     InsertTrie("root/dir2/dir6/dir10",root);
 
-    // InsertTrie("a/b/e", root);
-    // InsertTrie("a/c");
-    // InsertTrie("a/d/f");
-    // InsertTrie("a/d/g");
-    PrintTrie(root);
+//     // InsertTrie("a/b/e", root);
+//     // InsertTrie("a/c");
+//     // InsertTrie("a/d/f");
+//     // InsertTrie("a/d/g");
+//     PrintTrie(root);
 
-    // SearchTrie("root/dir1/dir2/dir3",root) == NULL ? printf("Not Found\n") : printf("Found\n");
-    // DeleteTrie("root/dir1/dir2/dir3",root);
-    // SearchTrie("root/dir1/dir2/dir3",root) == NULL ? printf("Not Found\n") : printf("Found\n");
+//     // SearchTrie("root/dir1/dir2/dir3",root) == NULL ? printf("Not Found\n") : printf("Found\n");
+//     // DeleteTrie("root/dir1/dir2/dir3",root);
+//     // SearchTrie("root/dir1/dir2/dir3",root) == NULL ? printf("Not Found\n") : printf("Found\n");
 
-    char str[1000] = "";
-    TrieToString(root, str);
-    printf("%s\n", str);
+//     char str[1000] = "";
+//     TrieToString(root, str);
+//     printf("%s\n", str);
 
-    // //new root variable
-    // printf("new root\n");
-    struct TrieNode *root2 = NULL;
-    TrieNode* newRoot = StringToTrie(str);
+//     // //new root variable
+//     // printf("new root\n");
+//     struct TrieNode *root2 = NULL;
+//     TrieNode* newRoot = StringToTrie(str);
 
-    printf("New Trie:\n");
-    root2 = StringToTrie(str);
-    // PrintTrie(newRoot);
-    PrintTrieLIkeAnActualTRee(newRoot,4);
+//     printf("New Trie:\n");
+//     root2 = StringToTrie(str);
+//     // PrintTrie(newRoot);
+//     PrintTrieLIkeAnActualTRee(newRoot,4);
 
-    return 0;
-}
+//     return 0;
+// }
