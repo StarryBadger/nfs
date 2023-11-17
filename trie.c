@@ -106,16 +106,16 @@ void PrintTrie(struct TrieNode *root)
 
 
 
-void TrieToString(struct TrieNode *root, char *str)
-{
-    if (root == NULL)
-        return;
-    strcat(str, "(");
-    strcat(str, root->directory);
-    TrieToString(root->firstChild, str);
-    strcat(str, ")");
-    TrieToString(root->sibling, str);
-}
+// void TrieToString(struct TrieNode *root, char *str)
+// {
+//     if (root == NULL)
+//         return;
+//     strcat(str, "(");
+//     strcat(str, root->directory);
+//     TrieToString(root->firstChild, str);
+//     strcat(str, ")");
+//     TrieToString(root->sibling, str);
+// }
 
 
 // int main()
