@@ -16,8 +16,8 @@ void printOperationMessage(int operationNumber)
     case DELETE:
         printf("Selected Operation: DELETE - Delete a file/folder\n");
         break;
-    case OPEN:
-        printf("Selected Operation: OPEN - Open a file for reading/writing\n");
+    case COPY:
+        printf("Selected Operation: COPY - Copy file from one directory to another\n");
         break;
     case METADATA:
         printf("Selected Operation: METADATA - Get metadata information about a file\n");
@@ -108,12 +108,19 @@ int main()
         if (send(mySocket, &message, sizeof(message), 0) < 0)
         {
             fprintf(stderr, "[-]Send error: %s\n", strerror(errno));
-            close(mySocket);
-            exit(1);
+            // close(mySocket);
+            // exit(1);
         }
         if (message.operation == 7)
         {
             break;
+        }
+        if (recv(mySocket, &initialAck, sizeof(initialAck), 0) < 0)
+        {
+            fprintf(stderr, "[-]Receive error: %s\n", strerror(errno));
+            if (close(mySocket) < 0)
+                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+            exit(1);
         }
     }
     closeSocket(mySocket);
