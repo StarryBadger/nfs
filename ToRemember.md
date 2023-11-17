@@ -2,3 +2,5 @@
 - discuss sendong data in chunks instead of 1024
 - see if path of ss assumption is correct (all files in the directory executable is run in)
 - see if multiple thread created and passing value we will need to malloc or not(??)
+- remeber to write D after every slash except the last one which may be D or F
+- remeber to do the above everywhere the trie is inserted into
