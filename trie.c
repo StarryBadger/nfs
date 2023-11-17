@@ -175,7 +175,9 @@ TrieNode *StringToTrie(char *string)
 
 void DeleteTrie(char *directory, TrieNode *root)
 {
-    char *directory_copy = strdup(directory);
+    // char *directory_copy = strdup(directory);
+    char directory_copy[100];
+    strcpy(directory_copy,directory);
     char *token = strtok(directory_copy, "/");
     struct TrieNode *temp = root;
     while (token != NULL)

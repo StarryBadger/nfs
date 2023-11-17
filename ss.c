@@ -297,114 +297,114 @@ void *CLientServerConnection(void *arg)
     }
 }
 
-// void* NMServerConnection(void* arg)
-// {
-//     int server_sock, nm_sock;
-//     struct sockaddr_in server_addr, nm_addr;
-//     socklen_t addr_size;
-//     // char buffer[MAX_PATH_LENGTH];
-//     int n;
+void* NMServerConnection(void* arg)
+{
+    int server_sock, nm_sock;
+    struct sockaddr_in server_addr, nm_addr;
+    socklen_t addr_size;
+    // char buffer[MAX_PATH_LENGTH];
+    int n;
 
-//     server_sock = socket(AF_INET, SOCK_STREAM, 0);
-//     if (server_sock < 0)
-//     {
-//         fprintf(stderr, "[-]Socket creation error: %s\n", strerror(errno));
-//         // exit(1);
-//     }
-//     // printf("[+]TCP server socket created.\n");
+    server_sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_sock < 0)
+    {
+        fprintf(stderr, "[-]Socket creation error: %s\n", strerror(errno));
+        // exit(1);
+    }
+    // printf("[+]TCP server socket created.\n");
 
-//     memset(&server_addr, '\0', sizeof(server_addr));
-//     server_addr.sin_family = AF_INET;
-//     server_addr.sin_port = 0;
-//     server_addr.sin_addr.s_addr = inet_addr(ip_address);
+    memset(&server_addr, '\0', sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = 0;
+    server_addr.sin_addr.s_addr = inet_addr(ip_address);
 
-//     n = bind(server_sock, (struct sockaddr *)&server_addr, sizeof(server_addr));
-//     if (n < 0)
-//     {
-//         fprintf(stderr, "[-]Bind error: %s\n", strerror(errno));
-//         close(server_sock);
-//         // exit(1);
-//     }
+    n = bind(server_sock, (struct sockaddr *)&server_addr, sizeof(server_addr));
+    if (n < 0)
+    {
+        fprintf(stderr, "[-]Bind error: %s\n", strerror(errno));
+        close(server_sock);
+        // exit(1);
+    }
 
-//     struct sockaddr_in sin;
-//     socklen_t len = sizeof(sin);
-//     while (1)
-//     {
-//         if (getsockname(server_sock, (struct sockaddr *)&sin, &len) == -1)
-//         {
-//             fprintf(stderr, "couldn't extract port of socket error\n");
-//             continue;
-//         }
-//         else
-//             break;
-//     }
+    struct sockaddr_in sin;
+    socklen_t len = sizeof(sin);
+    while (1)
+    {
+        if (getsockname(server_sock, (struct sockaddr *)&sin, &len) == -1)
+        {
+            fprintf(stderr, "couldn't extract port of socket error\n");
+            continue;
+        }
+        else
+            break;
+    }
 
-//     port_for_naming_server = sin.sin_port;
-//     sem_post(&portnms_lock);
-//     if (listen(server_sock, 5) < 0)
-//     {
-//         fprintf(stderr, "[-]Storage server got disconnected from Naming Server %s\n", strerror(errno));
-//         close(server_sock);
-//         exit(1);
-//     }
-//     printf("listening to respond to naming server\n");
+    port_for_naming_server = sin.sin_port;
+    sem_post(&portnms_lock);
+    if (listen(server_sock, 5) < 0)
+    {
+        fprintf(stderr, "[-]Storage server got disconnected from Naming Server %s\n", strerror(errno));
+        close(server_sock);
+        exit(1);
+    }
+    printf("listening to respond to naming server\n");
 
-//     addr_size = sizeof(nm_addr);
+    addr_size = sizeof(nm_addr);
 
-//     nm_sock = accept(server_sock, (struct sockaddr *)&nm_addr, &addr_size);
-//     if (nm_sock < 0)
-//     {
-//         fprintf(stderr, "[-]Accept error: %s\n", strerror(errno));
-//         if (close(server_sock) < 0)
-//             fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-//         // exit(1);
-//     }
+    nm_sock = accept(server_sock, (struct sockaddr *)&nm_addr, &addr_size);
+    if (nm_sock < 0)
+    {
+        fprintf(stderr, "[-]Accept error: %s\n", strerror(errno));
+        if (close(server_sock) < 0)
+            fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+        // exit(1);
+    }
 
-//     while (1)
-//     {       
-//         MessageClient2SS message;
-//         bzero(message.buffer, MAX_PATH_LENGTH);
-//         if (recv(nm_sock, &message, sizeof(message), 0) < 0)
-//         {
-//             fprintf(stderr, "[-]Receive error: %s\n", strerror(errno)); // ERROR HANDLING
-//             if (close(nm_sock) < 0)
-//                 fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
-//             exit(1);
-//         }
-//         printf("Received message from nm: %d %s\n", message.operation, message.buffer);
+    while (1)
+    {       
+        MessageClient2SS message;
+        bzero(message.buffer, MAX_PATH_LENGTH);
+        if (recv(nm_sock, &message, sizeof(message), 0) < 0)
+        {
+            fprintf(stderr, "[-]Receive error: %s\n", strerror(errno)); // ERROR HANDLING
+            if (close(nm_sock) < 0)
+                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+            exit(1);
+        }
+        printf("Received message from nm: %d %s\n", message.operation, message.buffer);
 
-//         if (message.operation == CREATE)
-//         {
-//             printf("IN create\n");
-//             int err_code;
-//             int fd = open(message.buffer, O_CREAT | O_WRONLY, 0644);
-//             if (fd == -1)
-//             {
-//                 fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
-//                 err_code = FILE_UNABLE_TO_CREATE;
-//                 // return NULL;
-//             }
-//             InsertTrie(message.buffer, ssTrie);
-//             err_code = NO_ERROR;
+        if (message.operation == CREATE)
+        {
+            printf("IN create\n");
+            int err_code;
+            int fd = open(message.buffer, O_CREAT | O_WRONLY, 0644);
+            if (fd == -1)
+            {
+                fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
+                err_code = FILE_UNABLE_TO_CREATE;
+                // return NULL;
+            }
+            InsertTrie(message.buffer, ssTrie);
+            err_code = NO_ERROR;
             
-//             if (send(nm_sock,&err_code, sizeof(err_code), 0) < 0)
-//             {
-//                 fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
-//                 if (close(nm_sock) < 0)
-//                     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
-//                 exit(1);
-//             }
+            if (send(nm_sock,&err_code, sizeof(err_code), 0) < 0)
+            {
+                fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+                if (close(nm_sock) < 0)
+                    fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+                exit(1);
+            }
 
-//             if (err_code == FILE_UNABLE_TO_CREATE)
-//                 return NULL;
+            if (err_code == FILE_UNABLE_TO_CREATE)
+                return NULL;
 
-//             close(fd);
-//         }
-//     }
-//     close(nm_sock);
-//     if (close_flag == 1)
-//         return NULL;
-// }
+            close(fd);
+        }
+    }
+    close(nm_sock);
+    if (close_flag == 1)
+        return NULL;
+}
 
 void *clients_handler_worker(void *arg)
 {
