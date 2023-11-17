@@ -8,6 +8,8 @@ int close_flag = 0;
 TrieNode *ssTrie = NULL;
 pthread_t nm_ss_connection;
 
+void *NMServerConnection(void *arg);
+
 void *naming_server_responder_worker(void *arg)
 {
     // printf("here i am\n");
@@ -61,6 +63,8 @@ void *naming_server_responder_worker(void *arg)
         close(server_sock);
         exit(1);
     }
+    pthread_create(&nm_ss_connection, NULL, NMServerConnection, (void *)&server_sock);
+
     printf("listening to respond to naming server\n");
     while (1)
     {
@@ -77,7 +81,7 @@ void *naming_server_responder_worker(void *arg)
                 fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
             // exit(1);
         }
-                      
+
         close(client_sock);
         if (close_flag == 1)
             return NULL;
@@ -142,8 +146,6 @@ void *naming_server_informer_worker(void *arg)
         exit(1);
     }
 
-    // pthread_create(&nm_ss_connection, NULL, NMServerConnection, NULL);
-    
     return NULL;
 }
 
@@ -162,58 +164,6 @@ void *CLientServerConnection(void *arg)
     }
     printf("Received message from client: %d %s\n", message.operation, message.buffer);
 
-    if (message.operation == CREATE)
-    {
-        printf("IN create\n");
-        int err_code;
-        int fd = open(message.buffer, O_CREAT | O_WRONLY, 0644);
-        if (fd == -1)
-        {
-            fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
-            err_code = FILE_UNABLE_TO_CREATE;
-            // return NULL;
-        }
-        InsertTrie(message.buffer, ssTrie);
-        err_code = NO_ERROR;
-        
-        if (send(client_sock,&err_code, sizeof(err_code), 0) < 0)
-        {
-            fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
-            if (close(client_sock) < 0)
-                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
-            exit(1);
-        }
-
-        if (err_code == FILE_UNABLE_TO_CREATE)
-            return NULL;
-
-        close(fd);
-    }
-
-    if (message.operation == CREATE_DIR)
-    {
-        int err_code;
-        if (mkdir(message.buffer, 0777) == -1)
-        {
-            fprintf(stderr, "\x1b[31mCould not create %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
-            err_code = DIRECTORY_UNABLE_TO_CREATE;
-            // return NULL;
-        }
-        InsertTrie(message.buffer, ssTrie);
-        err_code = NO_ERROR;
-        
-        if (send(client_sock,&err_code, sizeof(err_code), 0) < 0)
-        {
-            fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
-            if (close(client_sock) < 0)
-                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
-            exit(1);
-        }
-
-        if (err_code == DIRECTORY_UNABLE_TO_CREATE)
-            return NULL;
-    }
-
     if (message.operation == READ)
     {
         int fd = open(message.buffer, O_RDONLY);
@@ -224,10 +174,9 @@ void *CLientServerConnection(void *arg)
             fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
             err_code = FILE_NOT_READABLE;
             // return NULL;
-        }  
+        }
 
-        
-        if (send(client_sock,&err_code, sizeof(err_code), 0) < 0)
+        if (send(client_sock, &err_code, sizeof(err_code), 0) < 0)
         {
             fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
             if (close(client_sock) < 0)
@@ -240,7 +189,6 @@ void *CLientServerConnection(void *arg)
 
         char buffer[1024];
         int bytes_read;
-
 
         while ((bytes_read = read(fd, buffer, 1024)) > 0)
         {
@@ -277,138 +225,119 @@ void *CLientServerConnection(void *arg)
         close(fd);
     }
 
-    if (message.operation == DELETE)
-    {
-        int fd = open(message.buffer, O_RDONLY);
-        if (fd == -1)
-        {
-            fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
-            return NULL;
-        }
-        closeSocket(fd);
-        if (remove(message.buffer) == 0)
-        {
-            printf("\x1b[32mDeleted %s successfully\n\n\x1b[0m", message.buffer);
-            DeleteTrie(message.buffer, ssTrie);
-        }
-        else
-            printf("\x1b[31mCould not delete %s\n\n\x1b[0m", message.buffer);
-    }
-
     if (message.operation == COPY)
     {
-         
     }
 }
 
-// void* NMServerConnection(void* arg)
-// {
-//     int server_sock, nm_sock;
-//     struct sockaddr_in server_addr, nm_addr;
-//     socklen_t addr_size;
-//     // char buffer[MAX_PATH_LENGTH];
-//     int n;
+void *NMServerConnection(void *arg)
+{
+    int server_sock, nm_sock;
+    struct sockaddr_in nm_addr;
+    socklen_t addr_size;
+    server_sock = *((int *)arg);
+    addr_size = sizeof(nm_addr);
 
-//     server_sock = socket(AF_INET, SOCK_STREAM, 0);
-//     if (server_sock < 0)
-//     {
-//         fprintf(stderr, "[-]Socket creation error: %s\n", strerror(errno));
-//         // exit(1);
-//     }
-//     // printf("[+]TCP server socket created.\n");
+    while (1)
+    {
+        nm_sock = accept(server_sock, (struct sockaddr *)&nm_addr, &addr_size);
+        if (nm_sock < 0)
+        {
+            fprintf(stderr, "[-]Accept error: %s\n", strerror(errno));
+            if (close(server_sock) < 0)
+                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+            // exit(1);
+        }
+        MessageClient2SS message;
+        message.operation = 0;
+        bzero(message.buffer, MAX_PATH_LENGTH);
+        if (recv(nm_sock, &message, sizeof(message), 0) < 0)
+        {
+            fprintf(stderr, "[-]Receive error: %s\n", strerror(errno)); // ERROR HANDLING
+            if (close(nm_sock) < 0)
+                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+            exit(1);
+        }
+        if (message.operation == 0)
+            continue;
+        printf("Received message from nm: %d %s\n", message.operation, message.buffer);
+        printf("the message : %d\n", strlen(message.buffer));
 
-//     memset(&server_addr, '\0', sizeof(server_addr));
-//     server_addr.sin_family = AF_INET;
-//     server_addr.sin_port = 0;
-//     server_addr.sin_addr.s_addr = inet_addr(ip_address);
+        if (message.operation == CREATE)
+        {
+            printf("IN create\n");
+            int err_code;
+            int fd = open(message.buffer, O_CREAT | O_WRONLY, 0644);
+            if (fd == -1)
+            {
+                fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
+                err_code = FILE_UNABLE_TO_CREATE;
+                // return NULL;
+            }
+            InsertTrie(message.buffer, ssTrie);
+            err_code = NO_ERROR;
 
-//     n = bind(server_sock, (struct sockaddr *)&server_addr, sizeof(server_addr));
-//     if (n < 0)
-//     {
-//         fprintf(stderr, "[-]Bind error: %s\n", strerror(errno));
-//         close(server_sock);
-//         // exit(1);
-//     }
+            if (send(nm_sock, &err_code, sizeof(err_code), 0) < 0)
+            {
+                fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+                if (close(nm_sock) < 0)
+                    fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+                exit(1);
+            }
 
-//     struct sockaddr_in sin;
-//     socklen_t len = sizeof(sin);
-//     while (1)
-//     {
-//         if (getsockname(server_sock, (struct sockaddr *)&sin, &len) == -1)
-//         {
-//             fprintf(stderr, "couldn't extract port of socket error\n");
-//             continue;
-//         }
-//         else
-//             break;
-//     }
+            if (err_code == FILE_UNABLE_TO_CREATE)
+                return NULL;
 
-//     port_for_naming_server = sin.sin_port;
-//     sem_post(&portnms_lock);
-//     if (listen(server_sock, 5) < 0)
-//     {
-//         fprintf(stderr, "[-]Storage server got disconnected from Naming Server %s\n", strerror(errno));
-//         close(server_sock);
-//         exit(1);
-//     }
-//     printf("listening to respond to naming server\n");
+            close(fd);
+        }
 
-//     addr_size = sizeof(nm_addr);
+        // if (message.operation == CREATE_DIR)
+        // {
+        //     int err_code;
+        //     if (mkdir(message.buffer, 0777) == -1)
+        //     {
+        //         fprintf(stderr, "\x1b[31mCould not create %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
+        //         err_code = DIRECTORY_UNABLE_TO_CREATE;
+        //         // return NULL;
+        //     }
+        //     InsertTrie(message.buffer, ssTrie);
+        //     err_code = NO_ERROR;
 
-//     nm_sock = accept(server_sock, (struct sockaddr *)&nm_addr, &addr_size);
-//     if (nm_sock < 0)
-//     {
-//         fprintf(stderr, "[-]Accept error: %s\n", strerror(errno));
-//         if (close(server_sock) < 0)
-//             fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-//         // exit(1);
-//     }
+        //     if (send(nm_sock, &err_code, sizeof(err_code), 0) < 0)
+        //     {
+        //         fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+        //         if (close(client_sock) < 0)
+        //             fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+        //         exit(1);
+        //     }
 
-//     while (1)
-//     {       
-//         MessageClient2SS message;
-//         bzero(message.buffer, MAX_PATH_LENGTH);
-//         if (recv(nm_sock, &message, sizeof(message), 0) < 0)
-//         {
-//             fprintf(stderr, "[-]Receive error: %s\n", strerror(errno)); // ERROR HANDLING
-//             if (close(nm_sock) < 0)
-//                 fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
-//             exit(1);
-//         }
-//         printf("Received message from nm: %d %s\n", message.operation, message.buffer);
+        //     if (err_code == DIRECTORY_UNABLE_TO_CREATE)
+        //         return NULL;
+        // }
 
-//         if (message.operation == CREATE)
-//         {
-//             printf("IN create\n");
-//             int err_code;
-//             int fd = open(message.buffer, O_CREAT | O_WRONLY, 0644);
-//             if (fd == -1)
-//             {
-//                 fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
-//                 err_code = FILE_UNABLE_TO_CREATE;
-//                 // return NULL;
-//             }
-//             InsertTrie(message.buffer, ssTrie);
-//             err_code = NO_ERROR;
-            
-//             if (send(nm_sock,&err_code, sizeof(err_code), 0) < 0)
-//             {
-//                 fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
-//                 if (close(nm_sock) < 0)
-//                     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
-//                 exit(1);
-//             }
-
-//             if (err_code == FILE_UNABLE_TO_CREATE)
-//                 return NULL;
-
-//             close(fd);
-//         }
-//     }
-//     close(nm_sock);
-//     if (close_flag == 1)
-//         return NULL;
-// }
+        if (message.operation == DELETE)
+        {
+            printf("In delete\n");
+            int fd = open(message.buffer, O_RDONLY);
+            if (fd == -1)
+            {
+                fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
+                return NULL;
+            }
+            close(fd);
+            if (remove(message.buffer) == 0)
+            {
+                printf("\x1b[32mDeleted %s successfully\n\n\x1b[0m", message.buffer);
+                DeleteTrie(message.buffer, ssTrie);
+            }
+            else
+                printf("\x1b[31mCould not delete %s\n\n\x1b[0m", message.buffer);
+        }
+        close(nm_sock);
+    }
+    if (close_flag == 1)
+        return NULL;
+}
 
 void *clients_handler_worker(void *arg)
 {
@@ -454,7 +383,7 @@ void *clients_handler_worker(void *arg)
     port_for_clients = sin.sin_port;
     // printf("port extracted is %d\n", port_for_clients);
     sem_post(&portc_lock);
-     if (listen(server_sock, 5) < 0)
+    if (listen(server_sock, 5) < 0)
     {
         fprintf(stderr, "[-]Storage server got disconnected from Naming Server %s\n", strerror(errno));
         close(server_sock);
@@ -477,7 +406,7 @@ void *clients_handler_worker(void *arg)
             exit(1);
         }
         pthread_t client_service_thread;
-        pthread_create(&client_service_thread,NULL,CLientServerConnection,(void*)&client_sock);
+        pthread_create(&client_service_thread, NULL, CLientServerConnection, (void *)&client_sock);
     }
     return NULL;
 }
@@ -499,7 +428,7 @@ void GetAccessiblePaths()
         // append ss1 to cwdd
         // sprintf(current_directory, "%s/%s", current_directory, "ss1");
         char port_in_string[10];
-        sprintf(port_in_string,"%d",port_for_clients);
+        sprintf(port_in_string, "%d", port_for_clients);
         ssTrie = createNode(port_in_string);
         lookFor(current_directory, strlen(current_directory), ssTrie);
     }
@@ -514,7 +443,7 @@ void GetAccessiblePaths()
         for (int i = 0; i < num_directory; i++)
         {
             scanf("%s", paths[i]);
-            //handle paths being relative
+            // handle paths being relative
             TEMPBUFF[0] = '\0';
             strcat(TEMPBUFF, current_directory);
             if (paths[i][0] != '/')
@@ -525,7 +454,7 @@ void GetAccessiblePaths()
             strcpy(paths[i], TEMPBUFF);
         }
         char port_in_string[10];
-        sprintf(port_in_string,"%d",port_for_clients);
+        sprintf(port_in_string, "%d", port_for_clients);
         ssTrie = createNode(port_in_string);
         for (int i = 0; i < num_directory; i++)
         {

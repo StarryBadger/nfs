@@ -4,3 +4,4 @@
 - see if multiple thread created and passing value we will need to malloc or not(??)
 - remeber to write D after every slash except the last one which may be D or F
 - remeber to do the above everywhere the trie is inserted into
+- SHAUNAK add CREATE_DIR as list of options for client
