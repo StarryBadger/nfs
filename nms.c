@@ -262,24 +262,58 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node)
             fprintf(stderr, "[-]Receive time error: %s\n", strerror(errno));
             return;
         }
-        
-        MessageNMS2SS_COPY msg_to_send;
-        strcpy(msg_to_send.msg,buffer);
-        msg_to_send.operation=WRITE;
-        strcpy(msg_to_send.buffer,pathString(path_line, index + 1));
-        printf("Sending message to server to write: %s  %s  %d\n", msg_to_send.buffer,msg_to_send.msg, msg_to_send.operation);
-        if (send(sock, &msg_to_send, sizeof(msg_to_send), 0) < 0)
+
+        strcpy(msg.buffer, pathString(path_line, index + 1));
+        msg.operation = CREATE;
+        printf("Sending message to server to read: %s %d\n", msg.buffer, msg.operation);
+
+        if (send(sock2, &msg, sizeof(msg), 0) < 0)
         {
             fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
             // if (close(sock) < 0)
             //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
             return;
         }
-        
+        MessageNMS2SS_COPY msg_to_send;
+        strcpy(msg_to_send.msg, buffer);
+        msg_to_send.operation = WRITE;
+        strcpy(msg_to_send.buffer, pathString(path_line, index + 1));
+        printf("Sending message to server to write: %s  %s  %d\n", msg_to_send.buffer, msg_to_send.msg, msg_to_send.operation);
+        if (send(sock2, &msg_to_send, sizeof(msg_to_send), 0) < 0)
+        {
+            fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
+            // if (close(sock) < 0)
+            //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+            return;
+        }
     }
-    else{
-        
+    else
+    {
+        strcpy(msg.buffer, pathString(path_line, index + 1));
+        msg.operation = CREATE;
+        printf("Sending message to server to read: %s %d\n", msg.buffer, msg.operation);
+
+        if (send(sock2, &msg, sizeof(msg), 0) < 0)
+        {
+            fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
+            // if (close(sock) < 0)
+            //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+            return;
+        }
     }
+
+    if (node->firstChild)
+    {
+        lessgoRec(sock, sock2, path_line, index + 1, node->firstChild);
+    }
+    TrieNode* temp=node->sibling;
+    while(temp!=NULL)
+    {
+        lessgoRec(sock,sock2,path_line,index+1,node->sibling);
+        temp=temp->sibling;
+    }
+    path_line[index][0]='\0';
+    return;
 }
 
 void *ss_is_alive_worker(void *arg)
