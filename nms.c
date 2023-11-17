@@ -280,7 +280,7 @@ void *client_handler(void *arg)
             break;
         }
         int port_to_send;
-        if (message.operation == 2 || message.operation == 3 || message.operation == 6)
+        if (message.operation == READ || message.operation == WRITE || message.operation == METADATA)
         {
             port_to_send = search_port(&message);
             if (port_to_send == -1)
@@ -289,8 +289,8 @@ void *client_handler(void *arg)
                 if (send(clientSocket, port_to_send, sizeof(port_to_send), 0) < 0)
                 {
                     fprintf(stderr, "[-]Sendtime error: %s\n", strerror(errno));
-                    if (close(clientSocket) < 0)
-                        fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+                    // if (close(clientSocket) < 0)
+                    //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
                     // if (close() < 0)
                     //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
                     // exit(1);
@@ -300,8 +300,8 @@ void *client_handler(void *arg)
                 if (send(clientSocket, port_to_send, sizeof(port_to_send), 0) < 0)
                 {
                     fprintf(stderr, "[-]Sendtime error: %s\n", strerror(errno));
-                    if (close(clientSocket) < 0)
-                        fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+                    // if (close(clientSocket) < 0)
+                    //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
                     // if (close() < 0)
                     //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
                     // exit(1);
