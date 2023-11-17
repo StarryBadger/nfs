@@ -221,7 +221,7 @@ void *client_handler(void *arg)
 {
     int clientSocket = *((int *)arg);
     int initialRequest, initialAck;
-    int operationNumber = 7;
+    MessageClient2NM message;
     int terminateConnectionFlag = 0;
     if (recv(clientSocket, &initialRequest, sizeof(initialRequest), 0) < 0)
     {
@@ -249,20 +249,17 @@ void *client_handler(void *arg)
     printf("Acknowledgment sent to client: %d\n", initialAck);
     while (1)
     {
-        if (recv(clientSocket, &operationNumber, sizeof(operationNumber), 0) < 0)
+        if (recv(clientSocket, &message, sizeof(message), 0) < 0)
         {
             fprintf(stderr, "[-]Receive error: %s\n", strerror(errno));
             close(clientSocket);
             return NULL;
         }
-        printf("received %d\n",operationNumber);
-        if (operationNumber >= 7 || operationNumber < 1)
+        printf("received %s %d\n",message.buffer, message.operation);
+        if (message.operation >= 7 || message.operation < 1)
         {
             terminateConnectionFlag = 1;
-            printf("received %d %d\n",operationNumber,terminateConnectionFlag);
         }
-        printf("**%d terminateStat\n",terminateConnectionFlag);
-
         // add send code here
         if (terminateConnectionFlag)
         {

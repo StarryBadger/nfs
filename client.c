@@ -84,7 +84,7 @@ int main()
     while (1)
     {
         // We prompt user for operation number (1 through 6)
-        int operationNumber;
+        MessageClient2NM message;
         printf("Enter operation number (1-7):\n");
         printf("1. CREATE - Create a new file/folder\n");
         printf("2. READ - Read the content of a file\n");
@@ -93,21 +93,25 @@ int main()
         printf("5. OPEN - Open a file for reading/writing\n");
         printf("6. METADATA - Get metadata information about a file\n");
         printf("7. TERMINATE - Terminate connection\n");
-        if (scanf("%d", &operationNumber) != 1 || operationNumber < 1 || operationNumber > 7)
+        if (scanf("%d", &message.operation) != 1 || message.operation < 1 || message.operation > 7)
         {
             fprintf(stderr, "[-]Invalid operation number\n");
             continue;
         }
-        printOperationMessage(operationNumber);
+        printOperationMessage(message.operation);
+        if (message.operation != 7)
+        {
+            printf("Enter file path\n");
+            scanf("%s", message.buffer);
+        }
         // Send operation number to the server
-        if (send(mySocket, &operationNumber, sizeof(operationNumber), 0) < 0)
+        if (send(mySocket, &message, sizeof(message), 0) < 0)
         {
             fprintf(stderr, "[-]Send error: %s\n", strerror(errno));
-            if (close(mySocket) < 0)
-                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+            close(mySocket);
             exit(1);
         }
-        if (operationNumber == 7)
+        if (message.operation == 7)
         {
             break;
         }
