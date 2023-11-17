@@ -5,7 +5,7 @@ void appendCharToFront(char *str, char character)
     int i;
     for (i = length; i >= 0; i--)
     {
-        if (str[i]='/')
+        if (str[i]=='/')
         {
             break;
         }
