@@ -293,33 +293,15 @@ void *client_handler(void *arg)
             if (port_to_send == -1)
             {
                 port_to_send = NO_SUCH_PATH;
-                if (send(clientSocket, port_to_send, sizeof(port_to_send), 0) < 0)
-                {
-                    fprintf(stderr, "[-]Sendtime error: %s\n", strerror(errno));
-                    // if (close(clientSocket) < 0)
-                    //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-                    // if (close() < 0)
-                    //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-                    // exit(1);
-                }
             }
-            else
+            if (send(clientSocket, port_to_send, sizeof(port_to_send), 0) < 0)
             {
-                if (send(clientSocket, port_to_send, sizeof(port_to_send), 0) < 0)
-                {
-                    fprintf(stderr, "[-]Sendtime error: %s\n", strerror(errno));
-                    // if (close(clientSocket) < 0)
-                    //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-                    // if (close() < 0)
-                    //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-                    // exit(1);
-                }
+                fprintf(stderr, "[-]Sendtime error: %s\n", strerror(errno));
             }
         }
         else if (message.operation == CREATE)
         {
         }
-        
     }
     close(clientSocket);
     printf("Client disconnected\n");
