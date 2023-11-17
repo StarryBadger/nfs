@@ -111,10 +111,11 @@ int main()
             // close(mySocket);
             // exit(1);
         }
-        if (message.operation == 7)
+        if (message.operation == TERMINATE)
         {
             break;
         }
+
         if (recv(mySocket, &initialAck, sizeof(initialAck), 0) < 0)
         {
             fprintf(stderr, "[-]Receive error: %s\n", strerror(errno));

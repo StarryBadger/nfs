@@ -9,6 +9,7 @@
 #define DELETE 4
 #define COPY 5
 #define METADATA 6
+#define TERMINATE 7
 
 // initial comm
 #define INITIAL_MESSAGE 10
