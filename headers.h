@@ -23,7 +23,9 @@
 #include <time.h>
 #include <unistd.h>
 #include<stdint.h>
+
 #include "trie.h"
+#include "stack.h"
 #include "seek.h"
 #include "socketAPI.h"
 #include "errorHandler.h"

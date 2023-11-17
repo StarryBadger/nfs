@@ -117,51 +117,6 @@ void TrieToString(struct TrieNode *root, char *str)
     TrieToString(root->sibling, str);
 }
 
-TrieNode* StringToTrie(char *str) {
-    TrieNode* newRoot = NULL;
-    TrieNode* current = NULL;
-    char* token = strtok(str, "()");
-    
-    while (token != NULL) {
-        if (newRoot == NULL) {
-            newRoot = createNode(token);
-            current = newRoot;
-        } else if (strcmp(token, "(") == 0) {
-            // Create a child node
-            token = strtok(NULL, "()");
-            TrieNode* newNode = createNode(token);
-            if (current->firstChild == NULL) {
-                current->firstChild = newNode;
-                current = current->firstChild;
-            } else {
-                current = current->firstChild;
-                while (current->sibling != NULL) {
-                    current = current->sibling;
-                }
-                current->sibling = newNode;
-                current = current->sibling;
-            }
-        } else if (strcmp(token, ")") == 0) {
-            current = newRoot;
-        } else {
-            TrieNode* newNode = createNode(token);
-            current->sibling = newNode;
-            current = current->sibling;
-        }
-        token = strtok(NULL, "()");
-    }
-
-    return newRoot;
-}
-
-// TrieNode* StringToTrie(char* str)
-// {
-//     TrieNode* newRoot = NULL;
-//     TrieNode* current = NULL;
-//     // char* token = strtok_r(str, "()", &str);
-    
-// }
-
 // int main()
 // {
 //     TrieNode *root = NULL;
