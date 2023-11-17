@@ -295,8 +295,59 @@ void *client_handler(void *arg)
                 fprintf(stderr, "[-]Sendtime error: %s\n", strerror(errno));
             }
         }
-        else if (message.operation == CREATE)
+        else if (message.operation == CREATE || message.operation == DELETE)
         {
+            struct ss_list *temp;
+            int validpath = 0;
+            int port_to_ss;
+            temp = storage_servers->head->next;
+            while (temp != NULL)
+            {
+                if (SearchTrie(PathParent(message.buffer), temp->root) != NULL)
+                {
+                    port_to_ss = temp->ssTonms_port;
+                    validpath = 1;
+                    break;
+                }
+                temp = temp->next;
+            }
+            if (!validpath)
+            {
+                printf("no valid path\n");
+            }
+            else
+            {
+                printf("valid path\n");
+                int nms_sock;
+                struct sockaddr_in addr;
+                socklen_t addr_size;
+                int n;
+                nms_sock = socket(AF_INET, SOCK_STREAM, 0);
+                if (nms_sock < 0)
+                {
+                    fprintf(stderr, "[-]Socket creation error: %s\n", strerror(errno));
+                }
+                printf("[+]TCP server socket created.\n");
+
+                memset(&addr, '\0', sizeof(addr));
+                addr.sin_family = AF_INET;
+                addr.sin_port = port_to_ss;
+                addr.sin_addr.s_addr = inet_addr(ip_address);
+
+                if (connect(nms_sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+                {
+                    fprintf(stderr, "[-]Connection time error: %s\n", strerror(errno));
+                }
+                printf("Connected to the SS.\n");
+                printf("Sending message to server: %d %s\n", message.operation, message.buffer);
+
+                if (send(nms_sock, &message, sizeof(message), 0) < 0)
+                {
+                    fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
+                    if (close(nms_sock) < 0)
+                        fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+                }
+            }
         }
     }
     close(clientSocket);
