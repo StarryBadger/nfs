@@ -32,6 +32,13 @@ typedef struct MessageSS2NM
     int port_for_naming_server;
 } MessageSS2NM;
 
+typedef struct MessageNMS2SS_COPY
+{
+    char buffer[MAX_PATH_LENGTH];
+    int operation;
+    char msg[5000];
+}MessageNMS2SS_COPY;
+
 typedef struct MessageClient
 {
     char buffer[MAX_PATH_LENGTH];

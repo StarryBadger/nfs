@@ -32,7 +32,7 @@ struct storage_servers_node
 
 struct storage_servers_node *storage_servers;
 
-int search_port(char* buffer)
+int search_port(char *buffer)
 {
     struct ss_list *temp;
     temp = storage_servers->head->next;
@@ -221,6 +221,52 @@ void ss_is_alive_checker()
         temp = temp->next;
     }
 }
+char *pathString(char **path_line, int size)
+{
+    char *p_string = (char *)malloc(sizeof(char) * 25000);
+    p_string[0] = '\0';
+    int total_len = 0;
+    for (int i = 0; i < size; i++)
+    {
+        int len = strlen(path_line[i]);
+        total_len += len;
+        strcat(p_string, path_line[i]);
+        p_string[total_len] = '\0';
+    }
+    return p_string;
+}
+
+void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node)
+{
+    if (node == NULL)
+        return;
+    strcpy(path_line[index], node->directory);
+    MessageClient2NM msg;
+    if (node->isFile == 1)
+    {
+        strcpy(msg.buffer, pathString(path_line, index + 1));
+        msg.operation = READ;
+        printf("Sending message to server: %d %d\n", message.port_for_clients, message.port_for_naming_server);
+
+        if (send(sock, &msg, sizeof(msg), 0) < 0)
+        {
+            fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
+            // if (close(sock) < 0)
+            //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+            return;
+        }
+        char buffer[1024];
+        bzero(buffer, 1024);
+        if (recv(sock, buffer, sizeof(buffer), 0) < 0)
+        {
+            fprintf(stderr, "[-]Receive time error: %s\n", strerror(errno));
+            return;
+        }
+        
+        MessageNMS2SS_COPY msg_to_send;
+        
+    }
+}
 
 void *ss_is_alive_worker(void *arg)
 {
@@ -243,26 +289,26 @@ void *ss_is_alive_worker(void *arg)
 
 void CopyPath2Path(char *src_path, char *dest_path)
 {
-    int sock,sock2;
-    int port1,port2;
-    port1=search_port(src_path);
-    port2=search_port(dest_path);
-    struct sockaddr_in addr,addr2;
+    int sock, sock2;
+    int port1, port2;
+    port1 = search_port(src_path);
+    port2 = search_port(dest_path);
+    struct sockaddr_in addr, addr2;
     sock = socket(AF_INET, SOCK_STREAM, 0);
-    sock2= socket(AF_INET, SOCK_STREAM, 0);
+    sock2 = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0)
     {
         fprintf(stderr, "[-]Socket creation error: %s\n", strerror(errno));
 
         exit(1);
     }
-     if (sock2 < 0)
+    if (sock2 < 0)
     {
         fprintf(stderr, "[-]Socket creation error: %s\n", strerror(errno));
 
         exit(1);
     }
-    
+
     // printf("[+]TCP server socket created.\n");
 
     memset(&addr, '\0', sizeof(addr));
@@ -270,7 +316,7 @@ void CopyPath2Path(char *src_path, char *dest_path)
     // printf("%d\n",temp->ssTonms_port);
     addr.sin_port = port1;
     addr.sin_addr.s_addr = inet_addr(ip_address);
-    
+
     memset(&addr2, '\0', sizeof(addr2));
     addr2.sin_family = AF_INET;
     // printf("%d\n",temp->ssTonms_port);
@@ -281,13 +327,35 @@ void CopyPath2Path(char *src_path, char *dest_path)
         fprintf(stderr, "[-]Couldn't connect to storage server 1: %s\n", strerror(errno));
         exit(1);
     }
-     if (connect(sock2, (struct sockaddr *)&addr2, sizeof(addr2)) < 0)
+    if (connect(sock2, (struct sockaddr *)&addr2, sizeof(addr2)) < 0)
     {
         fprintf(stderr, "[-]Couldn't connect to storage server 2: %s\n", strerror(errno));
         exit(1);
     }
+    char **path_line = (char **)malloc(sizeof(char *) * 500);
+    for (int i = 0; i < 500; i++)
+    {
+        path_line[i] = (char *)malloc(sizeof(char) * 100);
+        path_line[i][0] = '\0';
+    }
 
-    
+    TrieNode *node = NULL;
+    struct ss_list *temp;
+    temp = storage_servers->head->next;
+    while (temp != NULL)
+    {
+        if ((node = SearchTrie(src_path, temp->root)) != NULL)
+        {
+            break;
+        }
+        temp = temp->next;
+    }
+    if (!node)
+    {
+        printf("invalid source path\n");
+        return;
+    }
+    lessgoRec(sock, sock2, path_line, 0, node);
 }
 
 void *client_handler(void *arg)
