@@ -218,6 +218,21 @@ void DeleteTrie(char *directory, TrieNode *root)
     free(temp);
 }
 
+char* PathParent(char* path)
+{
+    char* path_copy=strdup(path);
+    char* token=strtok(path_copy,"/");
+    char* parent=(char*)malloc(sizeof(char)*1000);
+    strcpy(parent,"");
+    while(token!=NULL)
+    {
+        strcat(parent,"/");
+        strcat(parent,token);
+        token=strtok(NULL,"/");
+    }
+    return parent;
+}
+
 void PrintTrie(struct TrieNode *root)
 {
     if (root == NULL)
