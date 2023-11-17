@@ -148,34 +148,37 @@ void *ss_port_worker(void *arg)
         exit(1);
     }
     printf("Listening...\n");
-    addr_size = sizeof(client_addr);
-    client_sock = accept(server_sock, (struct sockaddr *)&client_addr, &addr_size);
-    if (client_sock < 0)
+    while (1)
     {
-        fprintf(stderr, "[-]Accept error: %s\n", strerror(errno));
-        if (close(server_sock) < 0)
-            fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-        exit(1);
-    }
-    printf("[+]Storage server connected.\n");
+        addr_size = sizeof(client_addr);
+        client_sock = accept(server_sock, (struct sockaddr *)&client_addr, &addr_size);
+        if (client_sock < 0)
+        {
+            fprintf(stderr, "[-]Accept error: %s\n", strerror(errno));
+            if (close(server_sock) < 0)
+                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+            exit(1);
+        }
+        printf("[+]Storage server connected.\n");
 
-    bzero(buffer, MAX_PATH_LENGTH);
-    MessageSS2NM message;
-    if (recv(client_sock, &message, sizeof(message), 0) < 0)
-    {
-        fprintf(stderr, "[-]Receive error: %s\n", strerror(errno));
-        if (close(client_sock) < 0)
-            fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-        if (close(server_sock) < 0)
-            fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-        exit(1);
-    }
-    printf("Message from storage server: %s\n", message.buffer);
-    printf("Port for clients: %d\n", message.port_for_clients);
-    printf("Port for nms: %d\n", message.port_for_naming_server);
+        bzero(buffer, MAX_PATH_LENGTH);
+        MessageSS2NM message;
+        if (recv(client_sock, &message, sizeof(message), 0) < 0)
+        {
+            fprintf(stderr, "[-]Receive error: %s\n", strerror(errno));
+            if (close(client_sock) < 0)
+                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+            if (close(server_sock) < 0)
+                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+            exit(1);
+        }
+        printf("Message from storage server: %s\n", message.buffer);
+        printf("Port for clients: %d\n", message.port_for_clients);
+        printf("Port for nms: %d\n", message.port_for_naming_server);
 
-    // PrintTrie(StringToTrie(message.buffer));
-    InsertNewSS(message.port_for_clients, message.port_for_naming_server, StringToTrie(message.buffer));
+        // PrintTrie(StringToTrie(message.buffer));
+        InsertNewSS(message.port_for_clients, message.port_for_naming_server, StringToTrie(message.buffer));
+    }
 }
 void ss_is_alive_checker()
 {
@@ -205,6 +208,7 @@ void ss_is_alive_checker()
         if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
         {
             fprintf(stderr, "[-]Connection lost from storage server with port %d: %s\n", temp->ssTonms_port, strerror(errno));
+            RemoveSS(temp->index);
             // exit(1);
         }
         // else{
@@ -264,7 +268,7 @@ void *client_handler(void *arg)
     printf("Acknowledgment sent to client: %d\n", initialAck);
     while (1)
     {
-        message.operation=NOT_RECEIVED;
+        message.operation = NOT_RECEIVED;
         if (recv(clientSocket, &message, sizeof(message), 0) < 0)
         {
             fprintf(stderr, "[-]Receive error: %s\n", strerror(errno));
@@ -285,10 +289,10 @@ void *client_handler(void *arg)
         if (message.operation == READ || message.operation == WRITE || message.operation == METADATA)
         {
             port_to_send = search_port(&message);
-            printf("port to send:%d\n",port_to_send);
+            printf("port to send:%d\n", port_to_send);
             if (port_to_send == -1)
             {
-                port_to_send=NO_SUCH_PATH;
+                port_to_send = NO_SUCH_PATH;
                 if (send(clientSocket, port_to_send, sizeof(port_to_send), 0) < 0)
                 {
                     fprintf(stderr, "[-]Sendtime error: %s\n", strerror(errno));
@@ -299,7 +303,8 @@ void *client_handler(void *arg)
                     // exit(1);
                 }
             }
-            else{
+            else
+            {
                 if (send(clientSocket, port_to_send, sizeof(port_to_send), 0) < 0)
                 {
                     fprintf(stderr, "[-]Sendtime error: %s\n", strerror(errno));
