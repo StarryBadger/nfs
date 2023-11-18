@@ -58,6 +58,39 @@ int printConnectionRequest(int acknowledgement)
     }
     return 0;
 }
+void printMetadata(metadata *metadata)
+{
+    printf("I-node number:                      %lu\n", metadata->inodeNumber);
+    printf("Mode (permissions: octal):          %lo (octal)\n", metadata->mode);
+    printf("Link count:                         %lu\n", metadata->linkCount);
+    printf("Ownership:                          UID=%lu   GID=%lu\n", metadata->uid, metadata->gid);
+    printf("File size:                          %ld bytes\n", metadata->fileSize);
+    printf("Preferred I/O block size:           %ld bytes\n", metadata->preferredBlockSize);
+    printf("Blocks allocated:                   %ld\n", metadata->blocksAllocated);
+    printf("Last file access:                   %s", ctime(&metadata->lastFileAccess));
+    printf("Last file modification:             %s", ctime(&metadata->lastFileModification));
+    printf("Last status change:                 %s", ctime(&metadata->lastStatusChange));
+    return;
+}
+errcode handleReadCommunication()
+{
+    return NO_ERROR;
+}
+errcode handleWriteCommunication()
+{
+    return NO_ERROR;
+}
+errcode handleMetadataCommunication(int socketSS)
+{
+    metadata fileInfo;
+    if (recv(socketSS, &fileInfo, sizeof(fileInfo), 0) < 0)
+    {
+        fprintf(stderr, "[-]Receive error: %s\n", strerror(errno)); // ERROR HANDLING
+        return NETWORK_ERROR;
+    }
+    printMetadata(&fileInfo);
+    return NO_ERROR;
+}
 errcode handleSSCommunication(int socketNM, MessageClient2SS message)
 {
     int ss_client_port;
@@ -87,7 +120,6 @@ errcode handleSSCommunication(int socketNM, MessageClient2SS message)
         fprintf(stderr, "[-]Send error: %s\n", strerror(errno));
         return NETWORK_ERROR;
     }
-
     int err_code;
     if (recv(socketSS, &err_code, sizeof(err_code), 0) < 0)
     {
@@ -103,7 +135,17 @@ errcode handleSSCommunication(int socketNM, MessageClient2SS message)
     {
         printf("Operation successful\n");
     }
-
+    switch (message.operation)
+    {
+    case READ:
+        return handleReadCommunication();
+    case WRITE:
+        return handleWriteCommunication();
+    case METADATA:
+        return handleMetadataCommunication(socketSS);
+    default:
+        return UNEXPECTED_ERROR;
+    }
     return NO_ERROR;
 }
 void askFileOrDirectory(MessageClient2NM *message)
