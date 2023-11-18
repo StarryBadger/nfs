@@ -235,8 +235,8 @@ char *pathString(char **path_line, int size)
         int len = strlen(path_line[i]);
         total_len += len;
         strcat(p_string, path_line[i]);
-        if(i!=size-1)
-        strcat(p_string,"/");
+        if (i != size - 1)
+            strcat(p_string, "/");
         p_string[total_len] = '\0';
     }
     return p_string;
@@ -479,8 +479,7 @@ void *client_handler(void *arg)
             temp = storage_servers->head->next;
             while (temp != NULL)
             {
-                if (((message.operation == CREATE) && SearchTrie(PathParent(message.buffer), temp->root) != NULL) 
-                || (message.operation == DELETE && SearchTrie(message.buffer, temp->root) != NULL))
+                if (((message.operation == CREATE) && SearchTrie(PathParent(message.buffer), temp->root) != NULL) || (message.operation == DELETE && SearchTrie(message.buffer, temp->root) != NULL))
                 {
                     port_to_ss = temp->ssTonmnp_port;
                     validpath = 1;
@@ -488,19 +487,19 @@ void *client_handler(void *arg)
                 }
                 temp = temp->next;
             }
-            if((message.operation == CREATE) && strcmp(message.buffer,PathParent(message.buffer))==0)
+            if ((message.operation == CREATE) && strcmp(message.buffer, PathParent(message.buffer)) == 0)
             {
-                validpath=1;
-                temp=storage_servers->head->next;
-                if(temp!=NULL)  
-                    port_to_ss=temp->ssTonmnp_port;
+                validpath = 1;
+                temp = storage_servers->head->next;
+                if (temp != NULL)
+                    port_to_ss = temp->ssTonmnp_port;
                 else
-                    validpath=0;
+                    validpath = 0;
             }
             if (!validpath)
             {
                 printf("no valid path\n");
-                int err_code_about_to_send=NO_SUCH_PATH;
+                int err_code_about_to_send = NO_SUCH_PATH;
                 if (send(clientSocket, &err_code_about_to_send, sizeof(err_code_about_to_send), 0) < 0)
                 {
                     fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
@@ -548,6 +547,35 @@ void *client_handler(void *arg)
                     // return;
                 }
                 printf("Error code received from storage server: %d\n", err_code_about_to_send);
+                if (err_code_about_to_send == NO_ERROR)
+                {
+                    if (message.operation == CREATE)
+                    {
+                        temp=storage_servers->head->next;
+                        while (temp != NULL)
+                        {
+                            if (SearchTrie(PathParent(message.buffer),temp->root)!=NULL)
+                            {
+                                InsertTrie(message.buffer,temp->root);
+                                break;
+                            }
+                            temp = temp->next;
+                        }
+                    }
+                    else if(message.operation==DELETE)
+                    {
+                        temp=storage_servers->head->next;
+                        while (temp != NULL)
+                        {
+                            if (SearchTrie(message.buffer,temp->root)!=NULL)
+                            {
+                                DeleteTrie(message.buffer,temp->root);
+                                break;
+                            }
+                            temp = temp->next;
+                        }
+                    }
+                }
                 close(nms_sock);
                 if (send(clientSocket, &err_code_about_to_send, sizeof(err_code_about_to_send), 0) < 0)
                 {
@@ -559,8 +587,7 @@ void *client_handler(void *arg)
         }
         else if (message.operation == COPY)
         {
-            CopyPath2Path(message.buffer,message.msg);
-
+            CopyPath2Path(message.buffer, message.msg);
         }
     }
     close(clientSocket);
