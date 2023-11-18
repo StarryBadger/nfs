@@ -1,6 +1,6 @@
 #include "headers.h"
 
-char buffer[MAX_PATH_LENGTH];
+// char buffer[MAX_PATH_LENGTH];
 int can_enter = 0;
 struct ss_list
 {
@@ -152,6 +152,7 @@ void *ss_port_worker(void *arg)
         exit(1);
     }
     printf("Listening...\n");
+    char buffer[MAX_PATH_LENGTH];
     while (1)
     {
         addr_size = sizeof(client_addr);
@@ -182,7 +183,7 @@ void *ss_port_worker(void *arg)
         printf("Port for nm_np: %d\n", message.port_for_nm_np);
 
         // PrintTrie(StringToTrie(message.buffer));
-        InsertNewSS(message.port_for_clients, message.port_for_naming_server, message.port_for_nm_np ,StringToTrie(message.buffer));
+        InsertNewSS(message.port_for_clients, message.port_for_naming_server, message.port_for_nm_np, StringToTrie(message.buffer));
     }
 }
 
@@ -309,13 +310,13 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node)
     {
         lessgoRec(sock, sock2, path_line, index + 1, node->firstChild);
     }
-    TrieNode* temp=node->sibling;
-    while(temp!=NULL)
+    TrieNode *temp = node->sibling;
+    while (temp != NULL)
     {
-        lessgoRec(sock,sock2,path_line,index+1,node->sibling);
-        temp=temp->sibling;
+        lessgoRec(sock, sock2, path_line, index + 1, node->sibling);
+        temp = temp->sibling;
     }
-    path_line[index][0]='\0';
+    path_line[index][0] = '\0';
     return;
 }
 
@@ -476,7 +477,7 @@ void *client_handler(void *arg)
             temp = storage_servers->head->next;
             while (temp != NULL)
             {
-                if ((message.operation==CREATE && SearchTrie(PathParent(message.buffer), temp->root) != NULL) || (message.operation==DELETE && SearchTrie(message.buffer, temp->root) != NULL))
+                if ((message.operation == CREATE && SearchTrie(PathParent(message.buffer), temp->root) != NULL) || (message.operation == DELETE && SearchTrie(message.buffer, temp->root) != NULL))
                 {
                     port_to_ss = temp->ssTonmnp_port;
                     validpath = 1;
@@ -487,6 +488,13 @@ void *client_handler(void *arg)
             if (!validpath)
             {
                 printf("no valid path\n");
+                int err_code_about_to_send=NO_SUCH_PATH;
+                if (send(clientSocket, &err_code_about_to_send, sizeof(err_code_about_to_send), 0) < 0)
+                {
+                    fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+                    // exit(1);
+                    continue;
+                }
             }
             else
             {
@@ -519,6 +527,20 @@ void *client_handler(void *arg)
                     fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
                     if (close(nms_sock) < 0)
                         fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+                }
+
+                int err_code_about_to_send;
+                if (recv(nms_sock, &err_code_about_to_send, sizeof(err_code_about_to_send), 0) < 0)
+                {
+                    fprintf(stderr, "[-]Receive time error: %s\n", strerror(errno));
+                    // return;
+                }
+                close(nms_sock);
+                if (send(clientSocket, &err_code_about_to_send, sizeof(err_code_about_to_send), 0) < 0)
+                {
+                    fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+                    // exit(1);
+                    continue;
                 }
             }
         }

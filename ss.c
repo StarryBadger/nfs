@@ -285,10 +285,11 @@ void *NMServerConnection(void *arg)
         exit(1);
     }
     printf("listening to respond to clients\n");
-    addr_size = sizeof(nms_addr);
-
+    
     while (1)
     {
+        addr_size = sizeof(nms_addr);
+
         nms_sock = accept(server_sock, (struct sockaddr *)&nms_addr, &addr_size);
         if (nms_sock < 0)
         {
