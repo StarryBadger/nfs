@@ -5,7 +5,7 @@
 #include <fcntl.h>
 #include <grp.h>
 #include <limits.h>
-#include <linux/limits.h>
+#include <linux/limits.h> //check if complaint or even if needed
 #include <netdb.h>
 #include <netinet/in.h>
 #include <pthread.h>
@@ -18,11 +18,11 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <stdint.h>
 #include <semaphore.h>
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
-#include<stdint.h>
 
 #include "trie.h"
 #include "stack.h"
