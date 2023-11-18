@@ -94,7 +94,7 @@ errcode handleWriteCommunication(int socketSS)
     scanf("%s", toWrite);
     if (send(socketSS, &toWrite, sizeof(toWrite), 0) < 0)
     {
-        fprintf(stderr, "[-]Send error: %s\n", strerror(errno)); // ERROR HANDLING
+        fprintf(stderr, RED"[-]Send error: %s\n"RESET, strerror(errno)); // ERROR HANDLING
         return NETWORK_ERROR;
     }
     return NO_ERROR;
@@ -104,7 +104,7 @@ errcode handleMetadataCommunication(int socketSS)
     metadata fileInfo;
     if (recv(socketSS, &fileInfo, sizeof(fileInfo), 0) < 0)
     {
-        fprintf(stderr, "[-]Receive error: %s\n", strerror(errno)); // ERROR HANDLING
+        fprintf(stderr, RED"[-]Receive error: %s\n"RESET, strerror(errno)); // ERROR HANDLING
         return NETWORK_ERROR;
     }
     printMetadata(&fileInfo);
@@ -115,7 +115,7 @@ errcode handleSSCommunication(int socketNM, MessageClient2SS message)
     int ss_client_port;
     if (recv(socketNM, &ss_client_port, sizeof(ss_client_port), 0) < 0)
     {
-        fprintf(stderr, "[-]Receive error: %s\n", strerror(errno));
+        fprintf(stderr, RED"[-]Receive error: %s\n"RESET, strerror(errno));
         return NETWORK_ERROR;
     }
     if (ss_client_port == NO_SUCH_PATH)
@@ -130,19 +130,19 @@ errcode handleSSCommunication(int socketNM, MessageClient2SS message)
     addr.sin_addr.s_addr = inet_addr(ip_address);
     if (connect(socketSS, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
-        fprintf(stderr, "[-]Connection error: %s\n", strerror(errno));
+        fprintf(stderr, RED"[-]Connection error: %s\n"RESET, strerror(errno));
         return NETWORK_ERROR;
     }
     printf("Connected to the storage server.\n");
     if (send(socketSS, &message, sizeof(message), 0) < 0)
     {
-        fprintf(stderr, "[-]Send error: %s\n", strerror(errno));
+        fprintf(stderr, RED"[-]Send error: %s\n"RESET, strerror(errno));
         return NETWORK_ERROR;
     }
     int err_code;
     if (recv(socketSS, &err_code, sizeof(err_code), 0) < 0)
     {
-        fprintf(stderr, "[-]Receive error: %s\n", strerror(errno));
+        fprintf(stderr, RED"[-]Receive error: %s\n"RESET, strerror(errno));
         return NETWORK_ERROR;
     }
     if (err_code != NO_ERROR)
@@ -197,7 +197,7 @@ int main()
     addr.sin_addr.s_addr = inet_addr(ip_address);
     if (connect(mySocket, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
-        fprintf(stderr, "[-]Connection error: %s\n", strerror(errno));
+        fprintf(stderr, RED"[-]Connection error: %s\n"RESET, strerror(errno));
         exit(1);
     }
     printf("Connected to the server.\n");
@@ -205,7 +205,7 @@ int main()
     int initialRequest = INITIAL_MESSAGE;
     if (send(mySocket, &initialRequest, sizeof(initialRequest), 0) < 0)
     {
-        fprintf(stderr, "[-]Send error: %s\n", strerror(errno));
+        fprintf(stderr, RED"[-]Send error: %s\n"RESET, strerror(errno));
         if (close(mySocket) < 0)
             fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
         exit(1);
