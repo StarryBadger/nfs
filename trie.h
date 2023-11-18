@@ -9,6 +9,8 @@ typedef struct TrieNode
     int isFile;
 }TrieNode;
 
+void PrintTrieLIkeAnActualTRee(struct TrieNode *root, int level);
+
 TrieNode *createNode(char *directory);
 
 void InsertTrie(char *directory,TrieNode* root);

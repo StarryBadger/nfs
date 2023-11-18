@@ -556,11 +556,20 @@ void *client_handler(void *arg)
                         {
                             if (SearchTrie(PathParent(message.buffer),temp->root)!=NULL)
                             {
+                                printf("IN CREATE\n");
                                 InsertTrie(message.buffer,temp->root);
+                                PrintTrieLIkeAnActualTRee(temp->root,4);
                                 break;
                             }
                             temp = temp->next;
                         }
+                        if (strcmp(message.buffer,PathParent(message.buffer)) == 0)
+                        {
+                            temp=storage_servers->head->next;
+                            printf("IN CREATE\n");
+                            InsertTrie(message.buffer,temp->root);
+                            PrintTrieLIkeAnActualTRee(temp->root,4);
+                        }   
                     }
                     else if(message.operation==DELETE)
                     {
@@ -570,6 +579,7 @@ void *client_handler(void *arg)
                             if (SearchTrie(message.buffer,temp->root)!=NULL)
                             {
                                 DeleteTrie(message.buffer,temp->root);
+                                PrintTrieLIkeAnActualTRee(temp->root,4);
                                 break;
                             }
                             temp = temp->next;
