@@ -314,7 +314,7 @@ void *NMServerConnection(void *arg)
         printf("Received message from nm: %d %s\n", message.operation, message.buffer);
         printf("the message : %d\n", strlen(message.buffer));
 
-        if (message.operation == CREATE)
+        if (message.operation == CREATE && !message.isADirectory)
         {
             int err_code;
             int fd = open(message.buffer, O_CREAT | O_WRONLY, 0644);
@@ -342,7 +342,7 @@ void *NMServerConnection(void *arg)
             close(fd);
         }
 
-        if (message.operation == CREATE_DIR)
+        if (message.operation == CREATE && message.isADirectory)
         {
             int err_code;
             if (mkdir(message.buffer, 0777) == -1)

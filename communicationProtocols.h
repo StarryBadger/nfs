@@ -1,6 +1,7 @@
 #ifndef __REQUEST_PROTOCOLS_H
 #define __REQUEST_PROTOCOLS_H
 #include <stdint.h>
+#include <stdbool.h>
 // operations
 #define NOT_RECEIVED -1
 #define CREATE 1
@@ -10,7 +11,6 @@
 #define COPY 5
 #define METADATA 6
 #define TERMINATE 7
-#define CREATE_DIR 8
 
 // initial comm
 #define INITIAL_MESSAGE 10
@@ -44,6 +44,7 @@ typedef struct MessageClient
 {
     char buffer[MAX_PATH_LENGTH];
     int operation;
+    bool isADirectory;
 } MessageClient;
 typedef MessageClient MessageClient2SS;
 typedef MessageClient MessageClient2NM;

@@ -52,7 +52,7 @@ errcode handleSSCommunication(int socketNM, MessageClient2SS message)
         fprintf(stderr, "[-]Receive error: %s\n", strerror(errno));
         return NETWORK_ERROR;
     }
-    if (ss_client_port==NO_SUCH_PATH)
+    if (ss_client_port == NO_SUCH_PATH)
     {
         return FILE_NOT_FOUND;
     }
@@ -80,7 +80,7 @@ errcode handleSSCommunication(int socketNM, MessageClient2SS message)
         fprintf(stderr, "[-]Receive error: %s\n", strerror(errno));
         return NETWORK_ERROR;
     }
-    if (err_code!=NO_ERROR)
+    if (err_code != NO_ERROR)
     {
         printf("Error code: %d\n", err_code);
         return err_code;
@@ -91,6 +91,26 @@ errcode handleSSCommunication(int socketNM, MessageClient2SS message)
     }
 
     return NO_ERROR;
+}
+void askFileOrDirectory(MessageClient2NM *message)
+{
+    char CHAR_BUFF;
+    getchar();
+    while (1)
+    {
+        printf("Enter F for file and D for directory\n");
+        scanf("%c", &CHAR_BUFF);
+        // getchar();
+        if (CHAR_BUFF == 'F' || CHAR_BUFF == 'D' || CHAR_BUFF == 'f' || CHAR_BUFF == 'd')
+        {
+            message->isADirectory = (CHAR_BUFF == 'D' || CHAR_BUFF == 'd') ? true : false;
+            return;
+        }
+        else
+        {
+            printf("Invalid request!\n");
+        }
+    }
 }
 int main()
 {
@@ -146,6 +166,10 @@ int main()
             fprintf(stderr, "[-]Invalid operation number\n");
             continue;
         }
+        if (message.operation == CREATE || message.operation == DELETE)
+        {
+            askFileOrDirectory(&message);
+        }
         printOperationMessage(message.operation);
         if (message.operation != 7)
         {
@@ -166,9 +190,9 @@ int main()
 
         if (message.operation == READ || message.operation == WRITE || message.operation == METADATA)
         {
-            if (handleSSCommunication(mySocket, message)!=NO_ERROR)
+            if (handleSSCommunication(mySocket, message) != NO_ERROR)
             {
-                //do something
+                // do something
             }
         }
     }
