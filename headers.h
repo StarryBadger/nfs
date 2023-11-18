@@ -11,6 +11,8 @@
 #include <pthread.h>
 #include <pwd.h>
 #include <stdbool.h>
+#include <stdarg.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,7 +20,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
-#include <stdint.h>
 #include <semaphore.h>
 #include <termios.h>
 #include <time.h>
@@ -30,3 +31,4 @@
 #include "socketAPI.h"
 #include "errorHandler.h"
 #include "communicationProtocols.h"
+#include "logging.h"
