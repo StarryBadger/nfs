@@ -72,6 +72,7 @@ void InsertNewSS(int ssTocPortNo, int ssTonmsPortNo, int ssToNMmpport, TrieNode 
     new->ssTonms_port = ssTonmsPortNo;
     new->ssTonmnp_port = ssToNMmpport;
     new->root = ssRoot;
+    PrintTrieLIkeAnActualTRee(new->root,4);
     return;
 }
 void RemoveSS(int index)
@@ -481,6 +482,8 @@ void *client_handler(void *arg)
             {
                 if (((message.operation == CREATE) && SearchTrie(PathParent(message.buffer), temp->root) != NULL) || (message.operation == DELETE && SearchTrie(message.buffer, temp->root) != NULL))
                 {
+                    if((message.operation==CREATE && !SearchTrie(PathParent(message.buffer),temp->root)->isAccessible) || (message.operation==DELETE && !SearchTrie(message.buffer,temp->root)->isAccessible))
+                    break;
                     port_to_ss = temp->ssTonmnp_port;
                     validpath = 1;
                     break;

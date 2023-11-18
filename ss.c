@@ -191,7 +191,7 @@ void Read_ss(int *err_code, int client_sock, MessageClient2SS message)
         }
     }
     // bzero(buffer,SEND_SIZE);
-    buffer[0]='\0';
+    buffer[0] = '\0';
     strcpy(buffer, END_STRING);
     if (send(client_sock, buffer, strlen(buffer), 0) < 0)
     {
@@ -217,7 +217,7 @@ void Write_ss(int *err_code, int client_sock, MessageClient2SS message)
     char buffer[PATH_MAX];
     int bytes_read;
 
-    if(send(client_sock, err_code, sizeof(*err_code), 0) < 0)
+    if (send(client_sock, err_code, sizeof(*err_code), 0) < 0)
     {
         fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
         if (close(client_sock) < 0)
@@ -228,7 +228,7 @@ void Write_ss(int *err_code, int client_sock, MessageClient2SS message)
     if (*err_code == FILE_NOT_WRITABLE)
         return NULL;
 
-    if(recv(client_sock, buffer, sizeof(buffer), 0) < 0)
+    if (recv(client_sock, buffer, sizeof(buffer), 0) < 0)
     {
         fprintf(stderr, "[-]Receive error: %s\n", strerror(errno)); // ERROR HANDLING
         if (close(client_sock) < 0)
@@ -237,16 +237,15 @@ void Write_ss(int *err_code, int client_sock, MessageClient2SS message)
     }
 
     // strcpy(buffer,"one 1");
-    
+
     printf("Received message from client: %s\n", buffer);
-    if(write(fd, buffer, strlen(buffer)) < 0)
+    if (write(fd, buffer, strlen(buffer)) < 0)
     {
         fprintf(stderr, "[-]Write error: %s\n", strerror(errno)); // ERROR HANDLING
         if (close(client_sock) < 0)
             fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
         // exit(1);
     }
-    
 
     printf("\n");
     close(fd);
@@ -449,15 +448,15 @@ void *NMServerConnection(void *arg)
                 err_code = DIRECTORY_UNABLE_TO_CREATE;
                 // return NULL;
             }
-            // InsertTrie(message.buffer, ssTrie); // SHREYANSH
+            else
             err_code = NO_ERROR;
 
             if (send(nms_sock, &err_code, sizeof(err_code), 0) < 0)
             {
                 fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
-                if (close(nms_sock) < 0)
-                    fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
-                exit(1);
+                // if (close(nms_sock) < 0)
+                //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+                // exit(1);
             }
 
             if (err_code == DIRECTORY_UNABLE_TO_CREATE)
@@ -466,6 +465,7 @@ void *NMServerConnection(void *arg)
 
         if (message.operation == DELETE)
         {
+            int err_code;
             printf("In delete\n");
             int fd = open(message.buffer, O_RDONLY);
             if (fd == -1)
@@ -477,10 +477,21 @@ void *NMServerConnection(void *arg)
             if (remove(message.buffer) == 0)
             {
                 printf("\x1b[32mDeleted %s successfully\n\n\x1b[0m", message.buffer);
-                DeleteTrie(message.buffer, ssTrie);
+                // DeleteTrie(message.buffer, ssTrie);
+
+                err_code = NO_ERROR;
             }
-            else
+            else{
                 printf("\x1b[31mCould not delete %s\n\n\x1b[0m", message.buffer);
+                err_code= DELETE_FAILED;
+            }
+            if (send(nms_sock, &err_code, sizeof(err_code), 0) < 0)
+                {
+                    fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+                    // if (close(nms_sock) < 0)
+                    //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+                    // exit(1);
+                }
         }
         close(nms_sock);
     }
