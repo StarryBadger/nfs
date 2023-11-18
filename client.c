@@ -1,11 +1,18 @@
 #include "headers.h"
 #include "requestProtocols.h"
-void printOperationMessage(int operationNumber)
+void printOperationMessage(MessageClient2NM message)
 {
-    switch (operationNumber)
+    switch (message.operation)
     {
     case CREATE:
-        printf("Selected Operation: CREATE - Create a new file/folder\n");
+        if (message.isADirectory)
+        {
+            printf("Selected Operation: CREATE - Create a new directory\n");
+        }
+        else
+        {
+            printf("Selected Operation: CREATE - Create a new file\n");
+        }
         break;
     case READ:
         printf("Selected Operation: READ - Read the content of a file\n");
@@ -14,7 +21,14 @@ void printOperationMessage(int operationNumber)
         printf("Selected Operation: WRITE - Write data to a file\n");
         break;
     case DELETE:
-        printf("Selected Operation: DELETE - Delete a file/folder\n");
+        if (message.isADirectory)
+        {
+            printf("Selected Operation: DELETE - Delete an empty directory\n");
+        }
+        else
+        {
+            printf("Selected Operation: DELETE - Delete a file\n");
+        }
         break;
     case COPY:
         printf("Selected Operation: COPY - Copy file from one directory to another\n");
@@ -170,7 +184,7 @@ int main()
         {
             askFileOrDirectory(&message);
         }
-        printOperationMessage(message.operation);
+        printOperationMessage(message);
         if (message.operation != 7)
         {
             printf("Enter file path\n");
