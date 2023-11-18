@@ -485,6 +485,15 @@ void *client_handler(void *arg)
                 }
                 temp = temp->next;
             }
+            if(message.operation == CREATE && strcmp(message.buffer,PathParent(message.buffer))==0)
+            {
+                validpath=1;
+                temp=storage_servers->head->next;
+                if(temp!=NULL)
+                    port_to_ss=temp->ssTonmnp_port;
+                else
+                    validpath=0;
+            }
             if (!validpath)
             {
                 printf("no valid path\n");
@@ -535,6 +544,7 @@ void *client_handler(void *arg)
                     fprintf(stderr, "[-]Receive time error: %s\n", strerror(errno));
                     // return;
                 }
+                printf("Error code received from storage server: %d\n", err_code_about_to_send);
                 close(nms_sock);
                 if (send(clientSocket, &err_code_about_to_send, sizeof(err_code_about_to_send), 0) < 0)
                 {
