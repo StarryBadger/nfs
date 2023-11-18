@@ -25,6 +25,7 @@
 #define ip_address "127.0.0.1"
 
 #define METADATA_STR_MAX 100
+#define SEND_SIZE 4096
 
 typedef struct MessageSS2NM
 {

@@ -74,13 +74,42 @@ void printMetadata(metadata *metadata)
 }
 errcode handleReadCommunication(int socketSS)
 {
+    //started change
+    char buffer[SEND_SIZE];
+    int bytesReceived;
+    while (1)
+    {
+        // bzero(buffer,SEND_SIZE);
+        // printf("this is\n ");
+        if (recv(socketSS, buffer, sizeof(buffer), 0) < 0)
+        {
+            fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+            if (close(socketSS) < 0)
+                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+            return NETWORK_ERROR;
+        }
+        if (strcmp(buffer, "@e")==0)
+        {
+            break;
+        }
+        printf("Received message: %s\n",buffer);
+    }
+    // if (bytesReceived == -1)
+    // {
+    //     if (close(socketSS) < 0)
+    //         fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+    //     // exit(1);
+    //     return NETWORK_ERROR;
+    // }
+    printf("\n");
+    //ended change
     return NO_ERROR;
 }
 errcode handleWriteCommunication(int socketSS)
 {
     char toWrite[PATH_MAX];
     printf("Enter text to be written: ");
-    scanf("%s",toWrite);
+    scanf("%s", toWrite);
     if (send(socketSS, &toWrite, sizeof(toWrite), 0) < 0)
     {
         fprintf(stderr, "[-]Send error: %s\n", strerror(errno)); // ERROR HANDLING

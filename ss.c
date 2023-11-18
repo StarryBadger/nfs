@@ -174,14 +174,14 @@ void Read_ss(int *err_code, int client_sock, MessageClient2SS message)
     if (*err_code == FILE_NOT_READABLE)
         return NULL;
 
-    char buffer[PATH_MAX];
+    char buffer[SEND_SIZE];
     int bytes_read;
 
-    while ((bytes_read = read(fd, buffer, PATH_MAX)) > 0)
+    while ((bytes_read = read(fd, buffer, SEND_SIZE)) > 0)
     {
         buffer[bytes_read] = '\0';
         printf("Sending message to client: %s\n", buffer);
-        if (send(client_sock, buffer, strlen(buffer), 0) < 0)
+        if (send(client_sock, buffer, sizeof(buffer), 0) < 0)
         {
             fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
             if (close(client_sock) < 0)
@@ -190,8 +190,8 @@ void Read_ss(int *err_code, int client_sock, MessageClient2SS message)
             return NULL;
         }
     }
-
-    strcpy(buffer, "@Message end@");
+    
+    strcpy(buffer, "@e");
     if (send(client_sock, buffer, strlen(buffer), 0) < 0)
     {
         fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
