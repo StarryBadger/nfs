@@ -5,7 +5,6 @@ void closeSocket(int socketToClose)
     {
         fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
     }
-    exit(SOCKET_CLOSE_ERROR);
 }
 int initSocket()
 {

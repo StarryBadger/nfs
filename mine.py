@@ -5,6 +5,6 @@ def generate_lines(file_path, num_lines):
 
 if __name__ == "__main__":
     file_path = "out.txt"
-    num_lines = 26000
+    num_lines = 1600
     generate_lines(file_path, num_lines)
     print(f"{num_lines} lines written to {file_path}")

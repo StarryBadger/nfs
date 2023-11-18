@@ -74,43 +74,17 @@ void printMetadata(metadata *metadata)
 }
 errcode handleReadCommunication(int socketSS)
 {
-    //started change
     char buffer[SEND_SIZE];
-    int bytesReceived;
-    while (1)
+    int bytesRead;
+    while ((bytesRead = recv(socketSS, buffer, sizeof(buffer), 0)) > 0)
     {
-        // bzero(buffer,SEND_SIZE);
-        // printf("this is\n ");
-        buffer[0]='\0';
-        
-        if ( bytesReceived = recv(socketSS, buffer, sizeof(buffer), 0) < 0)
-        {
-            fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
-            if (close(socketSS) < 0)
-                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
-            return NETWORK_ERROR;
-        }
-        printf("%s",buffer);
-        // if (strncmp(buffer,END_STRING,2)==0)
-        // {
-        //     break;
-        // }
-        // for(int k=0;k<bytesReceived;k++)
-        // {
-        //     // printf("hi");
-        //     printf("%c",buffer[k]);
-        // }
-        // printf("\n");
+        fwrite(buffer, 1, bytesRead, stdout);
     }
-    // if (bytesReceived == -1)
-    // {
-    //     if (close(socketSS) < 0)
-    //         fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
-    //     // exit(1);
-    //     return NETWORK_ERROR;
-    // }
-    printf("ending now in client\n");
-    //ended change
+    if (bytesRead < 0)
+    {
+        closeSocket(socketSS);
+        return NETWORK_ERROR;
+    }
     return NO_ERROR;
 }
 errcode handleWriteCommunication(int socketSS)
