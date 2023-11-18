@@ -90,11 +90,11 @@ errcode handleReadCommunication(int socketSS)
                 fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
             return NETWORK_ERROR;
         }
-        if (strncmp(buffer,END_STRING,2)==0)
-        {
-            break;
-        }
-        printf("Received message: %s ",buffer);
+        printf("%s",buffer);
+        // if (strncmp(buffer,END_STRING,2)==0)
+        // {
+        //     break;
+        // }
         // for(int k=0;k<bytesReceived;k++)
         // {
         //     // printf("hi");
@@ -109,7 +109,7 @@ errcode handleReadCommunication(int socketSS)
     //     // exit(1);
     //     return NETWORK_ERROR;
     // }
-    printf("\n");
+    printf("ending now in client\n");
     //ended change
     return NO_ERROR;
 }
