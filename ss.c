@@ -190,8 +190,9 @@ void Read_ss(int *err_code, int client_sock, MessageClient2SS message)
             return NULL;
         }
     }
-    
-    strcpy(buffer, "@e");
+    // bzero(buffer,SEND_SIZE);
+    buffer[0]='\0';
+    strcpy(buffer, END_STRING);
     if (send(client_sock, buffer, strlen(buffer), 0) < 0)
     {
         fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING

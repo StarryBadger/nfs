@@ -24,6 +24,8 @@
 #define nms_client_port 10059
 #define ip_address "127.0.0.1"
 
+#define END_STRING "@@e@*"
+
 #define METADATA_STR_MAX 100
 #define SEND_SIZE 4096
 

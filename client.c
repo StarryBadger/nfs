@@ -81,18 +81,26 @@ errcode handleReadCommunication(int socketSS)
     {
         // bzero(buffer,SEND_SIZE);
         // printf("this is\n ");
-        if (recv(socketSS, buffer, sizeof(buffer), 0) < 0)
+        buffer[0]='\0';
+        
+        if ( bytesReceived = recv(socketSS, buffer, sizeof(buffer), 0) < 0)
         {
             fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
             if (close(socketSS) < 0)
                 fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
             return NETWORK_ERROR;
         }
-        if (strcmp(buffer, "@e")==0)
+        if (strncmp(buffer,END_STRING,2)==0)
         {
             break;
         }
-        printf("Received message: %s\n",buffer);
+        printf("Received message: %s ",buffer);
+        // for(int k=0;k<bytesReceived;k++)
+        // {
+        //     // printf("hi");
+        //     printf("%c",buffer[k]);
+        // }
+        // printf("\n");
     }
     // if (bytesReceived == -1)
     // {
