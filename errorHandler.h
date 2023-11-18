@@ -4,6 +4,7 @@ typedef int errcode;
 #define NO_ERROR 0
 #define UNEXPECTED_ERROR 1
 #define NETWORK_ERROR 2
+#define FILE_DESCRIPTOR_ERROR 3
 
 // Naming Server Errors
 #define INVALID_PATH 10

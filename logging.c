@@ -1,11 +1,10 @@
 #include "headers.h"
-void logThis(const char *format, ...)
+errcode logThis(const char *format, ...)
 {
     FILE *logFile = fopen("interaction@NM.log", "a");
     if (logFile == NULL)
     {
-        perror("Error opening file");
-        exit(EXIT_FAILURE);
+        return FILE_DESCRIPTOR_ERROR;
     }
 
     time_t rawtime;
@@ -21,4 +20,5 @@ void logThis(const char *format, ...)
     vfprintf(logFile, format, args);
     va_end(args);
     fclose(logFile);
+    return NO_ERROR;
 }
