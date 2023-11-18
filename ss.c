@@ -18,7 +18,7 @@ void *naming_server_responder_worker(void *arg)
     int server_sock, client_sock;
     struct sockaddr_in server_addr, client_addr;
     socklen_t addr_size;
-    // char buffer[MAX_PATH_LENGTH];
+    // char buffer[PATH_MAX];
     int n;
 
     server_sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -99,7 +99,7 @@ void *naming_server_informer_worker(void *arg)
     int ss_sock;
     struct sockaddr_in addr;
     socklen_t addr_size;
-    char buffer[MAX_PATH_LENGTH];
+    char buffer[PATH_MAX];
     int n;
 
     ss_sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -131,7 +131,7 @@ void *naming_server_informer_worker(void *arg)
     // InsertTrie("root/dir2/dir6/dir9",ssTrie);
     // InsertTrie("root/dir2/dir6/dir10",ssTrie);
 
-    // bzero(buffer, MAX_PATH_LENGTH);
+    // bzero(buffer, PATH_MAX);
     // sprintf(buffer,"%d,%d",port_for_clients,port_for_naming_server);
     MessageSS2NM message;
     // strcpy(message.buffer, "storage_server_1");
@@ -174,10 +174,10 @@ void Read_ss(int *err_code, int client_sock, MessageClient2SS message)
     if (*err_code == FILE_NOT_READABLE)
         return NULL;
 
-    char buffer[1024];
+    char buffer[PATH_MAX];
     int bytes_read;
 
-    while ((bytes_read = read(fd, buffer, 1024)) > 0)
+    while ((bytes_read = read(fd, buffer, PATH_MAX)) > 0)
     {
         buffer[bytes_read] = '\0';
         printf("Sending message to client: %s\n", buffer);
@@ -213,7 +213,7 @@ void Write_ss(int *err_code, int client_sock, MessageClient2SS message)
         fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
         *err_code = FILE_NOT_WRITABLE;
     }
-    char buffer[1024];
+    char buffer[PATH_MAX];
     int bytes_read;
 
     if(send(client_sock, err_code, sizeof(*err_code), 0) < 0)
@@ -256,7 +256,7 @@ void *CLientServerConnection(void *arg)
     int client_sock = *(int *)arg;
     int err_code = NO_ERROR;
     MessageClient2SS message;
-    bzero(message.buffer, MAX_PATH_LENGTH);
+    bzero(message.buffer, PATH_MAX);
 
     if (recv(client_sock, &message, sizeof(message), 0) < 0)
     {
@@ -336,7 +336,7 @@ void *NMServerConnection(void *arg)
     int server_sock, nms_sock;
     struct sockaddr_in server_addr, nms_addr;
     socklen_t addr_size;
-    // char buffer[MAX_PATH_LENGTH];
+    // char buffer[PATH_MAX];
     int n;
 
     server_sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -397,7 +397,7 @@ void *NMServerConnection(void *arg)
         }
         MessageClient2SS message;
         message.operation = 0;
-        bzero(message.buffer, MAX_PATH_LENGTH);
+        bzero(message.buffer, PATH_MAX);
         if (recv(nms_sock, &message, sizeof(message), 0) < 0)
         {
             fprintf(stderr, "[-]Receive error: %s\n", strerror(errno)); // ERROR HANDLING
@@ -492,7 +492,7 @@ void *clients_handler_worker(void *arg)
     int server_sock, client_sock;
     struct sockaddr_in server_addr, client_addr;
     socklen_t addr_size;
-    // char buffer[MAX_PATH_LENGTH];
+    // char buffer[PATH_MAX];
     int n;
 
     server_sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -565,8 +565,8 @@ void GetAccessiblePaths()
     printf("Enter 2 to make some paths accessible\n");
     int choice;
     scanf("%d", &choice);
-    char current_directory[MAX_PATH_LENGTH];
-    char TEMPBUFF[MAX_PATH_LENGTH];
+    char current_directory[PATH_MAX];
+    char TEMPBUFF[PATH_MAX];
     getcwd(current_directory, sizeof(current_directory));
     if (choice == 1)
     {
@@ -587,7 +587,7 @@ void GetAccessiblePaths()
         int num_directory;
         scanf("%d", &num_directory);
         printf("Enter the paths for directories\n");
-        char paths[num_directory][MAX_PATH_LENGTH];
+        char paths[num_directory][PATH_MAX];
         for (int i = 0; i < num_directory; i++)
         {
             scanf("%s", paths[i]);
@@ -614,7 +614,7 @@ void GetAccessiblePaths()
         int num_files;
         scanf("%d", &num_files);
         printf("Enter the paths for files\n");
-        char files[num_files][MAX_PATH_LENGTH];
+        char files[num_files][PATH_MAX];
         for (int i = 0; i < num_files; i++)
         {
             scanf("%s", files[i]);

@@ -20,7 +20,6 @@
 
 #define NO_SUCH_PATH -20
 
-#define MAX_PATH_LENGTH 1024
 #define nms_ss_port 10045
 #define nms_client_port 10059
 #define ip_address "127.0.0.1"
@@ -29,27 +28,24 @@
 
 typedef struct MessageSS2NM
 {
-    char buffer[MAX_PATH_LENGTH];
+    char buffer[PATH_MAX];
     int port_for_clients;
     int port_for_naming_server;
     int port_for_nm_np;
 } MessageSS2NM;
 
-typedef struct MessageNMS2SS_COPY
+typedef struct MessageFormat
 {
-    char buffer[MAX_PATH_LENGTH];
+    char buffer[PATH_MAX];
     int operation;
-    char msg[5000];
-} MessageNMS2SS_COPY;
-
-typedef struct MessageClient
-{
-    char buffer[MAX_PATH_LENGTH];
-    int operation;
+    char msg[PATH_MAX];
     bool isADirectory;
-} MessageClient;
-typedef MessageClient MessageClient2SS;
-typedef MessageClient MessageClient2NM;
+} MessageFormat;
+typedef MessageFormat MessageNMS2SS_COPY;
+typedef MessageFormat MessageNMS2SS_WRITE;
+
+typedef MessageFormat MessageClient2SS;
+typedef MessageFormat MessageClient2NM;
 
 typedef struct metadata
 {

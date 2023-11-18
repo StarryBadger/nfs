@@ -1,6 +1,6 @@
 #include "headers.h"
 
-// char buffer[MAX_PATH_LENGTH];
+// char buffer[PATH_MAX];
 int can_enter = 0;
 struct ss_list
 {
@@ -117,7 +117,7 @@ void *ss_port_worker(void *arg)
     int server_sock, client_sock;
     struct sockaddr_in server_addr, client_addr;
     socklen_t addr_size;
-    //   char buffer[MAX_PATH_LENGTH];
+    //   char buffer[PATH_MAX];
     int n;
     // char port_str[6];
     // strcpy(port_str, argv[1]);
@@ -152,7 +152,7 @@ void *ss_port_worker(void *arg)
         exit(1);
     }
     printf("Listening...\n");
-    char buffer[MAX_PATH_LENGTH];
+    char buffer[PATH_MAX];
     while (1)
     {
         addr_size = sizeof(client_addr);
@@ -166,7 +166,7 @@ void *ss_port_worker(void *arg)
         }
         printf("[+]Storage server connected.\n");
 
-        bzero(buffer, MAX_PATH_LENGTH);
+        bzero(buffer, PATH_MAX);
         MessageSS2NM message;
         if (recv(client_sock, &message, sizeof(message), 0) < 0)
         {
@@ -227,7 +227,7 @@ void ss_is_alive_checker()
 }
 char *pathString(char **path_line, int size)
 {
-    char *p_string = (char *)malloc(sizeof(char) * 25000);
+    char *p_string = (char *)malloc(sizeof(char) * PATH_MAX);
     p_string[0] = '\0';
     int total_len = 0;
     for (int i = 0; i < size; i++)
@@ -235,6 +235,8 @@ char *pathString(char **path_line, int size)
         int len = strlen(path_line[i]);
         total_len += len;
         strcat(p_string, path_line[i]);
+        if(i!=size-1)
+        strcat(p_string,"/");
         p_string[total_len] = '\0';
     }
     return p_string;
@@ -259,8 +261,8 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node)
             //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
             return;
         }
-        char buffer[1024];
-        bzero(buffer, 1024);
+        char buffer[PATH_MAX];
+        bzero(buffer, PATH_MAX);
         if (recv(sock, buffer, sizeof(buffer), 0) < 0)
         {
             fprintf(stderr, "[-]Receive time error: %s\n", strerror(errno));
@@ -557,7 +559,8 @@ void *client_handler(void *arg)
         }
         else if (message.operation == COPY)
         {
-            // CopyPath2Path(message.buffer,);
+            CopyPath2Path(message.buffer,message.msg);
+
         }
     }
     close(clientSocket);
