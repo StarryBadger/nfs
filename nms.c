@@ -557,7 +557,7 @@ void *client_handler(void *arg)
                             if (SearchTrie(PathParent(message.buffer),temp->root)!=NULL)
                             {
                                 printf("IN CREATE\n");
-                                InsertTrie(message.buffer,temp->root);
+                                InsertTrie(message.buffer,temp->root,(int)(!message.isADirectory),1);
                                 PrintTrieLIkeAnActualTRee(temp->root,4);
                                 break;
                             }
@@ -567,7 +567,7 @@ void *client_handler(void *arg)
                         {
                             temp=storage_servers->head->next;
                             printf("IN CREATE\n");
-                            InsertTrie(message.buffer,temp->root);
+                            InsertTrie(message.buffer,temp->root,(int)(!message.isADirectory),1);
                             PrintTrieLIkeAnActualTRee(temp->root,4);
                         }   
                     }

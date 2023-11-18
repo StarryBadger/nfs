@@ -7,13 +7,14 @@ typedef struct TrieNode
     struct TrieNode *firstChild;
     struct TrieNode *sibling;
     int isFile;
+    int isAccessible;
 }TrieNode;
 
 void PrintTrieLIkeAnActualTRee(struct TrieNode *root, int level);
 
-TrieNode *createNode(char *directory);
+TrieNode *createNode(char *directory, int checkFile, int checkAcc);
 
-void InsertTrie(char *directory,TrieNode* root);
+void InsertTrie(char *directory,TrieNode* root, int checkFile, int checkAcc);
 
 TrieNode* SearchTrie(char *directory,TrieNode* root);
 

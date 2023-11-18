@@ -11,22 +11,23 @@ void PrintTrieLIkeAnActualTRee(struct TrieNode *root, int level)
     PrintTrieLIkeAnActualTRee(root->sibling, level);
 }
 
-TrieNode *createNode(char *directory)
+TrieNode *createNode(char *directory, int checkFile, int checkAcc)
 {
     struct TrieNode *newNode = (struct TrieNode *)malloc(sizeof(struct TrieNode));
     strcpy(newNode->directory, directory);
     newNode->firstChild = NULL;
     newNode->sibling = NULL;
-    newNode->isFile = 0;
+    newNode->isFile = checkFile;
+    newNode->isAccessible = checkAcc;
     return newNode;
 }
 
-void InsertTrie(char *directory, TrieNode *root)
+void InsertTrie(char *directory, TrieNode *root, int checkFile, int checkAcc)
 {
-    if (SearchTrie(directory, root) != NULL)
-    {
-        return;
-    }
+    // if (SearchTrie(directory, root) != NULL)
+    // {
+    //     return;
+    // }
     // char *directory_copy = strdup(directory);
     // char *directory_copy = (char *)malloc(sizeof(char) * 1000); 
     char directory_copy[100];
@@ -35,7 +36,7 @@ void InsertTrie(char *directory, TrieNode *root)
     TrieNode *temp = root;
     while (token != NULL)
     {
-        struct TrieNode *newNode = createNode(token);
+        struct TrieNode *newNode = createNode(token, 0, 0);
         if (temp->firstChild == NULL)
         {
             temp->firstChild = newNode;
@@ -58,7 +59,8 @@ void InsertTrie(char *directory, TrieNode *root)
         }
         token = strtok(NULL, "/");
     }
-    temp->isFile = 1;
+    temp->isAccessible = checkAcc;
+    temp->isFile = checkFile;
 }
 
 TrieNode *SearchTrie(char *directory, TrieNode *root)
@@ -91,11 +93,24 @@ void TrieToString(struct TrieNode *root, char *str)
     if (root == NULL)
         return;
     strcat(str, "(");
+
+    if(root->isFile == 1)
+        strcat(str, "F");
+    else
+        strcat(str, "D");
+
+    if(root->isAccessible == 1)
+        strcat(str, "A");
+    else
+        strcat(str, "N");
+
     strcat(str, root->directory);
     TrieToString(root->firstChild, str);
     strcat(str, ")");
     TrieToString(root->sibling, str);
 }
+
+
 
 TrieNode *StringToTrie(char *string)
 {
@@ -117,7 +132,17 @@ TrieNode *StringToTrie(char *string)
             if (string[(int)(ptr_in - temp) - 1] == '(')
             {
                 isChild = 1;
-                TrieNode *new = createNode(token);
+                TrieNode *new;
+                if(token[0]=='F' && token[1]=='N')
+                    new = createNode(token+2,1,0);
+                else if(token[0]=='F' && token[1]=='A')
+                    new = createNode(token+2,1,1);
+                else if(token[0]=='D' && token[1]=='N')
+                    new = createNode(token+2,0,0);
+                else if(token[0]=='D' && token[1]=='A')
+                    new = createNode(token+2,0,1);
+
+                // TrieNode *new = createNode(token);
                 return_root=new;
                 push(&head, new);
             }
@@ -128,14 +153,30 @@ TrieNode *StringToTrie(char *string)
             {
                 if(string[(int)(ptr_in-temp)-1]=='(')
                 {
-                    TrieNode* new=createNode(token);
+                    TrieNode* new;
+                    if(token[0]=='F' && token[1]=='N')
+                        new = createNode(token+1,1,0);
+                    else if(token[0]=='F' && token[1]=='A')
+                        new = createNode(token+2,1,1);
+                    else if(token[0]=='D' && token[1]=='N')
+                        new = createNode(token+2,0,0);
+                    else if(token[0]=='D' && token[1]=='A')
+                        new = createNode(token+2,0,1);
                     head->node->firstChild=new;
                     push(&head,new);
                 }
                 else{
                     int count=0;
                     isChild=0;
-                    TrieNode* new=createNode(token);
+                    TrieNode* new;
+                    if(token[0]=='F' && token[1]=='N')
+                        new = createNode(token+1,1,0);
+                    else if(token[0]=='F' && token[1]=='A')
+                        new = createNode(token+2,1,1);
+                    else if(token[0]=='D' && token[1]=='N')
+                        new = createNode(token+2,0,0);
+                    else if(token[0]=='D' && token[1]=='A')
+                        new = createNode(token+2,0,1);
                     head->node->firstChild=new;
                     node_pointer=new;
                     while(((int)(ptr_in-temp)+(count) < strlen(string))  && string[(int)(ptr_in-temp)+(count)]==')')
@@ -149,14 +190,30 @@ TrieNode *StringToTrie(char *string)
                 if(string[(int)(ptr_in-temp)-1]=='(')
                 {
                     isChild=1;
-                    TrieNode* new=createNode(token);
+                    TrieNode* new;
+                    if(token[0]=='F' && token[1]=='N')
+                        new = createNode(token+2,1,0);
+                    else if(token[0]=='F' && token[1]=='A')
+                        new = createNode(token+2,1,1);
+                    else if(token[0]=='D' && token[1]=='N')
+                        new = createNode(token+2,0,0);
+                    else if(token[0]=='D' && token[1]=='A')
+                        new = createNode(token+2,0,1);
                     node_pointer->sibling=new;
                     push(&head,new);
                 }
                 else{
                     int count=0;
                     isChild=0;
-                    TrieNode*new=createNode(token);
+                    TrieNode*new;
+                    if(token[0]=='F' && token[1]=='N')
+                        new = createNode(token+2,1,0);
+                    else if(token[0]=='F' && token[1]=='A')
+                        new = createNode(token+2,1,1);
+                    else if(token[0]=='D' && token[1]=='N')
+                        new = createNode(token+2,0,0);
+                    else if(token[0]=='D' && token[1]=='A')
+                        new = createNode(token+2,0,1);
                     node_pointer->sibling=new;
                     node_pointer=new;
                     while(((int)(ptr_in-temp)+(count) < strlen(string))  && string[(int)(ptr_in-temp)+(count)]==')')
@@ -227,13 +284,18 @@ void PrintTrie(struct TrieNode *root)
 // {
 //     TrieNode *root = NULL;
 
-//     root = createNode("ss1");
-//     InsertTrie("root/dir1/dir2/dir3",root);
-//     InsertTrie("root/dir1/dir5/dir6",root);
-//     InsertTrie("root/dir1/dir2/dir4",root);
-//     InsertTrie("root/dir1/dir5/dir7",root);
-//     InsertTrie("root/dir2/dir6/dir9",root);
-//     InsertTrie("root/dir2/dir6/dir10",root);
+//     root = createNode("ss1", 0, 1);
+//     // InsertTrie("root/dir1/dir2/dir3",root,0,0);
+//     // InsertTrie("root/dir1/dir5/dir6",root,0,0);
+//     // InsertTrie("root/dir1/dir2/dir4",root,0,1);
+//     // InsertTrie("root/dir2/dir6/fil9",root,1,1);
+//     // InsertTrie("root/dir1/dir5/dir7",root,0,1);
+//     // InsertTrie("root/dir2/dir6/fil10",root,1,1);
+
+//     InsertTrie("dir1/dir2/dir3/dir4/fil1", root, 1, 1);
+
+//     InsertTrie("dir1/dir2/dir3/dir4", root, 0, 1);
+//     InsertTrie("dir1/dir2", root, 0, 1);
 
 //     // InsertTrie("a/b/e", root);
 //     // InsertTrie("a/c");
@@ -249,8 +311,8 @@ void PrintTrie(struct TrieNode *root)
 //     TrieToString(root, str);
 //     printf("%s\n", str);
 
-//     // //new root variable
-//     // printf("new root\n");
+//     //new root variable
+//     printf("new root\n");
 //     struct TrieNode *root2 = NULL;
 //     TrieNode* newRoot = StringToTrie(str);
 

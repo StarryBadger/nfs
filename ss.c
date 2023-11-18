@@ -421,7 +421,7 @@ void *NMServerConnection(void *arg)
                 err_code = FILE_UNABLE_TO_CREATE;
                 // return NULL;
             }
-            InsertTrie(message.buffer, ssTrie);
+            // InsertTrie(message.buffer, ssTrie); //SHREYANSH
             err_code = NO_ERROR;
 
             if (send(nms_sock, &err_code, sizeof(err_code), 0) < 0)
@@ -448,7 +448,7 @@ void *NMServerConnection(void *arg)
                 err_code = DIRECTORY_UNABLE_TO_CREATE;
                 // return NULL;
             }
-            InsertTrie(message.buffer, ssTrie);
+            // InsertTrie(message.buffer, ssTrie); // SHREYANSH
             err_code = NO_ERROR;
 
             if (send(nms_sock, &err_code, sizeof(err_code), 0) < 0)
@@ -577,7 +577,7 @@ void GetAccessiblePaths()
         // sprintf(current_directory, "%s/%s", current_directory, "ss1");
         char port_in_string[10];
         sprintf(port_in_string, "%d", port_for_clients);
-        ssTrie = createNode(port_in_string);
+        ssTrie = createNode(port_in_string, 0, 1);
         lookFor(current_directory, strlen(current_directory), ssTrie);
     }
     else if (choice == 2)
@@ -603,10 +603,10 @@ void GetAccessiblePaths()
         }
         char port_in_string[10];
         sprintf(port_in_string, "%d", port_for_clients);
-        ssTrie = createNode(port_in_string);
+        ssTrie = createNode(port_in_string, 0, 1);
         for (int i = 0; i < num_directory; i++)
         {
-            InsertTrie(paths[i] + strlen(current_directory), ssTrie);
+            InsertTrie(paths[i] + strlen(current_directory), ssTrie, 0, 1);
             lookFor(paths[i], strlen(current_directory), ssTrie);
         }
 
@@ -621,7 +621,7 @@ void GetAccessiblePaths()
         }
         for (int i = 0; i < num_files; i++)
         {
-            InsertTrie(files[i], ssTrie);
+            InsertTrie(files[i], ssTrie, 1, 1);
         }
 
         // PrintTrie(ssTrie);

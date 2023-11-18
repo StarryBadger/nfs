@@ -57,7 +57,7 @@ void lookFor(char *path, int pathlength, TrieNode *root)
             printf("%s\n", pathBranch + pathlength);
             strcpy(TEMP_BUFF, pathBranch + pathlength);
             // appendCharToFront(TEMP_BUFF,'D');
-            InsertTrie(TEMP_BUFF, root);
+            InsertTrie(TEMP_BUFF, root, 0, 1);
             lookFor(pathBranch, pathlength, root);
         }
         else if (S_ISREG(st.st_mode))
@@ -65,7 +65,7 @@ void lookFor(char *path, int pathlength, TrieNode *root)
             printf("%s\n", pathBranch + pathlength);
             strcpy(TEMP_BUFF, pathBranch + pathlength);
             // appendCharToFront(TEMP_BUFF,'F');
-            InsertTrie(TEMP_BUFF, root);
+            InsertTrie(TEMP_BUFF, root, 1, 1);
         }
     }
     closedir(directory);
