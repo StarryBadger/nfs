@@ -153,6 +153,104 @@ void *naming_server_informer_worker(void *arg)
     return NULL;
 }
 
+void Read_ss(int *err_code, int client_sock, MessageClient2SS message)
+{
+    int fd = open(message.buffer, O_RDONLY);
+    if (fd == -1)
+    {
+        fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
+        *err_code = FILE_NOT_READABLE;
+        // return NULL;
+    }
+
+    if (send(client_sock, err_code, sizeof(*err_code), 0) < 0)
+    {
+        fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+        if (close(client_sock) < 0)
+            fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+        // exit(1);
+    }
+
+    if (*err_code == FILE_NOT_READABLE)
+        return NULL;
+
+    char buffer[1024];
+    int bytes_read;
+
+    while ((bytes_read = read(fd, buffer, 1024)) > 0)
+    {
+        buffer[bytes_read] = '\0';
+        printf("Sending message to client: %s\n", buffer);
+        if (send(client_sock, buffer, strlen(buffer), 0) < 0)
+        {
+            fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+            if (close(client_sock) < 0)
+                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+            // exit(1);
+            return NULL;
+        }
+    }
+
+    strcpy(buffer, "@Message end@");
+    if (send(client_sock, buffer, strlen(buffer), 0) < 0)
+    {
+        fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+        if (close(client_sock) < 0)
+            fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+        // exit(1);
+        return NULL;
+    }
+
+    printf("\n");
+    close(fd);
+}
+
+void Write_ss(int *err_code, int client_sock, MessageClient2SS message)
+{
+    int fd = open(message.buffer, O_WRONLY | O_TRUNC);
+    if (fd == -1)
+    {
+        fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
+        *err_code = FILE_NOT_WRITABLE;
+    }
+    char buffer[1024];
+    int bytes_read;
+
+    if(send(client_sock, err_code, sizeof(*err_code), 0) < 0)
+    {
+        fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+        if (close(client_sock) < 0)
+            fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+        // exit(1);
+    }
+
+    if (*err_code == FILE_NOT_WRITABLE)
+        return NULL;
+
+    // if(recv(client_sock, buffer, sizeof(buffer), 0) < 0)
+    // {
+    //     fprintf(stderr, "[-]Receive error: %s\n", strerror(errno)); // ERROR HANDLING
+    //     if (close(client_sock) < 0)
+    //         fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+    //     // exit(1);
+    // }
+
+    strcpy(buffer,"one 1");
+    
+    printf("Received message from client: %s\n", buffer);
+    if(write(fd, buffer, strlen(buffer)) < 0)
+    {
+        fprintf(stderr, "[-]Write error: %s\n", strerror(errno)); // ERROR HANDLING
+        if (close(client_sock) < 0)
+            fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+        // exit(1);
+    }
+    
+
+    printf("\n");
+    close(fd);
+}
+
 void *CLientServerConnection(void *arg)
 {
     int client_sock = *(int *)arg;
@@ -171,61 +269,12 @@ void *CLientServerConnection(void *arg)
 
     if (message.operation == READ)
     {
-        int fd = open(message.buffer, O_RDONLY);
-        if (fd == -1)
-        {
-            fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
-            err_code = FILE_NOT_READABLE;
-            // return NULL;
-        }
-
-        if (send(client_sock, &err_code, sizeof(err_code), 0) < 0)
-        {
-            fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
-            if (close(client_sock) < 0)
-                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
-            // exit(1);
-        }
-
-        if (err_code == FILE_NOT_READABLE)
-            return NULL;
-
-        char buffer[1024];
-        int bytes_read;
-
-        while ((bytes_read = read(fd, buffer, 1024)) > 0)
-        {
-            buffer[bytes_read] = '\0';
-            printf("Sending message to client: %s\n", buffer);
-            if (send(client_sock, buffer, strlen(buffer), 0) < 0)
-            {
-                fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
-                if (close(client_sock) < 0)
-                    fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
-                exit(1);
-            }
-        }
-        printf("\n");
-        close(fd);
+        Read_ss(&err_code, client_sock, message);
     }
 
     if (message.operation == WRITE)
     {
-        int fd = open(message.buffer, O_WRONLY);
-        if (fd == -1)
-        {
-            fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
-            return NULL;
-        }
-        char buffer[1024];
-        int bytes_read;
-        while ((bytes_read = read(fd, buffer, 1024)) > 0)
-        {
-            buffer[bytes_read] = '\0';
-            printf("%s", buffer);
-        }
-        printf("\n");
-        close(fd);
+        Write_ss(&err_code, client_sock, message);
     }
     if (message.operation == METADATA)
     {
