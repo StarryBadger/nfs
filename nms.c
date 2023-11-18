@@ -72,7 +72,7 @@ void InsertNewSS(int ssTocPortNo, int ssTonmsPortNo, int ssToNMmpport, TrieNode 
     new->ssTonms_port = ssTonmsPortNo;
     new->ssTonmnp_port = ssToNMmpport;
     new->root = ssRoot;
-    PrintTrieLIkeAnActualTRee(new->root,4);
+    PrintTrieLIkeAnActualTRee(new->root, 4);
     return;
 }
 void RemoveSS(int index)
@@ -426,6 +426,7 @@ void *client_handler(void *arg)
         return NULL;
     }
     printf("Initial Request received from client: %d\n", initialRequest);
+    logThis(LOG_INFO, CLIENT_NM, "Initial Request");
     if (initialRequest == INITIAL_MESSAGE)
     {
         initialAck = INITIAL_ACK_ACCEPT;
@@ -482,8 +483,8 @@ void *client_handler(void *arg)
             {
                 if (((message.operation == CREATE) && SearchTrie(PathParent(message.buffer), temp->root) != NULL) || (message.operation == DELETE && SearchTrie(message.buffer, temp->root) != NULL))
                 {
-                    if((message.operation==CREATE && !SearchTrie(PathParent(message.buffer),temp->root)->isAccessible) || (message.operation==DELETE && !SearchTrie(message.buffer,temp->root)->isAccessible))
-                    break;
+                    if ((message.operation == CREATE && !SearchTrie(PathParent(message.buffer), temp->root)->isAccessible) || (message.operation == DELETE && !SearchTrie(message.buffer, temp->root)->isAccessible))
+                        break;
                     port_to_ss = temp->ssTonmnp_port;
                     validpath = 1;
                     break;
@@ -554,35 +555,35 @@ void *client_handler(void *arg)
                 {
                     if (message.operation == CREATE)
                     {
-                        temp=storage_servers->head->next;
+                        temp = storage_servers->head->next;
                         while (temp != NULL)
                         {
-                            if (SearchTrie(PathParent(message.buffer),temp->root)!=NULL)
+                            if (SearchTrie(PathParent(message.buffer), temp->root) != NULL)
                             {
                                 printf("IN CREATE\n");
-                                InsertTrie(message.buffer,temp->root,(int)(!message.isADirectory),1);
-                                PrintTrieLIkeAnActualTRee(temp->root,4);
+                                InsertTrie(message.buffer, temp->root, (int)(!message.isADirectory), 1);
+                                PrintTrieLIkeAnActualTRee(temp->root, 4);
                                 break;
                             }
                             temp = temp->next;
                         }
-                        if (strcmp(message.buffer,PathParent(message.buffer)) == 0)
+                        if (strcmp(message.buffer, PathParent(message.buffer)) == 0)
                         {
-                            temp=storage_servers->head->next;
+                            temp = storage_servers->head->next;
                             printf("IN CREATE\n");
-                            InsertTrie(message.buffer,temp->root,(int)(!message.isADirectory),1);
-                            PrintTrieLIkeAnActualTRee(temp->root,4);
-                        }   
+                            InsertTrie(message.buffer, temp->root, (int)(!message.isADirectory), 1);
+                            PrintTrieLIkeAnActualTRee(temp->root, 4);
+                        }
                     }
-                    else if(message.operation==DELETE)
+                    else if (message.operation == DELETE)
                     {
-                        temp=storage_servers->head->next;
+                        temp = storage_servers->head->next;
                         while (temp != NULL)
                         {
-                            if (SearchTrie(message.buffer,temp->root)!=NULL)
+                            if (SearchTrie(message.buffer, temp->root) != NULL)
                             {
-                                DeleteTrie(message.buffer,temp->root);
-                                PrintTrieLIkeAnActualTRee(temp->root,4);
+                                DeleteTrie(message.buffer, temp->root);
+                                PrintTrieLIkeAnActualTRee(temp->root, 4);
                                 break;
                             }
                             temp = temp->next;
