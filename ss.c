@@ -138,8 +138,9 @@ void *naming_server_informer_worker(void *arg)
     TrieToString(ssTrie, message.buffer);
     message.port_for_clients = port_for_clients;
     message.port_for_naming_server = port_for_naming_server;
+    message.port_for_nm_np = port_for_naming_server_np;
 
-    printf("Sending message to server: %d %d\n", message.port_for_clients, message.port_for_naming_server);
+    printf("Sending message to server: %d %d %d\n", message.port_for_clients, message.port_for_naming_server,message.port_for_nm_np);
 
     if (send(ss_sock, &message, sizeof(message), 0) < 0)
     {

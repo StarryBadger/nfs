@@ -7,6 +7,7 @@ struct ss_list
     int index;
     int ssToc_port;
     int ssTonms_port;
+    int ssTonmnp_port;
     struct ss_list *next;
     struct ss_list *prev;
     TrieNode *root;
@@ -55,7 +56,7 @@ void init_storage_servers()
     can_enter = 1;
 }
 
-void InsertNewSS(int ssTocPortNo, int ssTonmsPortNo, TrieNode *ssRoot)
+void InsertNewSS(int ssTocPortNo, int ssTonmsPortNo, int ssToNMmpport, TrieNode *ssRoot)
 {
     struct ss_list *temp;
     temp = storage_servers->head;
@@ -69,6 +70,7 @@ void InsertNewSS(int ssTocPortNo, int ssTonmsPortNo, TrieNode *ssRoot)
     storage_servers->total_servers++;
     new->ssToc_port = ssTocPortNo;
     new->ssTonms_port = ssTonmsPortNo;
+    new->ssTonmnp_port = ssToNMmpport;
     new->root = ssRoot;
     return;
 }
@@ -177,9 +179,10 @@ void *ss_port_worker(void *arg)
         printf("Message from storage server: %s\n", message.buffer);
         printf("Port for clients: %d\n", message.port_for_clients);
         printf("Port for nms: %d\n", message.port_for_naming_server);
+        printf("Port for nm_np: %d\n", message.port_for_nm_np);
 
         // PrintTrie(StringToTrie(message.buffer));
-        InsertNewSS(message.port_for_clients, message.port_for_naming_server, StringToTrie(message.buffer));
+        InsertNewSS(message.port_for_clients, message.port_for_naming_server, message.port_for_nm_np ,StringToTrie(message.buffer));
     }
 }
 
@@ -473,9 +476,9 @@ void *client_handler(void *arg)
             temp = storage_servers->head->next;
             while (temp != NULL)
             {
-                if (SearchTrie(PathParent(message.buffer), temp->root) != NULL)
+                if ((message.operation==CREATE && SearchTrie(PathParent(message.buffer), temp->root) != NULL) || (message.operation==DELETE && SearchTrie(message.buffer, temp->root) != NULL))
                 {
-                    port_to_ss = temp->ssTonms_port;
+                    port_to_ss = temp->ssTonmnp_port;
                     validpath = 1;
                     break;
                 }
