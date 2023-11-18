@@ -140,7 +140,7 @@ void *naming_server_informer_worker(void *arg)
     message.port_for_naming_server = port_for_naming_server;
     message.port_for_nm_np = port_for_naming_server_np;
 
-    printf("Sending message to server: %d %d %d\n", message.port_for_clients, message.port_for_naming_server,message.port_for_nm_np);
+    printf("Sending message to server: %d %d %d\n", message.port_for_clients, message.port_for_naming_server, message.port_for_nm_np);
 
     if (send(ss_sock, &message, sizeof(message), 0) < 0)
     {
@@ -156,6 +156,7 @@ void *naming_server_informer_worker(void *arg)
 void *CLientServerConnection(void *arg)
 {
     int client_sock = *(int *)arg;
+    int err_code = NO_ERROR;
     MessageClient2SS message;
     bzero(message.buffer, MAX_PATH_LENGTH);
 
@@ -171,8 +172,6 @@ void *CLientServerConnection(void *arg)
     if (message.operation == READ)
     {
         int fd = open(message.buffer, O_RDONLY);
-        int err_code;
-        err_code = NO_ERROR;
         if (fd == -1)
         {
             fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
@@ -185,7 +184,7 @@ void *CLientServerConnection(void *arg)
             fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
             if (close(client_sock) < 0)
                 fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
-            exit(1);
+            // exit(1);
         }
 
         if (err_code == FILE_NOT_READABLE)
@@ -228,7 +227,56 @@ void *CLientServerConnection(void *arg)
         printf("\n");
         close(fd);
     }
+    if (message.operation == METADATA)
+    {
+        struct stat sb;
+        metadata fileInfo;
+        if (lstat(message.buffer, &sb) == -1)
+        {
+            fprintf(stderr, "\x1b[31mError acessing the metadata of %s.\n\n\x1b[0m", message.buffer); // ERROR HANDLING
+            err_code = METADATA_INACESSIBLE;
+        }
+        if (send(client_sock, &err_code, sizeof(err_code), 0) < 0)
+        {
+            fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+            if (close(client_sock) < 0)
+                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+            // exit(1);
+        }
+        if (err_code != NO_ERROR)
+        {
+            return NULL;
+        }
 
+        fileInfo.inodeNumber = (uintmax_t)sb.st_ino;
+        fileInfo.mode = (uintmax_t)sb.st_mode;
+        fileInfo.linkCount = (uintmax_t)sb.st_nlink;
+        fileInfo.uid = (uintmax_t)sb.st_uid;
+        fileInfo.gid = (uintmax_t)sb.st_gid;
+        fileInfo.preferredBlockSize = (intmax_t)sb.st_blksize;
+        fileInfo.fileSize = (intmax_t)sb.st_size;
+        fileInfo.blocksAllocated = (intmax_t)sb.st_blocks;
+        fileInfo.lastStatusChange = sb.st_ctime;
+        fileInfo.lastFileAccess = sb.st_atime;
+        fileInfo.lastFileModification = sb.st_mtime;
+        metadata *metadata = &fileInfo;
+        printf("I-node number:                      %llu\n", metadata->inodeNumber);
+        printf("Mode (permissions: octal):          %llo (octal)\n", metadata->mode);
+        printf("Link count:                         %llu\n", metadata->linkCount);
+        printf("Ownership:                          UID=%llu   GID=%llu\n", metadata->uid, metadata->gid);
+        printf("File size:                          %lld bytes\n", metadata->fileSize);
+        printf("Preferred I/O block size:           %lld bytes\n", metadata->preferredBlockSize);
+        printf("Blocks allocated:                   %lld\n", metadata->blocksAllocated);
+        printf("Last file access:                   %s", ctime(&metadata->lastFileAccess));
+        printf("Last file modification:             %s", ctime(&metadata->lastFileModification));
+        printf("Last status change:                 %s", ctime(&metadata->lastStatusChange));
+        if (send(client_sock, &fileInfo, sizeof(fileInfo), 0) < 0)
+        {
+            fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+            if (close(client_sock) < 0)
+                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+        }
+    }
     if (message.operation == COPY)
     {
     }
@@ -285,7 +333,7 @@ void *NMServerConnection(void *arg)
         exit(1);
     }
     printf("listening to respond to clients\n");
-    
+
     while (1)
     {
         addr_size = sizeof(nms_addr);
@@ -541,7 +589,7 @@ int main()
     pthread_t clients_handler, naming_server_informer, naming_server_responder;
     sem_init(&portc_lock, 0, 0);
     sem_init(&portnms_lock, 0, 0);
-    sem_init(&portnmsNp_lock,0,0);
+    sem_init(&portnmsNp_lock, 0, 0);
     pthread_create(&clients_handler, NULL, clients_handler_worker, NULL);
     pthread_create(&naming_server_responder, NULL, naming_server_responder_worker, NULL);
     pthread_create(&naming_server_informer, NULL, naming_server_informer_worker, NULL);

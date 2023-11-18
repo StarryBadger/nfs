@@ -21,6 +21,7 @@ typedef int errcode;
 #define FILE_SIZE_EXCEEDED 24  
 #define FILE_UNABLE_TO_CREATE 25
 #define DIRECTORY_UNABLE_TO_CREATE 26
+#define METADATA_INACESSIBLE 27
 
 
 // Client Request Errors

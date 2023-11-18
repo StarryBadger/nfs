@@ -25,6 +25,8 @@
 #define nms_client_port 10059
 #define ip_address "127.0.0.1"
 
+#define METADATA_STR_MAX 100
+
 typedef struct MessageSS2NM
 {
     char buffer[MAX_PATH_LENGTH];
@@ -38,7 +40,7 @@ typedef struct MessageNMS2SS_COPY
     char buffer[MAX_PATH_LENGTH];
     int operation;
     char msg[5000];
-}MessageNMS2SS_COPY;
+} MessageNMS2SS_COPY;
 
 typedef struct MessageClient
 {
@@ -48,11 +50,20 @@ typedef struct MessageClient
 } MessageClient;
 typedef MessageClient MessageClient2SS;
 typedef MessageClient MessageClient2NM;
+
 typedef struct metadata
 {
-    uint64_t fileSize;    // Size of the file in bytes
-    uint32_t permissions; // File permissions
-    uint64_t createTime;  // Timestamp: when the file was created
-    uint64_t modifyTime;  // Timestamp: the last modification time
-}metadata;
+    uintmax_t inodeNumber;
+    uintmax_t mode;
+    uintmax_t linkCount;
+    uintmax_t uid;
+    uintmax_t gid;
+    intmax_t preferredBlockSize;
+    intmax_t fileSize;
+    intmax_t blocksAllocated;
+    time_t lastStatusChange;
+    time_t lastFileAccess;
+    time_t lastFileModification;
+
+} metadata;
 #endif

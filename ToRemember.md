@@ -5,3 +5,4 @@
 - remeber to write D after every slash except the last one which may be D or F
 - remeber to do the above everywhere the trie is inserted into
 - SHAUNAK add CREATE_DIR as list of options for client
+https://man7.org/linux/man-pages/man2/stat.2.html
