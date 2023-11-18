@@ -72,12 +72,20 @@ void printMetadata(metadata *metadata)
     printf("Last status change:                 %s", ctime(&metadata->lastStatusChange));
     return;
 }
-errcode handleReadCommunication()
+errcode handleReadCommunication(int socketSS)
 {
     return NO_ERROR;
 }
-errcode handleWriteCommunication()
+errcode handleWriteCommunication(int socketSS)
 {
+    char toWrite[PATH_MAX];
+    printf("Enter text to be written: ");
+    scanf("%s",toWrite);
+    if (send(socketSS, &toWrite, sizeof(toWrite), 0) < 0)
+    {
+        fprintf(stderr, "[-]Send error: %s\n", strerror(errno)); // ERROR HANDLING
+        return NETWORK_ERROR;
+    }
     return NO_ERROR;
 }
 errcode handleMetadataCommunication(int socketSS)
@@ -138,9 +146,9 @@ errcode handleSSCommunication(int socketNM, MessageClient2SS message)
     switch (message.operation)
     {
     case READ:
-        return handleReadCommunication();
+        return handleReadCommunication(socketSS);
     case WRITE:
-        return handleWriteCommunication();
+        return handleWriteCommunication(socketSS);
     case METADATA:
         return handleMetadataCommunication(socketSS);
     default:
