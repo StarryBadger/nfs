@@ -469,7 +469,7 @@ void *client_handler(void *arg)
                 fprintf(stderr, "[-]Sendtime error: %s\n", strerror(errno));
             }
         }
-        else if (message.operation == CREATE || message.operation == DELETE)
+        else if (message.operation == CREATE || message.operation == CREATE_DIR || message.operation == DELETE)
         {
             struct ss_list *temp;
             int validpath = 0;
@@ -477,7 +477,8 @@ void *client_handler(void *arg)
             temp = storage_servers->head->next;
             while (temp != NULL)
             {
-                if ((message.operation == CREATE && SearchTrie(PathParent(message.buffer), temp->root) != NULL) || (message.operation == DELETE && SearchTrie(message.buffer, temp->root) != NULL))
+                if (((message.operation == CREATE || message.operation == CREATE_DIR) && SearchTrie(PathParent(message.buffer), temp->root) != NULL) 
+                || (message.operation == DELETE && SearchTrie(message.buffer, temp->root) != NULL))
                 {
                     port_to_ss = temp->ssTonmnp_port;
                     validpath = 1;
@@ -485,11 +486,11 @@ void *client_handler(void *arg)
                 }
                 temp = temp->next;
             }
-            if(message.operation == CREATE && strcmp(message.buffer,PathParent(message.buffer))==0)
+            if((message.operation == CREATE || message.operation == CREATE_DIR) && strcmp(message.buffer,PathParent(message.buffer))==0)
             {
                 validpath=1;
                 temp=storage_servers->head->next;
-                if(temp!=NULL)
+                if(temp!=NULL)  
                     port_to_ss=temp->ssTonmnp_port;
                 else
                     validpath=0;

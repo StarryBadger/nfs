@@ -316,7 +316,6 @@ void *NMServerConnection(void *arg)
 
         if (message.operation == CREATE)
         {
-            printf("IN create\n");
             int err_code;
             int fd = open(message.buffer, O_CREAT | O_WRONLY, 0644);
             if (fd == -1)
@@ -343,29 +342,29 @@ void *NMServerConnection(void *arg)
             close(fd);
         }
 
-        // if (message.operation == CREATE_DIR)
-        // {
-        //     int err_code;
-        //     if (mkdir(message.buffer, 0777) == -1)
-        //     {
-        //         fprintf(stderr, "\x1b[31mCould not create %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
-        //         err_code = DIRECTORY_UNABLE_TO_CREATE;
-        //         // return NULL;
-        //     }
-        //     InsertTrie(message.buffer, ssTrie);
-        //     err_code = NO_ERROR;
+        if (message.operation == CREATE_DIR)
+        {
+            int err_code;
+            if (mkdir(message.buffer, 0777) == -1)
+            {
+                fprintf(stderr, "\x1b[31mCould not create %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
+                err_code = DIRECTORY_UNABLE_TO_CREATE;
+                // return NULL;
+            }
+            InsertTrie(message.buffer, ssTrie);
+            err_code = NO_ERROR;
 
-        //     if (send(nm_sock, &err_code, sizeof(err_code), 0) < 0)
-        //     {
-        //         fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
-        //         if (close(client_sock) < 0)
-        //             fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
-        //         exit(1);
-        //     }
+            if (send(nms_sock, &err_code, sizeof(err_code), 0) < 0)
+            {
+                fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+                if (close(nms_sock) < 0)
+                    fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+                exit(1);
+            }
 
-        //     if (err_code == DIRECTORY_UNABLE_TO_CREATE)
-        //         return NULL;
-        // }
+            if (err_code == DIRECTORY_UNABLE_TO_CREATE)
+                return NULL;
+        }
 
         if (message.operation == DELETE)
         {
