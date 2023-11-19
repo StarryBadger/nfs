@@ -214,25 +214,31 @@ void Write_ss(int *err_code, int client_sock, MessageClient2SS message)
     if (*err_code == FILE_NOT_WRITABLE)
         return NULL;
 
-    if (recv(client_sock, buffer, sizeof(buffer), 0) < 0)
+
+    int bytesRead;
+
+    while ((bytesRead = recv(client_sock, buffer, sizeof(buffer), 0)) > 0)
     {
-        fprintf(stderr, "[-]Receive error: %s\n", strerror(errno)); // ERROR HANDLING
-        if (close(client_sock) < 0)
-            fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
-        // exit(1);
-    }
+        // fprintf(stderr, "[-]Receive error: %s\n", strerror(errno)); // ERROR HANDLING
+        // if (close(client_sock) < 0)
+        //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+        // // exit(1);
+    // }
 
     // strcpy(buffer,"one 1");
 
-    printf("Received message from client: %s\n", buffer);
-    if (write(fd, buffer, strlen(buffer)) < 0)
-    {
-        fprintf(stderr, "[-]Write error: %s\n", strerror(errno)); // ERROR HANDLING
-        if (close(client_sock) < 0)
-            fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
-        // exit(1);
-    }
+        printf("Received message from client: %s\n", buffer);
+        if (write(fd, buffer, strlen(buffer)) < 0)
+        {
+            fprintf(stderr, "[-]Write error: %s\n", strerror(errno)); // ERROR HANDLING
+            if (close(client_sock) < 0)
+                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+            // exit(1);
+        }
 
+    }
+    if(bytes_read<0)
+        closeSocket(client_sock);
     printf("\n");
     close(fd);
 }
