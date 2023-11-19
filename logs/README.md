@@ -1,0 +1,1 @@
+# logs are saved for each session in the format yyyy-mm-dd|HH:MM:SS
