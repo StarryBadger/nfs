@@ -263,12 +263,6 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node)
         }
         char buffer[PATH_MAX];
         bzero(buffer, PATH_MAX);
-        if (recv(sock, buffer, sizeof(buffer), 0) < 0)
-        {
-            fprintf(stderr, "[-]Receive time error: %s\n", strerror(errno));
-            return;
-        }
-
         strcpy(msg.buffer, pathString(path_line, index + 1));
         msg.operation = CREATE;
         printf("Sending message to server to read: %s %d\n", msg.buffer, msg.operation);
@@ -280,17 +274,25 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node)
             //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
             return;
         }
-        MessageNMS2SS_COPY msg_to_send;
-        strcpy(msg_to_send.msg, buffer);
-        msg_to_send.operation = WRITE;
-        strcpy(msg_to_send.buffer, pathString(path_line, index + 1));
-        printf("Sending message to server to write: %s  %s  %d\n", msg_to_send.buffer, msg_to_send.msg, msg_to_send.operation);
-        if (send(sock2, &msg_to_send, sizeof(msg_to_send), 0) < 0)
+        int bytesread;
+        while ((bytesread = recv(sock, buffer, sizeof(buffer), 0)) > 0)
         {
-            fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
-            // if (close(sock) < 0)
-            //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-            return;
+            MessageNMS2SS_COPY msg_to_send;
+            strcpy(msg_to_send.msg, buffer);
+            msg_to_send.operation = WRITE;
+            strcpy(msg_to_send.buffer, pathString(path_line, index + 1));
+            printf("Sending message to server to write: %s  %s  %d\n", msg_to_send.buffer, msg_to_send.msg, msg_to_send.operation);
+            if (send(sock2, &msg_to_send, sizeof(msg_to_send), 0) < 0)
+            {
+                fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
+                // if (close(sock) < 0)
+                //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+                return;
+            }
+        }
+        if(bytesread<0)
+        {
+            return ;
         }
     }
     else
@@ -427,7 +429,7 @@ void *client_handler(void *arg)
         }
     }
     printf("Initial Request received from client: %d\n", initialRequest);
-    logThis(logfile, LOG_INFO, CLIENT_NM, "Initial Request %d [PORT: %d IP:%d]", initialRequest,nms_client_port,ip_address);
+    logThis(logfile, LOG_INFO, CLIENT_NM, "Initial Request %d [PORT: %d IP:%d]", initialRequest, nms_client_port, ip_address);
     if (initialRequest == INITIAL_MESSAGE)
     {
         initialAck = INITIAL_ACK_ACCEPT;
@@ -444,7 +446,7 @@ void *client_handler(void *arg)
         close(clientSocket);
         return NULL;
     }
-    logThis(logfile, LOG_INFO, NM_CLIENT, "Initial Acknowledgement %d [PORT: %d IP: %d]", initialAck,nms_client_port, ip_address);
+    logThis(logfile, LOG_INFO, NM_CLIENT, "Initial Acknowledgement %d [PORT: %d IP: %d]", initialAck, nms_client_port, ip_address);
     printf("Acknowledgment sent to client: %d\n", initialAck);
     while (1)
     {
