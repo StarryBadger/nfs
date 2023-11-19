@@ -201,6 +201,8 @@ void askFileOrDirectory(MessageClient2NM *message)
 int main()
 {
     struct sockaddr_in addr;
+    MessageClient2NM message;
+    errcode errorStatus;
     int mySocket = initSocket();
     memset(&addr, '\0', sizeof(addr));
     addr.sin_family = AF_INET;
@@ -238,7 +240,6 @@ int main()
     while (1)
     {
         // We prompt user for operation number (1 through 6)
-        MessageClient2NM message;
         printf("\nEnter operation number (1-7):\n");
         printf("1. CREATE - Create a new file/folder\n");
         printf("2. READ - Read the content of a file\n");
@@ -257,9 +258,16 @@ int main()
             askFileOrDirectory(&message);
         }
         printOperationMessage(message);
-        if (message.operation != 7)
+        if (message.operation == COPY)
         {
-            printf("Enter file path\n");
+            printf("Source path: ");
+            scanf("%s", message.buffer);
+            printf("Destination path: ");
+            scanf("%s", message.msg);
+        }
+        else if (message.operation != TERMINATE)
+        {
+            printf("Enter file path: ");
             scanf("%s", message.buffer);
         }
         // Send operation number to the server
@@ -276,7 +284,8 @@ int main()
         // non-priviledged
         else if (message.operation == READ || message.operation == WRITE || message.operation == METADATA)
         {
-            if (handleSSCommunication(mySocket, message) != NO_ERROR)
+            errorStatus = handleSSCommunication(mySocket, message);
+            if (errorStatus == NETWORK_ERROR)
             {
                 break;
             }
@@ -284,8 +293,10 @@ int main()
         // priviledged
         else if (message.operation == CREATE || message.operation == DELETE || message.operation == COPY)
         {
-            if (receivePriviledgedConfirmation(mySocket) != NO_ERROR)
+            errorStatus = receivePriviledgedConfirmation(mySocket);
+            if (errorStatus == NETWORK_ERROR)
             {
+                break;
             }
         }
     }

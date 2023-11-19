@@ -36,11 +36,16 @@ int search_port(char *buffer)
 {
     struct ss_list *temp;
     temp = storage_servers->head->next;
+    TrieNode *searchResult;
     while (temp != NULL)
     {
-        if (SearchTrie(buffer, temp->root) != NULL)
+        searchResult = SearchTrie(buffer, temp->root);
+        if (searchResult != NULL)
         {
-            return temp->ssToc_port;
+            if (searchResult->isAccessible)
+            {
+                return temp->ssToc_port;
+            }
         }
         temp = temp->next;
     }
@@ -290,9 +295,9 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node)
                 return;
             }
         }
-        if(bytesread<0)
+        if (bytesread < 0)
         {
-            return ;
+            return;
         }
     }
     else
@@ -472,11 +477,18 @@ void *client_handler(void *arg)
         if (message.operation == READ || message.operation == WRITE || message.operation == METADATA)
         {
             port_to_send = search_port(message.buffer);
-            printf("port to send:%d\n", port_to_send);
             if (send(clientSocket, &port_to_send, sizeof(port_to_send), 0) < 0)
             {
                 fprintf(stderr, "[-]Sendtime error: %s\n", strerror(errno));
             }
+            if (port_to_send == NO_SUCH_PATH)
+            {
+                printf("Client entered an invalid/inaccessible path\n");
+                // logThis(logfile,)
+                continue;
+            }
+            printf("Port sent to client %d\n", port_to_send);
+            // log
         }
         else if (message.operation == CREATE || message.operation == DELETE)
         {
