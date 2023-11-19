@@ -161,18 +161,18 @@ void Read_ss(int *err_code, int client_sock, MessageClient2SS message,int fd)
         *err_code = FILE_NOT_READABLE;
     }
 
-    if (send(client_sock, err_code, sizeof(*err_code), 0) < 0)
-    {
-        fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
-        close(client_sock);                                           // ERROR HANDLING
-        *err_code = NETWORK_ERROR;
-        return;
-    }
+    // if (send(client_sock, err_code, sizeof(*err_code), 0) < 0)
+    // {
+    //     fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+    //     close(client_sock);                                           // ERROR HANDLING
+    //     *err_code = NETWORK_ERROR;
+    //     return;
+    // }
 
-    if (*err_code == FILE_NOT_READABLE)
-    {
-        return;
-    }
+    // if (*err_code == FILE_NOT_READABLE)
+    // {
+    //     return;
+    // }
 
     char buffer[SEND_SIZE];
     int bytesRead;
@@ -215,8 +215,9 @@ int Write_ss(int *err_code, int client_sock, MessageClient2SS message,int fd)
 
     int bytesRead=0;
 
-    // printf("Received message from client: %s\n", message.msg);
-    if (write(fd, message.msg, sizeof(message.msg)) < 0)
+    printf("Received message from client: %s\n", message.msg);
+    // printf("size of message: %d\n", sizeof(message.msg));
+    if (write(fd, message.msg, strlen(message.msg)) < 0)
     {
         fprintf(stderr, "[-]Write error: %s\n", strerror(errno)); // ERROR HANDLING
         if (close(client_sock) < 0)
@@ -242,6 +243,7 @@ int Write_ss(int *err_code, int client_sock, MessageClient2SS message,int fd)
                 fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
             // exit(1);
         }
+        bzero(buffer, PATH_MAX);
 
     }
     return bytes_read;
@@ -432,17 +434,17 @@ void *NMServerConnection(void *arg)
             // InsertTrie(message.buffer, ssTrie); //SHREYANSH
             err_code = NO_ERROR;
 
-            if (send(nms_sock, &err_code, sizeof(err_code), 0) < 0)
-            {
-                fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
-                if (close(nms_sock) < 0)
-                    fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
-                // exit(1);
-                continue;
-            }
+            // if (send(nms_sock, &err_code, sizeof(err_code), 0) < 0)
+            // {
+            //     fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+            //     if (close(nms_sock) < 0)
+            //         fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+            //     // exit(1);
+            //     continue;
+            // }
 
-            if (err_code == FILE_UNABLE_TO_CREATE)
-                return NULL;
+            // if (err_code == FILE_UNABLE_TO_CREATE)
+            //     return NULL;
 
             close(fd);
         }

@@ -310,7 +310,8 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node,
             MessageNMS2SS_COPY msg_to_send;
             printf("Received message from server: %s\n", buffer);
             strcpy(msg_to_send.msg, buffer);
-            
+            msg_to_send.msg[bytesread] = '\0';
+            // strncpy(msg_to_send.msg, buffer, bytesread);
             printf("Sending message to server to write: %s  %s  %d\n", msg_to_send.buffer, msg_to_send.msg, msg_to_send.operation);
             msg_to_send.operation = WRITE;
             // strcpy(msg_to_send.buffer, pathString(path_line, index + 1,initial_index));
@@ -323,6 +324,7 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node,
                 //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
                 return;
             }
+            bzero(buffer, PATH_MAX);
         }
         if (bytesread < 0)
         {
