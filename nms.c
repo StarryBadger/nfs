@@ -230,12 +230,12 @@ void ss_is_alive_checker()
         temp = temp->next;
     }
 }
-char *pathString(char **path_line, int size)
+char *pathString(char **path_line, int size,int start)
 {
     char *p_string = (char *)malloc(sizeof(char) * 4096);
     p_string[0] = '\0';
     int total_len = 0;
-    for (int i = 0; i < size; i++)
+    for (int i = start; i < size; i++)
     {
         int len = strlen(path_line[i]);
         total_len += len;
@@ -248,7 +248,7 @@ char *pathString(char **path_line, int size)
     }
     return p_string;
 }
-void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node)
+void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node, int initial_index)
 {
     if (node == NULL)
         return;
@@ -256,7 +256,7 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node)
     MessageClient2NM msg;
     if (node->isFile == 1)
     {
-        strcpy(msg.buffer, pathString(path_line, index + 1));
+        strcpy(msg.buffer, pathString(path_line, index + 1,0));
         msg.operation = READ;
         printf("Sending message to server to read: %s %d\n", msg.buffer, msg.operation);
 
@@ -269,7 +269,8 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node)
         }
         char buffer[PATH_MAX];
         bzero(buffer, PATH_MAX);
-        strcpy(msg.buffer, pathString(path_line, index + 1));
+        strcpy(msg.buffer, pathString(path_line, index + 1,initial_index));
+        msg.isADirectory=0;
         msg.operation = CREATE;
         printf("Sending message to server to read: %s %d\n", msg.buffer, msg.operation);
 
@@ -286,7 +287,7 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node)
             MessageNMS2SS_COPY msg_to_send;
             strcpy(msg_to_send.msg, buffer);
             msg_to_send.operation = WRITE;
-            strcpy(msg_to_send.buffer, pathString(path_line, index + 1));
+            strcpy(msg_to_send.buffer, pathString(path_line, index + 1,initial_index));
             printf("Sending message to server to write: %s  %s  %d\n", msg_to_send.buffer, msg_to_send.msg, msg_to_send.operation);
             if (send(sock2, &msg_to_send, sizeof(msg_to_send), 0) < 0)
             {
@@ -303,7 +304,8 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node)
     }
     else
     {
-        strcpy(msg.buffer, pathString(path_line, index + 1));
+        strcpy(msg.buffer, pathString(path_line, index + 1,initial_index));
+        msg.isADirectory=1;
         msg.operation = CREATE;
         printf("Sending message to server to read: %s %d\n", msg.buffer, msg.operation);
 
@@ -318,12 +320,12 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node)
 
     if (node->firstChild)
     {
-        lessgoRec(sock, sock2, path_line, index + 1, node->firstChild);
+        lessgoRec(sock, sock2, path_line, index + 1, node->firstChild,initial_index);
     }
     TrieNode *temp = node->sibling;
     while (temp != NULL)
     {
-        lessgoRec(sock, sock2, path_line, index + 1, node->sibling);
+        lessgoRec(sock, sock2, path_line, index + 1, node->sibling,initial_index);
         temp = temp->sibling;
     }
     path_line[index][0] = '\0';
@@ -430,10 +432,10 @@ void CopyPath2Path(char *src_path, char *dest_path)
         path_count++;
         token2=__strtok_r(NULL,del2,&ptr_in2);
     }
-
+    int initial_index=path_count-1;
     path_line[path_count-1][0]='\0';
     // printf("hi1\n");
-    lessgoRec(sock, sock2, path_line, path_count-1, node);
+    lessgoRec(sock, sock2, path_line, path_count-1, node,initial_index);
     
 }
 
