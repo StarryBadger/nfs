@@ -416,7 +416,19 @@ void CopyPath2Path(char *src_path, char *dest_path)
         printf("invalid source path\n");
         return;
     }
-    lessgoRec(sock, sock2, path_line, 0, node);
+    char temp_buff[PATH_MAX];
+    strcpy(temp_buff,src_path);
+    char del2[]="/";
+    char* token2;
+    char* ptr_in2;
+    int count=0;
+    token2= __strtok_r(temp_buff,del2,&ptr_in2);
+    while(token2!=NULL)
+    {
+        strcpy(path_line[count++],token2);
+        token2=(NULL,del2,&ptr_in2);
+    }
+    lessgoRec(sock, sock2, path_line, count, node);
 }
 
 void *client_handler(void *arg)
