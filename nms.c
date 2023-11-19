@@ -51,7 +51,25 @@ int search_port(char *buffer)
     }
     return NO_SUCH_PATH;
 }
-
+int search_port2(char *buffer)
+{
+    struct ss_list *temp;
+    temp = storage_servers->head->next;
+    TrieNode *searchResult;
+    while (temp != NULL)
+    {
+        searchResult = SearchTrie(buffer, temp->root);
+        if (searchResult != NULL)
+        {
+            if (searchResult->isAccessible)
+            {
+                return temp->ssTonmnp_port;
+            }
+        }
+        temp = temp->next;
+    }
+    return NO_SUCH_PATH;
+}
 void init_storage_servers()
 {
     storage_servers->head = init_server_list_head();
@@ -355,8 +373,8 @@ void CopyPath2Path(char *src_path, char *dest_path)
 {
     int sock, sock2;
     int port1, port2;
-    port1 = search_port(src_path);
-    port2 = search_port(dest_path);
+    port1 = search_port2(src_path);
+    port2 = search_port2(dest_path);
     struct sockaddr_in addr, addr2;
     sock = socket(AF_INET, SOCK_STREAM, 0);
     sock2 = socket(AF_INET, SOCK_STREAM, 0);
