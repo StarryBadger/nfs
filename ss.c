@@ -153,9 +153,8 @@ void *naming_server_informer_worker(void *arg)
     return NULL;
 }
 
-void Read_ss(int *err_code, int client_sock, MessageClient2SS message)
+void Read_ss(int *err_code, int client_sock, MessageClient2SS message,int fd)
 {
-    int fd = open(message.buffer, O_RDONLY);
     if (fd < 0)
     {
         fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
@@ -187,14 +186,13 @@ void Read_ss(int *err_code, int client_sock, MessageClient2SS message)
             return;
         }
     }
-    closeSocket(client_sock);
-    printf("\n");
-    close(fd);
+    // closeSocket(client_sock);
+    // printf("\n");
+    // close(fd);
 }
 
-void Write_ss(int *err_code, int client_sock, MessageClient2SS message)
+int Write_ss(int *err_code, int client_sock, MessageClient2SS message,int fd)
 {
-    int fd = open(message.buffer, O_WRONLY | O_TRUNC);
     if (fd == -1)
     {
         fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
@@ -237,10 +235,11 @@ void Write_ss(int *err_code, int client_sock, MessageClient2SS message)
         }
 
     }
-    if(bytes_read<0)
-        closeSocket(client_sock);
-    printf("\n");
-    close(fd);
+    return bytes_read;
+    // if(bytes_read<0)
+    //     closeSocket(client_sock);
+    // printf("\n");
+    // close(fd);
 }
 
 void *CLientServerConnection(void *arg)
@@ -261,12 +260,21 @@ void *CLientServerConnection(void *arg)
 
     if (message.operation == READ)
     {
-        Read_ss(&err_code, client_sock, message);
+        int fd = open(message.buffer, O_RDONLY);
+        Read_ss(&err_code, client_sock, message,fd);
+        closeSocket(client_sock);
+        printf("\n");
+        close(fd);
     }
 
     if (message.operation == WRITE)
     {
-        Write_ss(&err_code, client_sock, message);
+        int fd = open(message.buffer, O_WRONLY | O_TRUNC);
+        int b_read = Write_ss(&err_code, client_sock, message,fd);
+        if(b_read<0)
+            closeSocket(client_sock);
+        printf("\n");
+        close(fd);
     }
     if (message.operation == METADATA)
     {
@@ -473,6 +481,22 @@ void *NMServerConnection(void *arg)
             else
                 printf("\x1b[31mCould not delete %s\n\n\x1b[0m", message.buffer);
         }
+
+        int err_code = NO_ERROR;
+
+        if (message.operation == READ)
+        {
+            int fd = open(message.buffer, O_RDONLY);
+            Read_ss(&err_code, nms_sock, message,fd);
+            close(fd);
+        }   
+
+        if (message.operation == WRITE)
+        {
+            int fd = open(message.buffer, O_WRONLY | O_TRUNC);
+            Write_ss(&err_code, nms_sock, message,fd);
+        }
+
         close(nms_sock);
     }
     if (close_flag == 1)
