@@ -76,3 +76,23 @@ errcode logThis(const char *filename, logLevel level, comm whosTalking, const ch
     fclose(logFile);
     return NO_ERROR;
 }
+errcode logOperation(const char *filename, MessageClient2NM message)
+{
+    switch (message.operation)
+    {
+    case CREATE:
+        return logThis(filename, LOG_INFO, CLIENT_NM, "Operation: CREATE - Create a new file/folder. Buffer: %s", message.buffer);
+    case READ:
+        return logThis(filename, LOG_INFO, CLIENT_NM, "Operation: READ - Read the content of a file. Buffer: %s", message.buffer);
+    case WRITE:
+        return logThis(filename, LOG_INFO, CLIENT_NM, "Operation: WRITE - Write data to a file. Buffer: %s", message.buffer);
+    case DELETE:
+        return logThis(filename, LOG_INFO, CLIENT_NM, "Operation: DELETE - Delete a file/folder. Buffer: %s", message.buffer);
+    case COPY:
+        return logThis(filename, LOG_INFO, CLIENT_NM, "Operation: OPEN - Open a file for reading/writing. Buffer: %s", message.buffer);
+    case METADATA:
+        return logThis(filename, LOG_INFO, CLIENT_NM, "Operation: METADATA - Get metadata information about a file. Buffer: %s", message.buffer);
+    default:
+        return logThis(filename, LOG_INFO, CLIENT_NM, "Unknown operation. Buffer: %s", message.buffer);
+    }
+}

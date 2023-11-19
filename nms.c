@@ -427,7 +427,7 @@ void *client_handler(void *arg)
         }
     }
     printf("Initial Request received from client: %d\n", initialRequest);
-    logThis(logfile, LOG_INFO, CLIENT_NM, "Initial Request on port %d", nms_client_port);
+    logThis(logfile, LOG_INFO, CLIENT_NM, "Initial Request %d [PORT: %d IP:%d]", initialRequest,nms_client_port,ip_address);
     if (initialRequest == INITIAL_MESSAGE)
     {
         initialAck = INITIAL_ACK_ACCEPT;
@@ -444,6 +444,7 @@ void *client_handler(void *arg)
         close(clientSocket);
         return NULL;
     }
+    logThis(logfile, LOG_INFO, NM_CLIENT, "Initial Acknowledgement %d [PORT: %d IP: %d]", initialAck,nms_client_port, ip_address);
     printf("Acknowledgment sent to client: %d\n", initialAck);
     while (1)
     {
@@ -454,6 +455,7 @@ void *client_handler(void *arg)
             close(clientSocket);
             return NULL;
         }
+        logOperation(logfile, message);
         printf("received %s %d\n", message.buffer, message.operation);
         if (message.operation >= 7 || message.operation < 1)
         {
