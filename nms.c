@@ -422,14 +422,19 @@ void CopyPath2Path(char *src_path, char *dest_path)
     char del2[]="/";
     char* token2;
     char* ptr_in2;
-    int count=0;
-    token2= __strtok_r(temp_buff,del2,&ptr_in2);
+    int path_count=0;
+    token2=__strtok_r(temp_buff,del2,&ptr_in2);
     while(token2!=NULL)
     {
-        strcpy(path_line[count++],token2);
-        token2=(NULL,del2,&ptr_in2);
+        strcpy(path_line[path_count],token2);
+        path_count++;
+        token2=__strtok_r(NULL,del2,&ptr_in2);
     }
-    lessgoRec(sock, sock2, path_line, count, node);
+
+    path_line[path_count-1][0]='\0';
+    // printf("hi1\n");
+    lessgoRec(sock, sock2, path_line, path_count-1, node);
+    
 }
 
 void *client_handler(void *arg)
