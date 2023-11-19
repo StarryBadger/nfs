@@ -13,5 +13,6 @@ typedef enum comm
     SS_NM,
     NM_SS
 } comm;
-errcode logThis(logLevel level,comm whosTalking, const char *format, ...);
+errcode initLog(char *filename);
+errcode logThis(const char *filename, logLevel level, comm whosTalking, const char *format, ...);
 #endif

@@ -1,6 +1,5 @@
 #include "headers.h"
-
-// char buffer[PATH_MAX];
+char logfile[30];
 int can_enter = 0;
 struct ss_list
 {
@@ -421,12 +420,14 @@ void *client_handler(void *arg)
     int terminateConnectionFlag = 0;
     if (recv(clientSocket, &initialRequest, sizeof(initialRequest), 0) < 0)
     {
-        fprintf(stderr, "[-]Receive error: %s\n", strerror(errno));
-        close(clientSocket);
-        return NULL;
+        fprintf(stderr, RED "[-]Receive error: %s\n" RESET, strerror(errno));
+        logThis(logfile, LOG_ERROR, CLIENT_NM, "Initial Request: %s", strerror(errno));
+        if (closeSocket(clientSocket) == NO_ERROR)
+        {
+        }
     }
     printf("Initial Request received from client: %d\n", initialRequest);
-    logThis(LOG_INFO, CLIENT_NM, "Initial Request");
+    logThis(logfile, LOG_INFO, CLIENT_NM, "Initial Request on port %d", nms_client_port);
     if (initialRequest == INITIAL_MESSAGE)
     {
         initialAck = INITIAL_ACK_ACCEPT;
@@ -466,7 +467,7 @@ void *client_handler(void *arg)
         int port_to_send;
         if (message.operation == READ || message.operation == WRITE || message.operation == METADATA)
         {
-            port_to_send = search_port(&message);
+            port_to_send = search_port(message.buffer);
             printf("port to send:%d\n", port_to_send);
             if (send(clientSocket, &port_to_send, sizeof(port_to_send), 0) < 0)
             {
@@ -651,6 +652,11 @@ int main(int argc, char *argv[])
 {
     storage_servers = (struct storage_servers_node *)malloc(sizeof(struct storage_servers_node));
     init_storage_servers();
+    if (initLog(logfile) != NO_ERROR)
+    {
+        fprintf(stderr, RED "Unable to create log file.\n" RESET);
+        exit(FILE_DESCRIPTOR_ERROR);
+    }
     pthread_t ss_port, ss_is_alive, client_connection;
     pthread_create(&ss_port, NULL, ss_port_worker, NULL);
     pthread_create(&ss_is_alive, NULL, ss_is_alive_worker, NULL);

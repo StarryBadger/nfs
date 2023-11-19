@@ -1,10 +1,12 @@
 #include "headers.h"
-void closeSocket(int socketToClose)
+errcode closeSocket(int socketToClose)
 {
     if (close(socketToClose) < 0)
     {
-        fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+        fprintf(stderr, RED"[-]Error closing socket: %s\n"RESET, strerror(errno));
+        return SOCKET_CLOSE_ERROR;
     }
+    return NO_ERROR;
 }
 int initSocket()
 {

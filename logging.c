@@ -1,8 +1,25 @@
 #include "headers.h"
-
-errcode logThis(logLevel level, comm whosTalking, const char *format, ...)
+errcode initLog(char *filename)
 {
-    FILE *logFile = fopen("interaction@NM.log", "a");
+    time_t rawtime;
+    struct tm *timeinfo;
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+    char timestamp[20];
+    strftime(timestamp, sizeof(timestamp), "%Y-%m-%d|%H:%M:%S", timeinfo);
+    snprintf(filename, 30, "logs/%s.log", timestamp);
+    FILE *logFile = fopen(filename, "w");
+    if (logFile == NULL)
+    {
+        return FILE_DESCRIPTOR_ERROR;
+    }
+    fprintf(logFile, "Logfile created at %s\n", timestamp);
+    fclose(logFile);
+    return NO_ERROR;
+}
+errcode logThis(const char *filename, logLevel level, comm whosTalking, const char *format, ...)
+{
+    FILE *logFile = fopen(filename, "a");
     if (logFile == NULL)
     {
         return FILE_DESCRIPTOR_ERROR;
@@ -43,6 +60,7 @@ errcode logThis(logLevel level, comm whosTalking, const char *format, ...)
         break;
     case NM_SS:
         commPrefix = "NM->SS";
+        break;
     default:
         commPrefix = "UNKNOWN";
     }
