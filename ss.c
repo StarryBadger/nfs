@@ -153,26 +153,28 @@ void *naming_server_informer_worker(void *arg)
     return NULL;
 }
 
-void Read_ss(int *err_code, int client_sock, MessageClient2SS message,int fd)
+void Read_ss(int *err_code, int client_sock, MessageClient2SS message,int fd,int isCLient)
 {
     if (fd < 0)
     {
         fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
         *err_code = FILE_NOT_READABLE;
     }
+    if(isCLient)
+    {
+        if (send(client_sock, err_code, sizeof(*err_code), 0) < 0)
+        {
+            fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+            close(client_sock);                                           // ERROR HANDLING
+            *err_code = NETWORK_ERROR;
+            return;
+        }
 
-    // if (send(client_sock, err_code, sizeof(*err_code), 0) < 0)
-    // {
-    //     fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
-    //     close(client_sock);                                           // ERROR HANDLING
-    //     *err_code = NETWORK_ERROR;
-    //     return;
-    // }
-
-    // if (*err_code == FILE_NOT_READABLE)
-    // {
-    //     return;
-    // }
+        if (*err_code == FILE_NOT_READABLE)
+        {
+            return;
+        }
+    }
 
     char buffer[SEND_SIZE];
     int bytesRead;
@@ -191,7 +193,7 @@ void Read_ss(int *err_code, int client_sock, MessageClient2SS message,int fd)
     // close(fd);
 }
 
-int Write_ss(int *err_code, int client_sock, MessageClient2SS message,int fd)
+int Write_ss(int *err_code, int client_sock, MessageClient2SS message,int fd,int isCLient)
 {
     if (fd == -1)
     {
@@ -201,17 +203,20 @@ int Write_ss(int *err_code, int client_sock, MessageClient2SS message,int fd)
     char buffer[PATH_MAX];
     int bytes_read;
 
-    // if (send(client_sock, err_code, sizeof(*err_code), 0) < 0)
-    // {
-    //     fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
-    //     if (close(client_sock) < 0)
-    //         fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
-    //     // exit(1);
-    // }
+    if(isCLient)
+    {
+        if (send(client_sock, err_code, sizeof(*err_code), 0) < 0)
+        {
+            fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+            if (close(client_sock) < 0)
+                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+            // exit(1);
+        }
 
-    // if (*err_code == FILE_NOT_WRITABLE)
-    //     return NULL;
+        if (*err_code == FILE_NOT_WRITABLE)
+            return NULL;
 
+    }
 
     int bytesRead=0;
 
@@ -268,7 +273,7 @@ void *CLientServerConnection(void *arg)
     if (message.operation == READ)
     {
         int fd = open(message.buffer, O_RDONLY);
-        Read_ss(&err_code, client_sock, message,fd);
+        Read_ss(&err_code, client_sock, message,fd,1);
         closeSocket(client_sock);
         printf("\n");
         close(fd);
@@ -277,7 +282,7 @@ void *CLientServerConnection(void *arg)
     if (message.operation == WRITE)
     {
         int fd = open(message.buffer, O_WRONLY | O_TRUNC);
-        int b_read = Write_ss(&err_code, client_sock, message,fd);
+        int b_read = Write_ss(&err_code, client_sock, message,fd,1);
         if(b_read<0)
             closeSocket(client_sock);
         printf("\n");
@@ -497,7 +502,7 @@ void *NMServerConnection(void *arg)
         if (message.operation == READ)
         {
             int fd = open(message.buffer, O_RDONLY);
-            Read_ss(&err_code, nms_sock, message,fd);
+            Read_ss(&err_code, nms_sock, message,fd,0);
             close(fd);
         }   
 
@@ -507,7 +512,7 @@ void *NMServerConnection(void *arg)
             printf("message path: %s\n", message.buffer);
             printf("message msg: %s\n", message.msg);
             int fd = open(message.buffer, O_WRONLY | O_TRUNC);
-            Write_ss(&err_code, nms_sock, message,fd);
+            Write_ss(&err_code, nms_sock, message,fd,0);
         }
 
     }
