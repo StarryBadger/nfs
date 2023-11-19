@@ -232,7 +232,7 @@ void ss_is_alive_checker()
 }
 char *pathString(char **path_line, int size)
 {
-    char *p_string = (char *)malloc(sizeof(char) * PATH_MAX);
+    char *p_string = (char *)malloc(sizeof(char) * 4096);
     p_string[0] = '\0';
     int total_len = 0;
     for (int i = 0; i < size; i++)
@@ -240,13 +240,14 @@ char *pathString(char **path_line, int size)
         int len = strlen(path_line[i]);
         total_len += len;
         strcat(p_string, path_line[i]);
-        if (i != size - 1)
+        if (i != size - 1){
             strcat(p_string, "/");
+            total_len++;
+        }
         p_string[total_len] = '\0';
     }
     return p_string;
 }
-
 void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node)
 {
     if (node == NULL)
