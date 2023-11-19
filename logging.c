@@ -6,7 +6,7 @@ errcode initLog(char *filename)
     time(&rawtime);
     timeinfo = localtime(&rawtime);
     char timestamp[20];
-    strftime(timestamp, sizeof(timestamp), "%Y-%m-%d|%H:%M:%S", timeinfo);
+    strftime(timestamp, sizeof(timestamp), "%Y-%m-%d-%H:%M:%S", timeinfo);
     snprintf(filename, 30, "logs/%s.log", timestamp);
     FILE *logFile = fopen(filename, "w");
     if (logFile == NULL)

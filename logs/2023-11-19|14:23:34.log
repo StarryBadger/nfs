@@ -1,4 +1,0 @@
-Logfile created at 2023-11-19|14:23:34
-[2023-11-19 14:23:39] [INFO] [CLIENT->NM] Initial Request 10 [PORT: 10059 IP:-683138938]
-[2023-11-19 14:23:39] [INFO] [ NM->CLIENT] Initial Acknowledgement 12 [PORT: 10059 IP: -683138938]
-[2023-11-19 14:23:47] [INFO] [CLIENT->NM] Operation: READ - Read the content of a file. Buffer: 1
