@@ -91,7 +91,8 @@ errcode handleWriteCommunication(int socketSS)
 {
     char toWrite[PATH_MAX];
     printf("Enter text to be written: ");
-    scanf("%s", toWrite);
+    // scanf("%s", toWrite);
+    scanf(" %[^\n]s", toWrite);
     if (send(socketSS, &toWrite, sizeof(toWrite), 0) < 0)
     {
         fprintf(stderr, RED"[-]Send error: %s\n"RESET, strerror(errno)); // ERROR HANDLING
@@ -228,12 +229,12 @@ int main()
     {
         // We prompt user for operation number (1 through 6)
         MessageClient2NM message;
-        printf("Enter operation number (1-7):\n");
+        printf("\nEnter operation number (1-7):\n");
         printf("1. CREATE - Create a new file/folder\n");
         printf("2. READ - Read the content of a file\n");
         printf("3. WRITE - Write data to a file\n");
         printf("4. DELETE - Delete a file/folder\n");
-        printf("5. OPEN - Open a file for reading/writing\n");
+        printf("5. COPY - Copy a file/folder\n");
         printf("6. METADATA - Get metadata information about a file\n");
         printf("7. TERMINATE - Terminate connection\n");
         if (scanf("%d", &message.operation) != 1 || message.operation < 1 || message.operation > 7)
