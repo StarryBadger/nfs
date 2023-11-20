@@ -290,7 +290,7 @@ void lessgoRec_again(int sock, char **path_line, int index, TrieNode *node, char
     char temp_dest_path[PATH_MAX];
     strcpy(temp_dest_path, path);
     strcat(temp_dest_path, "/");
-    strcat(temp_dest_path, pathString(path_line, index + 1, initial_index));
+    strcat(temp_dest_path, pathString(path_line, index + 1, 0));
     if (send(sock, &msg, sizeof(msg), 0) < 0)
     {
         fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
