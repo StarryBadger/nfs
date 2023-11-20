@@ -323,7 +323,7 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node,
 
             msg_to_send.operation = WRITE;
 
-            printf("Sending message to server to write: %s  %s  %d\n", msg_to_send.buffer, msg_to_send.msg, msg_to_send.operation);
+            // printf("Sending message to server to write: %s  %s  %d\n", msg_to_send.buffer, msg_to_send.msg, msg_to_send.operation);
             
             strcpy(msg_to_send.buffer, temp_dest_path);
 
@@ -333,7 +333,8 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node,
             // if(send_cout>24)
             // {
             //     break;
-            // }
+            // }            // printf("Sending message to server to write: %s  %s  %d\n", msg_to_send.buffer, msg_to_send.msg, msg_to_send.operation);
+
             if (send(sock2, &msg_to_send, sizeof(msg_to_send), 0) < 0)
             {
                 fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
@@ -345,7 +346,7 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node,
         }
         if (bytesread <= 0)
         {
-            return;
+            printf("atleasat its here\n");
         }
     }
     else
@@ -376,6 +377,7 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node,
     }
     if (level_flag == 0)
     {
+        // printf("here with directory : %s\n",node->directory);
         TrieNode *temp = node->sibling;
         while (temp != NULL)
         {
@@ -385,6 +387,7 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node,
         }
         
     }
+    // printf("here with directory : %s\n",node->directory);
     path_line[index][0] = '\0';
     return;
 }

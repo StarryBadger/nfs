@@ -1,0 +1,4 @@
+Logfile created at 2023-11-20-14:00:12
+[2023-11-20 14:00:15] [INFO] [CLIENT->NM] Initial Request 10 [PORT: 10063 IP:906805382]
+[2023-11-20 14:00:15] [INFO] [ NM->CLIENT] Initial Acknowledgement 12 [PORT: 10063 IP: 906805382]
+[2023-11-20 14:00:57] [INFO] [CLIENT->NM] Operation: READ - Read the content of a file. Buffer: d1/f1
