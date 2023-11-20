@@ -182,12 +182,17 @@ void Read_ss(int *err_code, int client_sock, MessageClient2SS message, FILE *fil
     // FILE* this = fopen("this.txt", "w");
     char buffer[SEND_SIZE];
     bzero(buffer, SEND_SIZE);
-    size_t bytesRead = 0;
+    size_t bytesRead = 0;  
+    MessageFormat message_read;
+
     while ((bytesRead = fread(buffer, 1, sizeof(buffer), file)) > 0)
     {
         // fwrite(buffer, 1, bytesRead, this);
         // printf("Sending message to client: %s\n", buffer);
-        if (send(client_sock, buffer, bytesRead, 0) < 0)
+        bzero(message_read.msg, PATH_MAX);  
+        strcpy(message_read.msg, buffer);
+        message_read.bytesToRead = bytesRead;
+        if (send(client_sock, &message_read, sizeof(message_read), 0) < 0)
         {
             fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
             close(client_sock);

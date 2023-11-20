@@ -308,12 +308,14 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node,
         int bytesread;
         int send_cout=0;
         // FILE* this = fopen("this_nm.txt","w");
-        while ((bytesread = recv(sock, buffer, sizeof(buffer), 0)) > 0)
+        MessageFormat message_read;
+        bzero(message_read.msg,PATH_MAX);
+        while ((bytesread = recv(sock, &message_read, sizeof(message_read), 0)) > 0)
         {
             // fwrite(buffer,1,bytesread,this);
             MessageNMS2SS_COPY msg_to_send;
             // printf("Received message from server: %s\n", buffer);
-            strcpy(msg_to_send.msg, buffer);
+            strcpy(msg_to_send.msg, message_read.msg);
             // msg_to_send.msg[bytesread] = '\0';
             // for(int l = bytesread;l<PATH_MAX;l++)
             // {
@@ -327,7 +329,7 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node,
             
             strcpy(msg_to_send.buffer, temp_dest_path);
 
-            msg_to_send.bytesToRead = bytesread;
+            msg_to_send.bytesToRead = message_read.bytesToRead;
             // send_cout++;
             // printf("send count: %d\n",send_cout);
             // if(send_cout>24)
@@ -343,6 +345,10 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node,
                 return;
             }
             bzero(buffer, PATH_MAX);
+            if(message_read.bytesToRead < SEND_SIZE)
+            {
+                break;
+            }
         }
         if (bytesread <= 0)
         {
