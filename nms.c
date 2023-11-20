@@ -309,12 +309,12 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node,
         while ((bytesread = recv(sock, buffer, sizeof(buffer), 0)) > 0)
         {
             MessageNMS2SS_COPY msg_to_send;
-            printf("Received message from server: %s\n", buffer);
+            // printf("Received message from server: %s\n", buffer);
             strcpy(msg_to_send.msg, buffer);
-            msg_to_send.msg[bytesread] = '\0';
+            // msg_to_send.msg[bytesread] = '\0';
             // strncpy(msg_to_send.msg, buffer, bytesread);
-            printf("Sending message to server to write: %s  %s  %d\n", msg_to_send.buffer, msg_to_send.msg, msg_to_send.operation);
             msg_to_send.operation = WRITE;
+            printf("Sending message to server to write: %s  %s  %d\n", msg_to_send.buffer, msg_to_send.msg, msg_to_send.operation);
             // strcpy(msg_to_send.buffer, pathString(path_line, index + 1,initial_index));
             strcpy(msg_to_send.buffer, temp_dest_path);
             // printf("Sending message to server to write: %s  %s  %d\n", msg_to_send.buffer, msg_to_send.msg, msg_to_send.operation);

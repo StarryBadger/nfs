@@ -229,6 +229,7 @@ int Write_ss(int *err_code, int client_sock, MessageClient2SS message,int fd,int
             fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
         // exit(1);
     }
+    bzero(buffer,PATH_MAX);
     
     while ((bytesRead = recv(client_sock, buffer, sizeof(buffer), 0)) > 0)
     {
