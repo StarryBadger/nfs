@@ -267,6 +267,40 @@ char *pathString(char **path_line, int size, int start)
     }
     return p_string;
 }
+void lessgoRec_again(int sock, char **path_line, int index, TrieNode *node, char *path)
+{
+    if (node == NULL)
+        return;
+    strcpy(path_line[index], node->directory);
+    if (node->isFile == 0)
+    {
+        if (node->firstChild)
+        {
+            lessgoRec_again(sock, path_line, index + 1, node->firstChild, path);
+        }
+    }
+    if (node->sibling)
+    {
+        path_line[index][0] = '\0';
+        lessgoRec_again(sock, path_line, index, node->sibling, path);
+    }
+
+    MessageFormat msg;
+    msg.operation = DELETE;
+    char temp_dest_path[PATH_MAX];
+    strcpy(temp_dest_path, path);
+    strcat(temp_dest_path, "/");
+    strcat(temp_dest_path, pathString(path_line, index + 1, initial_index));
+    if (send(sock, &msg, sizeof(msg), 0) < 0)
+    {
+        fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
+        // if (close(sock) < 0)
+        //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+        return;
+    }
+    path_line[index][0]='\0';
+    return;
+}
 void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node, int initial_index, char *dest_path, int level_flag)
 {
     if (node == NULL)
@@ -306,10 +340,10 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node,
             return;
         }
         int bytesread;
-        int send_cout=0;
+        int send_cout = 0;
         // FILE* this = fopen("this_nm.txt","w");
         MessageFormat message_read;
-        bzero(message_read.msg,PATH_MAX);
+        bzero(message_read.msg, PATH_MAX);
         while ((bytesread = recv(sock, &message_read, sizeof(message_read), 0)) > 0)
         {
             // fwrite(buffer,1,bytesread,this);
@@ -326,7 +360,7 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node,
             msg_to_send.operation = WRITE;
 
             // printf("Sending message to server to write: %s  %s  %d\n", msg_to_send.buffer, msg_to_send.msg, msg_to_send.operation);
-            
+
             strcpy(msg_to_send.buffer, temp_dest_path);
 
             msg_to_send.bytesToRead = message_read.bytesToRead;
@@ -345,7 +379,7 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node,
                 return;
             }
             bzero(buffer, PATH_MAX);
-            if(message_read.bytesToRead < SEND_SIZE)
+            if (message_read.bytesToRead < SEND_SIZE)
             {
                 break;
             }
@@ -379,19 +413,13 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node,
 
     if (node->firstChild)
     {
-        lessgoRec(sock, sock2, path_line, index + 1, node->firstChild, initial_index, dest_path,0);
+        lessgoRec(sock, sock2, path_line, index + 1, node->firstChild, initial_index, dest_path, 0);
     }
     if (level_flag == 0)
     {
-        // printf("here with directory : %s\n",node->directory);
-        TrieNode *temp = node->sibling;
-        while (temp != NULL)
-        {
-            path_line[index][0] = '\0';
-            lessgoRec(sock, sock2, path_line, index, node->sibling, initial_index, dest_path,level_flag);
-            temp = temp->sibling;
-        }
-        
+        path_line[index][0] = '\0';
+        if (node->sibling)
+            lessgoRec(sock, sock2, path_line, index, node->sibling, initial_index, dest_path, level_flag);
     }
     // printf("here with directory : %s\n",node->directory);
     path_line[index][0] = '\0';
@@ -501,7 +529,7 @@ void CopyPath2Path(char *src_path, char *dest_path)
     int initial_index = path_count - 1;
     path_line[path_count - 1][0] = '\0';
     // printf("hi1\n");
-    lessgoRec(sock, sock2, path_line, path_count - 1, node, initial_index, dest_path,1);
+    lessgoRec(sock, sock2, path_line, path_count - 1, node, initial_index, dest_path, 1);
 }
 
 void *client_handler(void *arg)

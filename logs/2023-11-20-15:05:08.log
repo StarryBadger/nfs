@@ -1,0 +1,4 @@
+Logfile created at 2023-11-20-15:05:08
+[2023-11-20 15:05:12] [INFO] [CLIENT->NM] Initial Request 10 [PORT: 10060 IP:-1050902394]
+[2023-11-20 15:05:12] [INFO] [ NM->CLIENT] Initial Acknowledgement 12 [PORT: 10060 IP: -1050902394]
+[2023-11-20 15:06:13] [INFO] [CLIENT->NM] Operation: OPEN - Open a file for reading/writing. Buffer: d1
