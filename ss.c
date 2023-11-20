@@ -177,9 +177,11 @@ void Read_ss(int *err_code, int client_sock, MessageClient2SS message,int fd,int
     }
 
     char buffer[SEND_SIZE];
+    bzero(buffer,SEND_SIZE);
     int bytesRead;
     while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0)
     {
+        printf("read chunk : %s\n",buffer);
         if (send(client_sock, buffer, bytesRead, 0) < 0)
         {
             fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
@@ -187,6 +189,7 @@ void Read_ss(int *err_code, int client_sock, MessageClient2SS message,int fd,int
             *err_code = NETWORK_ERROR;
             return;
         }
+        bzero(buffer,SEND_SIZE);
     }
     // closeSocket(client_sock);
     // printf("\n");
