@@ -20,14 +20,15 @@
 
 #define NO_SUCH_PATH -20
 
-#define nms_ss_port 10041
-#define nms_client_port 10061
+#define nms_ss_port 10040
+#define nms_client_port 10060
 #define ip_address "127.0.0.1"
 
 #define END_STRING "@@e@*"
 
 #define METADATA_STR_MAX 100
-#define SEND_SIZE 4096
+#define SEND_SIZE 1024
+#define PATH_MAX 1024
 
 typedef struct MessageSS2NM
 {

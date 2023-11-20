@@ -153,19 +153,21 @@ void *naming_server_informer_worker(void *arg)
     return NULL;
 }
 
-void Read_ss(int *err_code, int client_sock, MessageClient2SS message,int fd,int isCLient)
+
+void Read_ss(int *err_code, int client_sock, MessageClient2SS message, FILE *file, int isClient)
 {
-    if (fd < 0)
+    if (file == NULL)
     {
-        fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
+        fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer);
         *err_code = FILE_NOT_READABLE;
     }
-    if(isCLient)
+
+    if (isClient)
     {
         if (send(client_sock, err_code, sizeof(*err_code), 0) < 0)
         {
-            fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
-            close(client_sock);                                           // ERROR HANDLING
+            fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
+            close(client_sock);
             *err_code = NETWORK_ERROR;
             return;
         }
@@ -176,27 +178,32 @@ void Read_ss(int *err_code, int client_sock, MessageClient2SS message,int fd,int
         }
     }
 
+    // FILE* this = fopen("this.txt", "w");
     char buffer[SEND_SIZE];
-    bzero(buffer,SEND_SIZE);
-    int bytesRead;
-    while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0)
+    bzero(buffer, SEND_SIZE);
+    size_t bytesRead = 0;
+    while ((bytesRead = fread(buffer, 1, sizeof(buffer), file)) > 0)
     {
-        printf("read chunk : %s\n",buffer);
-        if (send(client_sock, buffer, bytesRead, 0) < 0)
+        // fwrite(buffer, 1, bytesRead, this);
+        // printf("Sending message to client: %s\n", buffer);
+        if (send(client_sock, buffer, strlen(buffer), 0) < 0)
         {
-            fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
-            close(client_sock);                                           // ERROR HANDLING
+            fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
+            close(client_sock);
             *err_code = NETWORK_ERROR;
             return;
         }
-        bzero(buffer,SEND_SIZE);
+        bzero(buffer, SEND_SIZE);
+        bytesRead = 0;
     }
+
     // closeSocket(client_sock);
     // printf("\n");
-    // close(fd);
+    // fclose(file);
 }
 
-int Write_ss(int *err_code, int client_sock, MessageClient2SS message,int fd,int isCLient)
+
+int Write_ss(int *err_code, int client_sock, MessageClient2SS message,FILE* fd,int isCLient)
 {
     if (fd == -1)
     {
@@ -223,38 +230,34 @@ int Write_ss(int *err_code, int client_sock, MessageClient2SS message,int fd,int
 
     int bytesRead=0;
 
-    printf("Received message from client: %s\n", message.msg);
+    // printf("Received message from client: %s\n", message.msg);
     // printf("size of message: %d\n", sizeof(message.msg));
-    if (write(fd, message.msg, strlen(message.msg)) < 0)
+    // if (write(fd, message.msg, strlen(message.msg)) < 0)
+
+    FILE *th = fopen("this.txt", "a");
+
+    if(fwrite(message.msg, 1, sizeof(message.msg), fd) < 0)
     {
         fprintf(stderr, "[-]Write error: %s\n", strerror(errno)); // ERROR HANDLING
         if (close(client_sock) < 0)
             fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
         // exit(1);
     }
-    bzero(buffer,PATH_MAX);
+    MessageFormat message2;
+    bzero(message2.msg,PATH_MAX);
     
-    while ((bytesRead = recv(client_sock, buffer, sizeof(buffer), 0)) > 0)
-    {
-        // fprintf(stderr, "[-]Receive error: %s\n", strerror(errno)); // ERROR HANDLING
-        // if (close(client_sock) < 0)
-        //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
-        // // exit(1);
+    // while ((bytesRead = recv(client_sock, &message2, sizeof(message2), 0)) > 0)
+    // {
+    //     fwrite(message2.msg, 1, bytesRead, th);
+    //     if(fwrite(message2.msg, 1, bytesRead, fd) < 0)
+    //     {
+    //         fprintf(stderr, "[-]Write error: %s\n", strerror(errno)); // ERROR HANDLING
+    //         if (close(client_sock) < 0)
+    //             fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+    //         // exit(1);
+    //     }
+    //     bzero(message2.msg, PATH_MAX);
     // }
-
-    // strcpy(buffer,"one 1");
-
-        printf("Received message to write from nm: %s\n", buffer);
-        if (write(fd, buffer, strlen(buffer)) < 0)
-        {
-            fprintf(stderr, "[-]Write error: %s\n", strerror(errno)); // ERROR HANDLING
-            if (close(client_sock) < 0)
-                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
-            // exit(1);
-        }
-        bzero(buffer, PATH_MAX);
-
-    }
     return bytes_read;
 }
 
@@ -272,25 +275,31 @@ void *CLientServerConnection(void *arg)
             fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
         exit(1);
     }
-    printf("Received message from client: %d %s\n", message.operation, message.buffer);
+    // printf("Received message from client: %d %s\n", message.operation, message.buffer);
 
     if (message.operation == READ)
     {
-        int fd = open(message.buffer, O_RDONLY);
-        Read_ss(&err_code, client_sock, message,fd,1);
+        // int fd = open(message.buffer, O_RDONLY);
+        // Read_ss(&err_code, client_sock, message,fd,1);
+
+        FILE *file = fopen(message.buffer, "r");
+        Read_ss(&err_code, client_sock, message, file, 1);
+
         closeSocket(client_sock);
-        printf("\n");
-        close(fd);
+        // printf("\n");
+        // close(fd);
+        fclose(file);
     }
 
     if (message.operation == WRITE)
     {
-        int fd = open(message.buffer, O_WRONLY | O_TRUNC);
+        // int fd = open(message.buffer, O_WRONLY | O_TRUNC);
+        FILE *fd = fopen(message.buffer, "w");
         int b_read = Write_ss(&err_code, client_sock, message,fd,1);
         if(b_read<0)
             closeSocket(client_sock);
-        printf("\n");
-        close(fd);
+        // printf("\n");
+        fclose(fd);
     }
     if (message.operation == METADATA)
     {
@@ -415,6 +424,7 @@ void *NMServerConnection(void *arg)
         message.operation = 0;
         bzero(message.buffer, PATH_MAX);
         bzero(message.msg, PATH_MAX);
+        FILE *this = fopen("this.txt", "w");
         if (recv(nms_sock, &message, sizeof(message), 0) < 0)
         {
             fprintf(stderr, "[-]Receive error: %s\n", strerror(errno)); // ERROR HANDLING
@@ -423,11 +433,10 @@ void *NMServerConnection(void *arg)
             // exit(1);
             continue;
         }
+        fwrite(message.msg, 1, strlen(message.msg), this);
+        fclose(this);
         if (message.operation == 0)
             continue;
-        printf("Received message from nm: %d %s\n", message.operation, message.buffer);
-        printf("the message is %s\n",message.msg);
-        printf("above\n");
         // printf("the message : %d\n", strlen(message.buffer));
 
         if (message.operation == CREATE && !message.isADirectory)
@@ -484,7 +493,6 @@ void *NMServerConnection(void *arg)
 
         if (message.operation == DELETE)
         {
-            printf("In delete\n");
             int fd = open(message.buffer, O_RDONLY);
             if (fd == -1)
             {
@@ -505,18 +513,18 @@ void *NMServerConnection(void *arg)
 
         if (message.operation == READ)
         {
-            int fd = open(message.buffer, O_RDONLY);
-            Read_ss(&err_code, nms_sock, message,fd,0);
-            close(fd);
+            // int fd = open(message.buffer, O_RDONLY);
+            FILE *file = fopen(message.buffer, "r");
+            Read_ss(&err_code, nms_sock, message,file,0);
+            fclose(file);
         }   
 
         if (message.operation == WRITE)
         {
-            printf("Operation write started\n");
-            printf("message path: %s\n", message.buffer);
-            printf("message msg: %s\n", message.msg);
-            int fd = open(message.buffer, O_WRONLY | O_TRUNC);
+            // int fd = open(message.buffer, O_WRONLY | O_TRUNC);
+            FILE *fd = fopen(message.buffer, "a");
             Write_ss(&err_code, nms_sock, message,fd,0);
+            fclose(fd);
         }
 
     }

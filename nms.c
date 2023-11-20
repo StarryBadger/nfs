@@ -306,18 +306,20 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node,
             return;
         }
         int bytesread;
+        // FILE* this = fopen("this_nm.txt","w");
         while ((bytesread = recv(sock, buffer, sizeof(buffer), 0)) > 0)
         {
+            // fwrite(buffer,1,bytesread,this);
             MessageNMS2SS_COPY msg_to_send;
             // printf("Received message from server: %s\n", buffer);
             strcpy(msg_to_send.msg, buffer);
-            // msg_to_send.msg[bytesread] = '\0';
-            // strncpy(msg_to_send.msg, buffer, bytesread);
+
             msg_to_send.operation = WRITE;
+
             printf("Sending message to server to write: %s  %s  %d\n", msg_to_send.buffer, msg_to_send.msg, msg_to_send.operation);
-            // strcpy(msg_to_send.buffer, pathString(path_line, index + 1,initial_index));
+            
             strcpy(msg_to_send.buffer, temp_dest_path);
-            // printf("Sending message to server to write: %s  %s  %d\n", msg_to_send.buffer, msg_to_send.msg, msg_to_send.operation);
+            
             if (send(sock2, &msg_to_send, sizeof(msg_to_send), 0) < 0)
             {
                 fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
