@@ -1,5 +1,6 @@
 #include "headers.h"
 char logfile[30];
+LRUCache *cacheMe;
 int can_enter = 0;
 struct ss_list
 {
@@ -298,7 +299,7 @@ void lessgoRec_again(int sock, char **path_line, int index, TrieNode *node, char
         //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
         return;
     }
-    path_line[index][0]='\0';
+    path_line[index][0] = '\0';
     return;
 }
 void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node, int initial_index, char *dest_path, int level_flag)
@@ -589,7 +590,18 @@ void *client_handler(void *arg)
         int port_to_send;
         if (message.operation == READ || message.operation == WRITE || message.operation == METADATA)
         {
-            port_to_send = search_port(message.buffer);
+            // CacheNode *current = searchCache(&cacheMe, message.buffer);
+            // if (current == NULL)
+            // {
+                port_to_send = search_port(message.buffer);
+                // addToCache(cacheMe, message.buffer, ip_address, port_to_send);
+            //     printf("Cache Hit!\n");
+            // }
+            // else
+            // {
+            //     port_to_send = current->port;
+            //     printf("Cache Miss!\n");
+            // }
             if (send(clientSocket, &port_to_send, sizeof(port_to_send), 0) < 0)
             {
                 fprintf(stderr, "[-]Sendtime error: %s\n", strerror(errno));
@@ -781,6 +793,7 @@ int main(int argc, char *argv[])
 {
     storage_servers = (struct storage_servers_node *)malloc(sizeof(struct storage_servers_node));
     init_storage_servers();
+    cacheMe = initLRUCache();
     if (initLog(logfile) != NO_ERROR)
     {
         fprintf(stderr, RED "Unable to create log file.\n" RESET);

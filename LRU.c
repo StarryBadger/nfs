@@ -1,91 +1,94 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "headers.h"
-cacheSt *createcacheStNode(const char *path, int port, const char *ip)
+LRUCache *initLRUCache()
 {
-    cacheSt *newNode = (struct cacheSt *)malloc(sizeof(struct cacheSt));
-    strcpy(newNode->path, path);
-    newNode->port = port;
-    strcpy(newNode->ip, ip);
-    newNode->next = NULL;
-    newNode->prev = NULL;
-    return newNode;
+    LRUCache *cache = (LRUCache *)malloc(sizeof(LRUCache));
+    cache->maxSize = LRUSize;
+    cache->currentSize = 0;
+    cache->head = NULL;
+    cache->tail = NULL;
+    return cache;
 }
-
-cache *createcache()
+CacheNode *searchCache(LRUCache *cache, const char *path)
 {
-    cache *newcache = (struct cache *)malloc(sizeof(struct cache));
-    newcache->head = NULL;
-    newcache->tail = NULL;
-    newcache->size = 0;
-    return newcache;
-}
-
-void insertAtEnd(struct cache *cache, struct cacheSt *newNode)
-{
-    if (cache->size >= MAX_cache_SIZE)
-    {
-        struct cacheSt *temp = cache->head;
-        cache->head = temp->next;
-        if (cache->head != NULL)
-        {
-            cache->head->prev = NULL;
-        }
-        free(temp);
-        cache->size--;
-    }
-    if (cache->tail == NULL)
-    {
-        cache->head = newNode;
-        cache->tail = newNode;
-    }
-    else
-    {
-        newNode->prev = cache->tail;
-        cache->tail->next = newNode;
-        cache->tail = newNode;
-    }
-    cache->size++;
-}
-void moveToEnd(struct cache *cache, struct cacheSt *node)
-{
-    if (node == cache->tail)
-    {
-        return;
-    }
-
-    if (node == cache->head)
-    {
-        cache->head = node->next;
-        cache->head->prev = NULL;
-    }
-    else
-    {
-        node->prev->next = node->next;
-        node->next->prev = node->prev;
-    }
-    node->prev = cache->tail;
-    node->next = NULL;
-    cache->tail->next = node;
-    cache->tail = node;
-}
-void printcache(struct cache *cache)
-{
-    struct cacheSt *current = cache->head;
+    CacheNode *current = cache->head;
     while (current != NULL)
     {
-        printf("Path: %s, Port: %d, IP: %s\n", current->path, current->port, current->ip);
+        if (strcmp(current->path, path) == 0)
+        {
+            if (current != cache->head)
+            {
+                if (current->prev != NULL)
+                {
+                    current->prev->next = current->next;
+                }
+                if (current->next != NULL)
+                {
+                    current->next->prev = current->prev;
+                }
+
+                if (current == cache->tail)
+                {
+                    cache->tail = current->prev;
+                }
+
+                current->next = cache->head;
+                current->prev = NULL;
+                cache->head->prev = current;
+                cache->head = current;
+            }
+            return current;
+        }
         current = current->next;
     }
+
+    return NULL;
 }
-void freecache(struct cache *cache)
+void addToCache(LRUCache *cache, const char *path, const char *ip, int port)
 {
-    struct cacheSt *current = cache->head;
-    struct cacheSt *next;
+    if (cache->currentSize >= cache->maxSize)
+    {
+        CacheNode *tail = cache->tail;
+        if (tail != NULL)
+        {
+            if (tail->prev != NULL)
+            {
+                tail->prev->next = NULL;
+            }
+            cache->tail = tail->prev;
+
+            free(tail);
+            cache->currentSize--;
+        }
+    }
+
+    CacheNode *newNode = (CacheNode *)malloc(sizeof(CacheNode));
+    strncpy(newNode->path, path, PATH_MAX);
+    strncpy(newNode->ip, ip, 16);
+    newNode->port = port;
+
+    newNode->next = cache->head;
+    newNode->prev = NULL;
+
+    if (cache->head != NULL)
+    {
+        cache->head->prev = newNode;
+    }
+
+    cache->head = newNode;
+
+    if (cache->tail == NULL)
+    {
+        cache->tail = newNode;
+    }
+
+    cache->currentSize++;
+}
+void freeCache(LRUCache *cache)
+{
+    CacheNode *current = cache->head;
     while (current != NULL)
     {
-        next = current->next;
+        CacheNode *next = current->next;
         free(current);
         current = next;
     }
