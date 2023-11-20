@@ -44,6 +44,7 @@ typedef struct MessageFormat
     int operation;
     char buffer[PATH_MAX];
     bool isADirectory;
+    int bytesToRead;
 } MessageFormat;
 typedef MessageFormat MessageNMS2SS_COPY;
 typedef MessageFormat MessageNMS2SS_WRITE;

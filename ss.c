@@ -9,6 +9,7 @@ sem_t portnmsNp_lock;
 int close_flag = 0;
 TrieNode *ssTrie = NULL;
 pthread_t nm_ss_connection;
+int write_count=0;
 
 void *NMServerConnection(void *arg);
 
@@ -186,7 +187,7 @@ void Read_ss(int *err_code, int client_sock, MessageClient2SS message, FILE *fil
     {
         // fwrite(buffer, 1, bytesRead, this);
         // printf("Sending message to client: %s\n", buffer);
-        if (send(client_sock, buffer, strlen(buffer), 0) < 0)
+        if (send(client_sock, buffer, bytesRead, 0) < 0)
         {
             fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
             close(client_sock);
@@ -234,21 +235,23 @@ int Write_ss(int *err_code, int client_sock, MessageClient2SS message,FILE* fd,i
     // printf("size of message: %d\n", sizeof(message.msg));
     // if (write(fd, message.msg, strlen(message.msg)) < 0)
 
-    FILE *th = fopen("this.txt", "a");
+    // FILE *th = fopen("this.txt", "a");
 
-    if(fwrite(message.msg, 1, sizeof(message.msg), fd) < 0)
+    if(fwrite(message.msg, 1,message.bytesToRead, fd) < 0)
     {
         fprintf(stderr, "[-]Write error: %s\n", strerror(errno)); // ERROR HANDLING
         if (close(client_sock) < 0)
             fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
         // exit(1);
     }
+    write_count++;
+    printf("write count: %d\n",write_count);
     MessageFormat message2;
     bzero(message2.msg,PATH_MAX);
     
     // while ((bytesRead = recv(client_sock, &message2, sizeof(message2), 0)) > 0)
     // {
-    //     fwrite(message2.msg, 1, bytesRead, th);
+    //     // fwrite(message2.msg, 1, bytesRead, th);
     //     if(fwrite(message2.msg, 1, bytesRead, fd) < 0)
     //     {
     //         fprintf(stderr, "[-]Write error: %s\n", strerror(errno)); // ERROR HANDLING
@@ -424,18 +427,20 @@ void *NMServerConnection(void *arg)
         message.operation = 0;
         bzero(message.buffer, PATH_MAX);
         bzero(message.msg, PATH_MAX);
-        FILE *this = fopen("this.txt", "w");
-        if (recv(nms_sock, &message, sizeof(message), 0) < 0)
+        // FILE *this = fopen("this.txt", "w");
+        int bytes_read ;
+        if ((bytes_read = recv(nms_sock, &message, sizeof(message), 0)) < 0)
         {
             fprintf(stderr, "[-]Receive error: %s\n", strerror(errno)); // ERROR HANDLING
-            if (close(nms_sock) < 0)
-                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+            // if (close(nms_sock) < 0)
+            //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
             // exit(1);
             continue;
         }
-        fwrite(message.msg, 1, strlen(message.msg), this);
-        fclose(this);
-        if (message.operation == 0)
+
+        // fwrite(message.msg, 1, strlen(message.msg), this);
+        // fclose(this);
+        if (message.operation == 0 || bytes_read==0)
             continue;
         // printf("the message : %d\n", strlen(message.buffer));
 

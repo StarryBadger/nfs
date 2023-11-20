@@ -13,7 +13,7 @@ def compare_files(file1, file2):
             print(f"Difference at line {i + 1}: {line.strip()}")
 
 if __name__ == "__main__":
-    file_path1 = "out.txt"
-    file_path2 = "clientout.txt"
+    file_path1 = "dir1/em.png"
+    file_path2 = "dir2/em.png"
 
     compare_files(file_path1, file_path2)
