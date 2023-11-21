@@ -175,7 +175,7 @@ errcode handleSSCommunication(int socketNM, MessageClient2SS message)
     }
     if (message.operation == WRITE)
     {
-        if (send(socketSS, &err_code, sizeof(err_code), 0) < 0)
+        if (send(socketNM, &err_code, sizeof(err_code), 0) < 0)
         {
             fprintf(stderr, RED "[-]Send error: %s\n" RESET, strerror(errno));
             return NETWORK_ERROR;
