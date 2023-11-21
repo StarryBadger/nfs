@@ -343,7 +343,6 @@ void *CLientServerConnection(void *arg)
         {
             return NULL;
         }
-
         fileInfo.inodeNumber = (uintmax_t)sb.st_ino;
         fileInfo.mode = (uintmax_t)sb.st_mode;
         fileInfo.linkCount = (uintmax_t)sb.st_nlink;
@@ -355,17 +354,6 @@ void *CLientServerConnection(void *arg)
         fileInfo.lastStatusChange = sb.st_ctime;
         fileInfo.lastFileAccess = sb.st_atime;
         fileInfo.lastFileModification = sb.st_mtime;
-        metadata *metadata = &fileInfo;
-        printf("I-node number:                      %llu\n", metadata->inodeNumber);
-        printf("Mode (permissions: octal):          %llo (octal)\n", metadata->mode);
-        printf("Link count:                         %llu\n", metadata->linkCount);
-        printf("Ownership:                          UID=%llu   GID=%llu\n", metadata->uid, metadata->gid);
-        printf("File size:                          %lld bytes\n", metadata->fileSize);
-        printf("Preferred I/O block size:           %lld bytes\n", metadata->preferredBlockSize);
-        printf("Blocks allocated:                   %lld\n", metadata->blocksAllocated);
-        printf("Last file access:                   %s", ctime(&metadata->lastFileAccess));
-        printf("Last file modification:             %s", ctime(&metadata->lastFileModification));
-        printf("Last status change:                 %s", ctime(&metadata->lastStatusChange));
         if (send(client_sock, &fileInfo, sizeof(fileInfo), 0) < 0)
         {
             fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING

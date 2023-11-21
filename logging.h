@@ -12,7 +12,8 @@ typedef enum comm
     CLIENT_NM,
     NM_CLIENT,
     SS_NM,
-    NM_SS
+    NM_SS,
+    NM_INTERNAL
 } comm;
 errcode initLog(char *filename);
 errcode logOperation(const char *filename, MessageClient2NM message);

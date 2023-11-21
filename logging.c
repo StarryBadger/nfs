@@ -63,6 +63,9 @@ errcode logThis(const char *filename, logLevel level, comm whosTalking, const ch
     case NM_SS:
         commPrefix = "NM->SS";
         break;
+    case NM_INTERNAL:
+        commPrefix = "NM INTERNAL";
+        break;
     default:
         commPrefix = "UNKNOWN";
     }
