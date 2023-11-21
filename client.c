@@ -112,9 +112,13 @@ bool printErrorMessages(errcode errorStatus) // returns true if to close connect
         printf("File in use!\n");
         return false;
     }
+    else if(errorStatus == NO_ERROR)
+    {
+        return false;
+    }
     else
     {
-        printf("Unknown error!\n");
+        printf("Unknown error! Error code : %d\n",errorStatus);
         return false;
     }
 }
@@ -156,6 +160,7 @@ void printOperationMessage(MessageClient2NM message)
         break;
     case TERMINATE:
         printf("Selected Operation: TERMINATE - Terminate Client\n");
+        break;
     default:
         printf("Invalid Operation Number\n");
     }

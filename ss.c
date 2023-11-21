@@ -463,9 +463,9 @@ void *NMServerConnection(void *arg)
 
         if (message.operation == CREATE && !message.isADirectory)
         {
-            printf("one\n");
             int err_code;
             int fd = open(message.buffer, O_CREAT | O_WRONLY, 0644);
+            err_code = NO_ERROR;
             if (fd == -1)
             {
                 fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
@@ -473,7 +473,6 @@ void *NMServerConnection(void *arg)
                 // return NULL;
             }
             // InsertTrie(message.buffer, ssTrie); //SHREYANSH
-            err_code = NO_ERROR;
 
             if (send(nms_sock, &err_code, sizeof(err_code), 0) < 0)
             {
@@ -492,16 +491,14 @@ void *NMServerConnection(void *arg)
 
         if (message.operation == CREATE && message.isADirectory)
         {
-            printf("two\n");
             int err_code;
+            err_code = NO_ERROR;
             if (mkdir(message.buffer, 0777) == -1)
             {
                 fprintf(stderr, "\x1b[31mCould not create %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
                 err_code = DIRECTORY_UNABLE_TO_CREATE;
                 // return NULL;
             }
-            // InsertTrie(message.buffer, ssTrie); // SHREYANSH
-            err_code = NO_ERROR;
 
             if (send(nms_sock, &err_code, sizeof(err_code), 0) < 0)
             {
@@ -517,13 +514,6 @@ void *NMServerConnection(void *arg)
 
         if (message.operation == DELETE)
         {
-            // int fd = open(message.buffer, O_RDONLY);
-            // if (fd == -1)
-            // {
-            //     fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
-            //     return NULL;
-            // }
-            // close(fd);
             int err_code = NO_ERROR;
             printf("to be deleted: %s\n", message.buffer);
             if (remove(message.buffer) == 0)
@@ -813,7 +803,7 @@ void *NMServerREDConnection(void *arg)
 
         if (message.operation == CREATE && !message.isADirectory)
         {
-            printf("one\n");
+            // printf("one\n");
             int err_code;
             int fd = open(message.buffer, O_CREAT | O_WRONLY, 0644);
             if (fd == -1)
@@ -842,7 +832,7 @@ void *NMServerREDConnection(void *arg)
 
         if (message.operation == CREATE && message.isADirectory)
         {
-            printf("two\n");
+            // printf("two\n");
             int err_code;
             if (mkdir(message.buffer, 0777) == -1)
             {

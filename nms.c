@@ -161,7 +161,7 @@ void InsertNewSS(int ssTocPortNo, int ssTonmsPortNo, int ssToNMmpport, int ssToN
         struct ss_list *first = storage_servers->head->next;
         struct ss_list *second = first->next;
         struct ss_list *third = new;
-        printf("first:  %d  second %d  : third:  %d\n", first->ssToc_port, second->ssToc_port, third->ssToc_port);
+        // printf("first:  %d  second %d  : third:  %d\n", first->ssToc_port, second->ssToc_port, third->ssToc_port);
         deleteRedundancy(first, 1);
         printf("delete 1 from 1 is done\n");
         CreateRedundancy(third, first, 1);
@@ -169,7 +169,7 @@ void InsertNewSS(int ssTocPortNo, int ssTonmsPortNo, int ssToNMmpport, int ssToN
         CreateRedundancy(second, first, 2);
         printf("insert of second into first is done\n");
         CreateRedundancy(third, second, 2);
-        printf("AA: first:  %d  second %d  : third:  %d\n", first->ssToc_port, second->ssToc_port, third->ssToc_port);
+        // printf("AA: first:  %d  second %d  : third:  %d\n", first->ssToc_port, second->ssToc_port, third->ssToc_port);
         printf("insertion of 3 into 2 is done\n");
         CreateRedundancy(second, third, 1);
         printf("insertion of 2 in 3 is done\n");
@@ -375,7 +375,7 @@ int lessgoRec_again(int port, char **path_line, int index, TrieNode *node, char 
     if (node == NULL)
         return UNABLE_TO_DELETE;
     strcpy(path_line[index], node->directory);
-    printf("here node name: %s\n", node->directory);
+    // printf("here node name: %s\n", node->directory);
     if (node->isFile == 0)
     {
         if (node->firstChild)
@@ -464,7 +464,7 @@ int lessgoRec_again(int port, char **path_line, int index, TrieNode *node, char 
             }
             if (SearchTrie(temp_dest_path, temp->root) != NULL)
             {
-                printf("here to delete: %s\n", temp_dest_path);
+                // printf("here to delete: %s\n", temp_dest_path);
                 DeleteTrie(temp_dest_path, temp->root);
                 PrintTrieLIkeAnActualTRee(temp->root, 4);
                 break;
