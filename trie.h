@@ -1,6 +1,8 @@
 #ifndef __TRIE_H
 #define __TRIE_H
 
+#include <pthread.h>
+
 typedef struct TrieNode
 {
     char directory[100];
@@ -8,6 +10,8 @@ typedef struct TrieNode
     struct TrieNode *sibling;
     int isFile;
     int isAccessible;
+    // pthread_rw_lock_t rwlock; 
+    // sem_t file_lock;
 }TrieNode;
 
 void PrintTrieLIkeAnActualTRee(struct TrieNode *root, int level);

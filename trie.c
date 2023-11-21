@@ -1,13 +1,4 @@
 #include "headers.h"
-#define CYN "\e[0;36m"
-#define RESET "\x1b[0m"
-#define GREEN "\x1b[32m"
-#define BLUE "\x1b[34m"
-#define WHITE "\x1b[37m"
-#define RED "\033[0;31m"
-#define YELLOW "\033[0;33m"
-#define ORANGE "\e[38;2;255;85;0m"
-#define BMAG "\e[1;35m"
 void PrintTrieLIkeAnActualTRee(struct TrieNode *root, int level)
 {
     if (root == NULL)
@@ -30,6 +21,8 @@ TrieNode *createNode(char *directory, int checkFile, int checkAcc)
     newNode->sibling = NULL;
     newNode->isFile = checkFile;
     newNode->isAccessible = checkAcc;
+    // sem_init(&newNode->file_lock,0,1);
+    // pthread_rwlock_init(&newNode->rwlock, NULL);
     return newNode;
 }
 

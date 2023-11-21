@@ -1,32 +1,9 @@
 #include "headers.h"
-void appendCharToFront(char *str, char character)
-{
-    char TEMP_BUFF[PATH_MAX];
-    int length = strlen(TEMP_BUFF);
-    int lastIndexOfSlash;
-    strcpy(TEMP_BUFF, str);
 
-    int i, j;
-    j = 0;
-
-    for (i = 0; i < length; i++)
-    {
-        str[j++] = TEMP_BUFF[i];
-
-        if (TEMP_BUFF[i] == '/')
-        {
-            str[j] = 'D';
-            lastIndexOfSlash = j;
-            j++;
-        }
-    }
-    str[lastIndexOfSlash] = character;
-    str[j] = '\0';
-}
 void lookFor(char *path, int pathlength, TrieNode *root)
 {
     DIR *directory = opendir(path);
-    char TEMP_BUFF[PATH_MAX + 1];
+    char TEMP_BUFF[PATH_LIMIT + 1];
     if (directory == NULL)
     {
         fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", path);
@@ -44,7 +21,7 @@ void lookFor(char *path, int pathlength, TrieNode *root)
         {
             continue;
         }
-        char pathBranch[PATH_MAX];
+        char pathBranch[PATH_LIMIT];
         strcpy(pathBranch, path);
         if (pathBranch[strlen(pathBranch) - 1] != '/')
             strcat(pathBranch, "/");
@@ -56,7 +33,6 @@ void lookFor(char *path, int pathlength, TrieNode *root)
         {
             printf("%s\n", pathBranch + pathlength);
             strcpy(TEMP_BUFF, pathBranch + pathlength);
-            // appendCharToFront(TEMP_BUFF,'D');
             InsertTrie(TEMP_BUFF, root, 0, 1);
             lookFor(pathBranch, pathlength, root);
         }
@@ -64,7 +40,6 @@ void lookFor(char *path, int pathlength, TrieNode *root)
         {
             printf("%s\n", pathBranch + pathlength);
             strcpy(TEMP_BUFF, pathBranch + pathlength);
-            // appendCharToFront(TEMP_BUFF,'F');
             InsertTrie(TEMP_BUFF, root, 1, 1);
         }
     }
@@ -72,7 +47,7 @@ void lookFor(char *path, int pathlength, TrieNode *root)
 }
 // void seek()
 // {
-//     char path[PATH_MAX];
+//     char path[PATH_LIMIT];
 //     scanf("%s", path);
 //     int pathlength = strlen(path);
 //     lookFor(path,pathlength,ssTrie);

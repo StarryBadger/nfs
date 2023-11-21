@@ -21,7 +21,7 @@ void *naming_server_responder_worker(void *arg)
     int server_sock, client_sock;
     struct sockaddr_in server_addr, client_addr;
     socklen_t addr_size;
-    // char buffer[PATH_MAX];
+    // char buffer[PATH_LIMIT];
     int n;
 
     server_sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -102,9 +102,6 @@ void *naming_server_informer_worker(void *arg)
     sem_wait(&portnmRed_lock);
     int ss_sock;
     struct sockaddr_in addr;
-    socklen_t addr_size;
-    char buffer[PATH_MAX];
-    int n;
 
     ss_sock = socket(AF_INET, SOCK_STREAM, 0);
     if (ss_sock < 0)
@@ -127,18 +124,7 @@ void *naming_server_informer_worker(void *arg)
     }
     printf("Connected to the server.\n");
 
-    // ssTrie = createNode("storage_server_1");
-    // InsertTrie("root/dir1/dir2/dir3",ssTrie);
-    // InsertTrie("root/dir1/dir5/dir6",ssTrie);
-    // InsertTrie("root/dir1/dir2/dir4",ssTrie);
-    // InsertTrie("root/dir1/dir5/dir7",ssTrie);
-    // InsertTrie("root/dir2/dir6/dir9",ssTrie);
-    // InsertTrie("root/dir2/dir6/dir10",ssTrie);
-
-    // bzero(buffer, PATH_MAX);
-    // sprintf(buffer,"%d,%d",port_for_clients,port_for_naming_server);
     MessageSS2NM message;
-    // strcpy(message.buffer, "storage_server_1");
     TrieToString(ssTrie, message.buffer);
     message.port_for_clients = port_for_clients;
     message.port_for_naming_server = port_for_naming_server;
@@ -191,7 +177,7 @@ void Read_ss(int *err_code, int client_sock, MessageClient2SS message, FILE *fil
     {
         // fwrite(buffer, 1, bytesRead, this);
         // printf("Sending message to client: %s\n", buffer);
-        bzero(message_read.msg, PATH_MAX);
+        bzero(message_read.msg, PATH_LIMIT);
         strcpy(message_read.msg, buffer);
         message_read.bytesToRead = bytesRead;
         if (send(client_sock, &message_read, sizeof(message_read), 0) < 0)
@@ -210,16 +196,13 @@ void Read_ss(int *err_code, int client_sock, MessageClient2SS message, FILE *fil
     // fclose(file);
 }
 
-int Write_ss(int *err_code, int client_sock, MessageClient2SS message, FILE *fd, int isCLient)
+void Write_ss(int *err_code, int client_sock, MessageClient2SS message, FILE *fd, int isCLient)
 {
-    if (fd == -1)
+    if (fd == NULL)
     {
         fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
         *err_code = FILE_NOT_WRITABLE;
     }
-    char buffer[PATH_MAX];
-    int bytes_read;
-
     if (isCLient)
     {
         
@@ -240,12 +223,7 @@ int Write_ss(int *err_code, int client_sock, MessageClient2SS message, FILE *fd,
                 fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
             // exit(1);
         }
-
-        if (*err_code == FILE_NOT_WRITABLE)
-            return NULL;
     }
-
-    int bytesRead = 0;
 
     // printf("Received message from client: %s\n", message.msg);
     // printf("size of message: %d\n", sizeof(message.msg));
@@ -265,7 +243,7 @@ int Write_ss(int *err_code, int client_sock, MessageClient2SS message, FILE *fd,
         printf("write count: %d\n", write_count);
     }
     MessageFormat message2;
-    bzero(message2.msg, PATH_MAX);
+    bzero(message2.msg, PATH_LIMIT);
 
     // while ((bytesRead = recv(client_sock, &message2, sizeof(message2), 0)) > 0)
     // {
@@ -277,9 +255,8 @@ int Write_ss(int *err_code, int client_sock, MessageClient2SS message, FILE *fd,
     //             fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
     //         // exit(1);
     //     }
-    //     bzero(message2.msg, PATH_MAX);
+    //     bzero(message2.msg, PATH_LIMIT);
     // }
-    return bytes_read;
 }
 
 void *CLientServerConnection(void *arg)
@@ -287,7 +264,7 @@ void *CLientServerConnection(void *arg)
     int client_sock = *(int *)arg;
     int err_code = NO_ERROR;
     MessageClient2SS message;
-    bzero(message.buffer, PATH_MAX);
+    bzero(message.buffer, PATH_LIMIT);
 
     if (recv(client_sock, &message, sizeof(message), 0) < 0)
     {
@@ -296,31 +273,19 @@ void *CLientServerConnection(void *arg)
             fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
         exit(1);
     }
-    // printf("Received message from client: %d %s\n", message.operation, message.buffer);
-
     if (message.operation == READ)
     {
-        // int fd = open(message.buffer, O_RDONLY);
-        // Read_ss(&err_code, client_sock, message,fd,1);
-
         FILE *file = fopen(message.buffer, "r");
         Read_ss(&err_code, client_sock, message, file, 1);
 
         closeSocket(client_sock);
-        // printf("\n");
-        // close(fd);
         fclose(file);
     }
 
     if (message.operation == WRITE)
     {
-        // int fd = open(message.buffer, O_WRONLY | O_TRUNC);
         FILE *fd = fopen(message.buffer, "w");
-        printf("enterd write in lcient %s",message.msg);
-        int b_read = Write_ss(&err_code, client_sock, message, fd, 1);
-        if (b_read < 0)
-            closeSocket(client_sock);
-        // printf("\n");
+        Write_ss(&err_code, client_sock, message, fd, 1);
         fclose(fd);
     }
     if (message.operation == METADATA)
@@ -335,9 +300,7 @@ void *CLientServerConnection(void *arg)
         if (send(client_sock, &err_code, sizeof(err_code), 0) < 0)
         {
             fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
-            if (close(client_sock) < 0)
-                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
-            // exit(1);
+            close(client_sock);
         }
         if (err_code != NO_ERROR)
         {
@@ -361,9 +324,7 @@ void *CLientServerConnection(void *arg)
                 fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
         }
     }
-    if (message.operation == COPY)
-    {
-    }
+    return NULL;
 }
 
 void *NMServerConnection(void *arg)
@@ -371,7 +332,7 @@ void *NMServerConnection(void *arg)
     int server_sock, nms_sock;
     struct sockaddr_in server_addr, nms_addr;
     socklen_t addr_size;
-    // char buffer[PATH_MAX];
+    // char buffer[PATH_LIMIT];
     int n;
 
     server_sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -443,8 +404,8 @@ void *NMServerConnection(void *arg)
         printf("Accepted\n");
         MessageClient2SS message;
         message.operation = 0;
-        bzero(message.buffer, PATH_MAX);
-        bzero(message.msg, PATH_MAX);
+        bzero(message.buffer, PATH_LIMIT);
+        bzero(message.msg, PATH_LIMIT);
         // FILE *this = fopen("this.txt", "w");
         int bytes_read;
         if ((bytes_read = recv(nms_sock, &message, sizeof(message), 0)) < 0)
@@ -576,7 +537,7 @@ void *clients_handler_worker(void *arg)
     int server_sock, client_sock;
     struct sockaddr_in server_addr, client_addr;
     socklen_t addr_size;
-    // char buffer[PATH_MAX];
+    // char buffer[PATH_LIMIT];
     int n;
 
     server_sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -649,8 +610,8 @@ void GetAccessiblePaths()
     printf("Enter 2 to make some paths accessible\n");
     int choice;
     scanf("%d", &choice);
-    char current_directory[PATH_MAX];
-    char TEMPBUFF[PATH_MAX];
+    char current_directory[PATH_LIMIT];
+    char TEMPBUFF[PATH_LIMIT];
     getcwd(current_directory, sizeof(current_directory));
     if (choice == 1)
     {
@@ -671,7 +632,7 @@ void GetAccessiblePaths()
         int num_directory;
         scanf("%d", &num_directory);
         printf("Enter the paths for directories\n");
-        char paths[num_directory][PATH_MAX];
+        char paths[num_directory][PATH_LIMIT];
         for (int i = 0; i < num_directory; i++)
         {
             scanf("%s", paths[i]);
@@ -698,7 +659,7 @@ void GetAccessiblePaths()
         int num_files;
         scanf("%d", &num_files);
         printf("Enter the paths for files\n");
-        char files[num_files][PATH_MAX];
+        char files[num_files][PATH_LIMIT];
         for (int i = 0; i < num_files; i++)
         {
             scanf("%s", files[i]);
@@ -722,7 +683,7 @@ void *NMServerREDConnection(void *arg)
     int server_sock, nms_sock;
     struct sockaddr_in server_addr, nms_addr;
     socklen_t addr_size;
-    // char buffer[PATH_MAX];
+    // char buffer[PATH_LIMIT];
     int n;
 
     server_sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -794,8 +755,8 @@ void *NMServerREDConnection(void *arg)
         printf("Accepted\n");
         MessageClient2SS message;
         message.operation = 0;
-        bzero(message.buffer, PATH_MAX);
-        bzero(message.msg, PATH_MAX);
+        bzero(message.buffer, PATH_LIMIT);
+        bzero(message.msg, PATH_LIMIT);
         // FILE *this = fopen("this.txt", "w");
         int bytes_read;
         if ((bytes_read = recv(nms_sock, &message, sizeof(message), 0)) < 0)

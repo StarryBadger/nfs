@@ -28,7 +28,6 @@ int initialize_nms_as_client(int port)
 {
     int ss_sock;
     struct sockaddr_in addr;
-    socklen_t addr_size;
     ss_sock = socket(AF_INET, SOCK_STREAM, 0);
     if (ss_sock < 0)
     {
@@ -236,7 +235,7 @@ void *ss_port_worker(void *arg)
     int server_sock, client_sock;
     struct sockaddr_in server_addr, client_addr;
     socklen_t addr_size;
-    //   char buffer[PATH_MAX];
+    //   char buffer[PATH_LIMIT];
     int n;
     // char port_str[6];
     // strcpy(port_str, argv[1]);
@@ -277,7 +276,7 @@ void *ss_port_worker(void *arg)
     }
     printf("Listening...\n");
     logThis(logfile, LOG_INFO, NM_INTERNAL, "Listening for storage servers");
-    char buffer[PATH_MAX];
+    char buffer[PATH_LIMIT];
     while (1)
     {
         addr_size = sizeof(client_addr);
@@ -293,7 +292,7 @@ void *ss_port_worker(void *arg)
         printf("[+]Storage server connected.\n");
         logThis(logfile, LOG_INFO, SS_NM, "Storage server connected");
 
-        bzero(buffer, PATH_MAX);
+        bzero(buffer, PATH_LIMIT);
         MessageSS2NM message;
         if (recv(client_sock, &message, sizeof(message), 0) < 0)
         {
@@ -391,7 +390,7 @@ int lessgoRec_again(int port, char **path_line, int index, TrieNode *node, char 
     {
         if (node->sibling)
         {
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < FILE_NAME_LENGTH; i++)
                 path_line[index][i] = '\0';
             int result = lessgoRec_again(port, path_line, index, node->sibling, path, flag, port_flag);
             strcpy(path_line[index], node->directory);
@@ -403,8 +402,8 @@ int lessgoRec_again(int port, char **path_line, int index, TrieNode *node, char 
     }
     MessageFormat msg;
     msg.operation = DELETE;
-    char temp_dest_path[PATH_MAX];
-    for (int i = 0; i < PATH_MAX; i++)
+    char temp_dest_path[PATH_LIMIT];
+    for (int i = 0; i < PATH_LIMIT; i++)
         temp_dest_path[i] = '\0';
     if (path != NULL)
     {
@@ -412,7 +411,7 @@ int lessgoRec_again(int port, char **path_line, int index, TrieNode *node, char 
         strcat(temp_dest_path, "/");
     }
     strcat(temp_dest_path, pathString(path_line, index + 1, 0));
-    memset(msg.buffer, '\0', PATH_MAX);
+    memset(msg.buffer, '\0', PATH_LIMIT);
     strcpy(msg.buffer, temp_dest_path);
     int sock = initialize_nms_as_client(port);
     printf("sending path to be deleted:%s\n", msg.buffer);
@@ -472,7 +471,7 @@ int lessgoRec_again(int port, char **path_line, int index, TrieNode *node, char 
         }
     }
     close(sock);
-    for (int i = 0; i < 100; i++)
+    for (int i = 0; i < FILE_NAME_LENGTH; i++)
         path_line[index][i] = '\0';
     return err_code_about_to_send;
 }
@@ -483,10 +482,10 @@ int lessgoRec(int port, int port2, char **path_line, int index, TrieNode *node, 
         return UNABLE_TO_COPY;
     strcpy(path_line[index], node->directory);
     MessageClient2NM msg;
-    memset(msg.buffer, '\0', PATH_MAX);
+    memset(msg.buffer, '\0', PATH_LIMIT);
     if (node->isFile == 1)
     {
-        
+
         int sock = initialize_nms_as_client(port);
         strcpy(msg.buffer, pathString(path_line, index + 1, 0));
         msg.operation = READ;
@@ -499,11 +498,11 @@ int lessgoRec(int port, int port2, char **path_line, int index, TrieNode *node, 
             //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
             return UNABLE_TO_COPY;
         }
-        char buffer[PATH_MAX];
-        // bzero(buffer, PATH_MAX);
-        // memset(buffer,'\0',PATH_MAX);
-        char temp_dest_path[PATH_MAX];
-        for (int i = 0; i < PATH_MAX; i++)
+        char buffer[PATH_LIMIT];
+        // bzero(buffer, PATH_LIMIT);
+        // memset(buffer,'\0',PATH_LIMIT);
+        char temp_dest_path[PATH_LIMIT];
+        for (int i = 0; i < PATH_LIMIT; i++)
         {
             temp_dest_path[i] = '\0';
             buffer[i] = '\0';
@@ -586,10 +585,9 @@ int lessgoRec(int port, int port2, char **path_line, int index, TrieNode *node, 
         }
         close(sock2);
         int bytesread;
-        int send_cout = 0;
         // FILE* this = fopen("this_nm.txt","w");
         MessageFormat message_read;
-        for (int i = 0; i < PATH_MAX; i++)
+        for (int i = 0; i < PATH_LIMIT; i++)
             buffer[i] = '\0';
 
         while ((bytesread = recv(sock, &message_read, sizeof(message_read), 0)) > 0)
@@ -599,7 +597,7 @@ int lessgoRec(int port, int port2, char **path_line, int index, TrieNode *node, 
             // printf("Received message from server: %s\n", buffer);
             strcpy(msg_to_send.msg, message_read.msg);
             // msg_to_send.msg[bytesread] = '\0';
-            // for(int l = bytesread;l<PATH_MAX;l++)
+            // for(int l = bytesread;l<PATH_LIMIT;l++)
             // {
             //     msg_to_send.msg[l] = '\0';
             // }
@@ -627,8 +625,8 @@ int lessgoRec(int port, int port2, char **path_line, int index, TrieNode *node, 
                 return UNABLE_TO_COPY;
             }
             close(sock2);
-            // bzero(buffer, PATH_MAX);
-            for (int i = 0; i < PATH_MAX; i++)
+            // bzero(buffer, PATH_LIMIT);
+            for (int i = 0; i < PATH_LIMIT; i++)
                 buffer[i] = '\0';
             if (message_read.bytesToRead < SEND_SIZE)
             {
@@ -647,8 +645,8 @@ int lessgoRec(int port, int port2, char **path_line, int index, TrieNode *node, 
     {
         // printf("here hahaha\n");
         // strcpy(msg.buffer, pathString(path_line, index + 1,initial_index));
-        char temp_dest_path[PATH_MAX];
-        for (int i = 0; i < PATH_MAX; i++)
+        char temp_dest_path[PATH_LIMIT];
+        for (int i = 0; i < PATH_LIMIT; i++)
         {
             temp_dest_path[i] = '\0';
             msg.buffer[i] = '\0';
@@ -740,7 +738,7 @@ int lessgoRec(int port, int port2, char **path_line, int index, TrieNode *node, 
     }
     if (level_flag == 0)
     {
-        for (int i = 0; i < PATH_MAX; i++)
+        for (int i = 0; i < PATH_LIMIT; i++)
             path_line[index][i] = '\0';
         if (node->sibling)
         {
@@ -752,7 +750,7 @@ int lessgoRec(int port, int port2, char **path_line, int index, TrieNode *node, 
         }
     }
     // printf("here with directory : %s\n",node->directory);
-    for (int i = 0; i < PATH_MAX; i++)
+    for (int i = 0; i < PATH_LIMIT; i++)
         path_line[index][0] = '\0';
     // path_line[index][0] = '\0';
     return NO_ERROR;
@@ -784,10 +782,10 @@ int CopyPath2Path(char *src_path, char *dest_path)
     port2 = searchPortForNMS(dest_path);
     logThis(logfile, LOG_INFO, NM_INTERNAL, "Source port: %d Destination port: %d", port1, port2);
 
-    char **path_line = (char **)malloc(sizeof(char *) * 500);
-    for (int i = 0; i < 500; i++)
+    char **path_line = (char **)malloc(sizeof(char *) * DIR_LIMIT);
+    for (int i = 0; i < DIR_LIMIT; i++)
     {
-        path_line[i] = (char *)malloc(sizeof(char) * 100);
+        path_line[i] = (char *)malloc(sizeof(char) * FILE_NAME_LENGTH);
         path_line[i][0] = '\0';
     }
 
@@ -807,7 +805,7 @@ int CopyPath2Path(char *src_path, char *dest_path)
         printf("invalid source path\n");
         return UNABLE_TO_COPY;
     }
-    char temp_buff[PATH_MAX];
+    char temp_buff[PATH_LIMIT];
     strcpy(temp_buff, src_path);
     char del2[] = "/";
     char *token2;
@@ -982,11 +980,11 @@ void *client_handler(void *arg)
                 if (message.operation == DELETE)
                 {
 
-                    char **path_line = (char **)malloc(sizeof(char *) * 500);
-                    for (int i = 0; i < 500; i++)
+                    char **path_line = (char **)malloc(sizeof(char *) * DIR_LIMIT);
+                    for (int i = 0; i < DIR_LIMIT; i++)
                     {
-                        path_line[i] = (char *)malloc(sizeof(char) * 100);
-                        for (int j = 0; j < 100; j++)
+                        path_line[i] = (char *)malloc(sizeof(char) * FILE_NAME_LENGTH);
+                        for (int j = 0; j < FILE_NAME_LENGTH; j++)
                             path_line[i][j] = '\0';
                     }
                     temp = storage_servers->head->next;
@@ -1005,7 +1003,7 @@ void *client_handler(void *arg)
                         }
                         temp = temp->next;
                     }
-                    printf("err_code_about_to_send is %d\n",err_code_about_to_send);
+                    printf("err_code_about_to_send is %d\n", err_code_about_to_send);
                     if (err_code_about_to_send == NO_ERROR)
                     {
                         struct ss_list *ite = storage_servers->head->next;
@@ -1085,8 +1083,8 @@ void *client_handler(void *arg)
                                 {
                                     struct ss_list *first;
                                     struct ss_list *second;
-                                    first=temp->my_red1_loc;
-                                    second=temp->my_red2_loc;
+                                    first = temp->my_red1_loc;
+                                    second = temp->my_red2_loc;
                                     deleteRedundancy(first, 1);
                                     deleteRedundancy(second, 2);
                                     CreateRedundancy(temp, first, 1);
@@ -1185,9 +1183,9 @@ void CreateRedundancy(struct ss_list *source, struct ss_list *destination, int r
     int sock2 = initialize_nms_as_client(destination->ssTonmred_port);
     MessageClient2NM msg;
     msg.operation = CREATE;
-    for (int i = 0; i < PATH_MAX; i++)
+    for (int i = 0; i < PATH_LIMIT; i++)
         msg.buffer[i] = '\0';
-    memset(msg.buffer, '\0', PATH_MAX);
+    memset(msg.buffer, '\0', PATH_LIMIT);
     if (rednum_flag == 1)
         strcpy(msg.buffer, "red1");
     else if (rednum_flag == 2)
@@ -1226,11 +1224,11 @@ void CreateRedundancy(struct ss_list *source, struct ss_list *destination, int r
             temp_red = temp_red->sibling;
             continue;
         }
-        char **path_line = (char **)malloc(sizeof(char *) * 500);
-        for (int i = 0; i < 500; i++)
+        char **path_line = (char **)malloc(sizeof(char *) * DIR_LIMIT);
+        for (int i = 0; i < DIR_LIMIT; i++)
         {
-            path_line[i] = (char *)malloc(sizeof(char) * 100);
-            for (int j = 0; j < 100; j++)
+            path_line[i] = (char *)malloc(sizeof(char) * FILE_NAME_LENGTH);
+            for (int j = 0; j < FILE_NAME_LENGTH; j++)
                 path_line[i][j] = '\0';
         }
         if (rednum_flag == 1)
@@ -1260,22 +1258,22 @@ void deleteRedundancy(struct ss_list *dest, int red_flag)
     }
     if (red_flag == 1)
     {
-        char **path_line = (char **)malloc(sizeof(char *) * 500);
-        for (int i = 0; i < 500; i++)
+        char **path_line = (char **)malloc(sizeof(char *) * DIR_LIMIT);
+        for (int i = 0; i < DIR_LIMIT; i++)
         {
-            path_line[i] = (char *)malloc(sizeof(char) * 100);
-            for (int j = 0; j < 100; j++)
+            path_line[i] = (char *)malloc(sizeof(char) * FILE_NAME_LENGTH);
+            for (int j = 0; j < FILE_NAME_LENGTH; j++)
                 path_line[i][j] = '\0';
         }
         lessgoRec_again(dest->ssTonmred_port, path_line, 0, SearchTrie("red1", dest->root), NULL, 1, 3);
     }
     else if (red_flag == 2)
     {
-        char **path_line = (char **)malloc(sizeof(char *) * 500);
-        for (int i = 0; i < 500; i++)
+        char **path_line = (char **)malloc(sizeof(char *) * DIR_LIMIT);
+        for (int i = 0; i < DIR_LIMIT; i++)
         {
-            path_line[i] = (char *)malloc(sizeof(char) * 100);
-            for (int j = 0; j < 100; j++)
+            path_line[i] = (char *)malloc(sizeof(char) * FILE_NAME_LENGTH);
+            for (int j = 0; j < FILE_NAME_LENGTH; j++)
                 path_line[i][j] = '\0';
         }
         lessgoRec_again(dest->ssTonmred_port, path_line, 0, SearchTrie("red2", dest->root), NULL, 1, 3);
@@ -1301,21 +1299,21 @@ void HandleRedundancy(struct ss_list *deleted_ss)
     struct ss_list *red2 = deleted_ss->my_red2_loc;
     struct ss_list *pred1 = deleted_ss->prev_red1;
     struct ss_list *pred2 = deleted_ss->prev_red2;
-    char **path_line = (char **)malloc(sizeof(char *) * 500);
-    for (int i = 0; i < 500; i++)
+    char **path_line = (char **)malloc(sizeof(char *) * DIR_LIMIT);
+    for (int i = 0; i < DIR_LIMIT; i++)
     {
-        path_line[i] = (char *)malloc(sizeof(char) * 100);
-        for (int j = 0; j < 100; j++)
+        path_line[i] = (char *)malloc(sizeof(char) * FILE_NAME_LENGTH);
+        for (int j = 0; j < FILE_NAME_LENGTH; j++)
             path_line[i][j] = '\0';
     }
     TrieNode *ite = SearchTrie("red1", red1->root)->firstChild;
     while (ite != NULL)
     {
-        char **path_line = (char **)malloc(sizeof(char *) * 500);
-        for (int i = 0; i < 500; i++)
+        char **path_line = (char **)malloc(sizeof(char *) * DIR_LIMIT);
+        for (int i = 0; i < DIR_LIMIT; i++)
         {
-            path_line[i] = (char *)malloc(sizeof(char) * 100);
-            for (int j = 0; j < 100; j++)
+            path_line[i] = (char *)malloc(sizeof(char) * FILE_NAME_LENGTH);
+            for (int j = 0; j < FILE_NAME_LENGTH; j++)
                 path_line[i][j] = '\0';
         }
         strcpy(path_line[0], "red1");

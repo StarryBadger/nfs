@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -pthread
+CFLAGS = -pthread -Wall 
 LDFLAGS = -lm
 
 CLIENT_SOURCES = socketAPI.c client.c

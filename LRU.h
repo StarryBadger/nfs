@@ -1,6 +1,6 @@
 typedef struct CacheNode
 {
-    char path[PATH_MAX];
+    char path[PATH_LIMIT];
     char ip[16];
     int portForClient;
     int portForNM;

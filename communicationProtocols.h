@@ -28,11 +28,23 @@
 
 #define METADATA_STR_MAX 100
 #define SEND_SIZE 1024
-#define PATH_MAX 1024
+#define PATH_LIMIT 1024
+#define DIR_LIMIT 500
+#define FILE_NAME_LENGTH 100
+
+#define CYN "\e[0;36m"
+#define RESET "\x1b[0m"
+#define GREEN "\x1b[32m"
+#define BLUE "\x1b[34m"
+#define WHITE "\x1b[37m"
+#define RED "\033[0;31m"
+#define YELLOW "\033[0;33m"
+#define ORANGE "\e[38;2;255;85;0m"
+#define BMAG "\e[1;35m"
 
 typedef struct MessageSS2NM
 {
-    char buffer[PATH_MAX];
+    char buffer[PATH_LIMIT];
     int port_for_clients;
     int port_for_naming_server;
     int port_for_nm_np;
@@ -41,9 +53,9 @@ typedef struct MessageSS2NM
 
 typedef struct MessageFormat
 {
-    char msg[PATH_MAX];
+    char msg[PATH_LIMIT];
     int operation;
-    char buffer[PATH_MAX];
+    char buffer[PATH_LIMIT];
     bool isADirectory;
     int bytesToRead;
 } MessageFormat;

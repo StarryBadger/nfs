@@ -63,7 +63,7 @@ void addToCache(LRUCache *cache, const char *path, const char *ip, int portForCl
     }
 
     CacheNode *newNode = (CacheNode *)malloc(sizeof(CacheNode));
-    strncpy(newNode->path, path, PATH_MAX);
+    strncpy(newNode->path, path, PATH_LIMIT);
     strncpy(newNode->ip, ip, 16);
     newNode->portForClient = portForClient;
     newNode->portForNM=portForNM;

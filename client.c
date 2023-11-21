@@ -75,7 +75,7 @@ errcode handleReadCommunication(int socketSS)
 {
     MessageClient2SS message;
     int bytesRead;
-    while (recv(socketSS, &message, sizeof(message), 0) > 0)
+    while ((bytesRead = recv(socketSS, &message, sizeof(message), 0)) > 0)
     {
         fwrite(message.msg, 1, message.bytesToRead, stdout);
     }

@@ -53,6 +53,4 @@ typedef int errcode;
 #define SOCKET_INIT_ERROR 70
 #define SOCKET_CLOSE_ERROR 71
 
-#define RED "\x1b[31m"
-#define RESET "\x1b[0m"
 

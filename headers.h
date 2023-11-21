@@ -24,6 +24,8 @@
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
+#include <semaphore.h>
+#include <pthread.h>
 
 #include "trie.h"
 #include "stack.h"
