@@ -79,13 +79,11 @@ int searchPortForClient(char *buffer, int operation)
     if (cachedEntry != NULL)
     {
         printf("Cache hit!\n");
-        // #################LOG
-        // ##
+        logThis(logfile, LOG_INFO, NM_INTERNAL, "Cache hit for %s", buffer);
         return cachedEntry->portForClient;
     }
     printf("Cache miss!\n");
-    // #################LOG
-    // ##
+    logThis(logfile, LOG_INFO, NM_INTERNAL, "Cache miss for %s", buffer);
     struct ss_list *temp;
     temp = storage_servers->head->next;
     TrieNode *searchResult;
@@ -99,18 +97,13 @@ int searchPortForClient(char *buffer, int operation)
                 if (operation != WRITE || (operation == WRITE && searchResult->isFile))
                 {
                     addToCache(cacheMe, buffer, ip_address, temp->ssToc_port, temp->ssTonmnp_port);
-                    // #################LOG
-                    // ##
-                    // #################LOG
-                    // ##
+                    logThis(logfile, LOG_INFO, NM_INTERNAL, "Added to cache for %s", buffer);
                     return temp->ssToc_port;
                 }
             }
         }
         temp = temp->next;
     }
-    // #################LOG
-    // ##
     return NO_SUCH_PATH;
 }
 int searchPortForNMS(char *buffer)
@@ -119,13 +112,11 @@ int searchPortForNMS(char *buffer)
     if (cachedEntry != NULL)
     {
         printf("Cache hit!\n");
-        // #################LOG
-        // ##
+        logThis(logfile, LOG_INFO, NM_INTERNAL, "Cache hit for %s", buffer);
         return cachedEntry->portForNM;
     }
     printf("Cache miss!\n");
-    // #################LOG
-    // ##
+    logThis(logfile, LOG_INFO, NM_INTERNAL, "Cache miss for %s", buffer);
     struct ss_list *temp;
     temp = storage_servers->head->next;
     TrieNode *searchResult;
@@ -137,17 +128,12 @@ int searchPortForNMS(char *buffer)
             if (searchResult->isAccessible)
             {
                 addToCache(cacheMe, buffer, ip_address, temp->ssToc_port, temp->ssTonmnp_port);
-                // #################LOG
-                // ##
-                // #################LOG
-                // ##
+                logThis(logfile, LOG_INFO, NM_INTERNAL, "Added to cache for %s", buffer);
                 return temp->ssTonmnp_port;
             }
         }
         temp = temp->next;
     }
-    // #################LOG
-    // ##
     return NO_SUCH_PATH;
 }
 void init_storage_servers()
@@ -289,17 +275,21 @@ void *ss_port_worker(void *arg)
     if (n < 0)
     {
         fprintf(stderr, "[-]Bind error: %s\n", strerror(errno));
+        logThis(logfile, LOG_ERROR, NM_INTERNAL, "Bind error: %s", strerror(errno));
         close(server_sock);
         exit(1);
     }
     printf("[+]Bind to the port number: %d\n", nms_ss_port);
+    logThis(logfile, LOG_INFO, NM_INTERNAL, "Bind to the port number: %d", nms_ss_port);
     if (listen(server_sock, 5) < 0)
     {
         fprintf(stderr, "[-]Listen error: %s\n", strerror(errno));
+        logThis(logfile, LOG_ERROR, NM_INTERNAL, "Listen error: %s", strerror(errno));
         close(server_sock);
         exit(1);
     }
     printf("Listening...\n");
+    logThis(logfile, LOG_INFO, NM_INTERNAL, "Listening for storage servers");
     char buffer[PATH_MAX];
     while (1)
     {
@@ -308,30 +298,31 @@ void *ss_port_worker(void *arg)
         if (client_sock < 0)
         {
             fprintf(stderr, "[-]Accept error: %s\n", strerror(errno));
+            logThis(logfile, LOG_ERROR, SS_NM, "Accept error: %s", strerror(errno));
             if (close(server_sock) < 0)
                 fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
             exit(1);
         }
         printf("[+]Storage server connected.\n");
+        logThis(logfile, LOG_INFO, SS_NM, "Storage server connected");
 
         bzero(buffer, PATH_MAX);
         MessageSS2NM message;
         if (recv(client_sock, &message, sizeof(message), 0) < 0)
         {
             fprintf(stderr, "[-]Receive error: %s\n", strerror(errno));
-            if (close(client_sock) < 0)
-                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-            if (close(server_sock) < 0)
-                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-            exit(1);
+            logThis(logfile, LOG_ERROR, SS_NM, "Receive error: %s", strerror(errno));
+            close(client_sock);
         }
         printf("Message from storage server: %s\n", message.buffer);
         printf("Port for clients: %d\n", message.port_for_clients);
-        printf("Port for nms: %d\n", message.port_for_naming_server);
-        printf("Port for nm_np: %d\n", message.port_for_nm_np);
+        printf("Port for nms to ping: %d\n", message.port_for_naming_server);
+        printf("Port for nms to communicate: %d\n", message.port_for_nm_np);
+        logThis(logfile,LOG_INFO,SS_NM,"Path Encoding received. [PORT: for clients: %d; for NMS to ping: %d for NMS to communicate: %d",message.port_for_clients,message.port_for_naming_server,message.port_for_nm_np);
 
         // PrintTrie(StringToTrie(message.buffer));
         InsertNewSS(message.port_for_clients, message.port_for_naming_server, message.port_for_nm_np, message.port_for_nm_red, StringToTrie(message.buffer));
+        logThis(logfile, LOG_INFO, NM_INTERNAL, "Storage server added to the list");
     }
 }
 
@@ -813,15 +804,16 @@ void *client_handler(void *arg)
             if (send(clientSocket, &port_to_send, sizeof(port_to_send), 0) < 0)
             {
                 fprintf(stderr, "[-]Sendtime error: %s\n", strerror(errno));
+                logThis(logfile, LOG_ERROR, NM_CLIENT, "Send operation information: %s", strerror(errno));
             }
+            logThis(logfile, LOG_INFO, NM_CLIENT, "Port sent: %d", port_to_send);
             if (port_to_send == NO_SUCH_PATH)
             {
                 printf("Client entered an invalid/inaccessible path\n");
-                // logThis(logfile,)
+                logThis(logfile, LOG_ERROR, NM_INTERNAL, "Client entered an invalid/inaccessible path");
                 continue;
             }
             printf("Port sent to client %d\n", port_to_send);
-            // log
         }
         else if (message.operation == CREATE || message.operation == DELETE)
         {
@@ -858,9 +850,11 @@ void *client_handler(void *arg)
                 if (send(clientSocket, &err_code_about_to_send, sizeof(err_code_about_to_send), 0) < 0)
                 {
                     fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+                    logThis(logfile, LOG_ERROR, NM_CLIENT, "Send operation information: %s", strerror(errno));
                     // exit(1);
                     continue;
                 }
+                logThis(logfile, LOG_INFO, NM_CLIENT, "Error code sent: %d", err_code_about_to_send);
             }
             else
             {
@@ -900,18 +894,17 @@ void *client_handler(void *arg)
 
                     if (send(nms_sock, &message, sizeof(message), 0) < 0)
                     {
-                        // #################LOG
-                        // ##
+                        logThis(logfile, LOG_ERROR, NM_CLIENT, "Send operation information: %s", strerror(errno));
                         fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
                         if (close(nms_sock) < 0)
                             fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
                     }
 
+
                     // int err_code_about_to_send;
                     if (recv(nms_sock, &err_code_about_to_send, sizeof(err_code_about_to_send), 0) < 0)
                     {
-                        // #################LOG
-                        // ##
+                        logThis(logfile, LOG_ERROR, CLIENT_NM, "Receive operation information: %s", strerror(errno));
                         fprintf(stderr, "[-]Receive time error: %s\n", strerror(errno));
                         // return;
                     }
@@ -959,8 +952,7 @@ void *client_handler(void *arg)
                     close(nms_sock);
                     if (send(clientSocket, &err_code_about_to_send, sizeof(err_code_about_to_send), 0) < 0)
                     {
-                        // #################LOG
-                        // ##
+                        logThis(logfile, LOG_ERROR, NM_CLIENT, "Send operation information: %s", strerror(errno));
                         fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
                         // exit(1);
                         continue;
@@ -974,9 +966,8 @@ void *client_handler(void *arg)
         }
     }
     close(clientSocket);
-    // #################LOG
-    // ##
     printf("Client disconnected\n");
+    logThis(logfile, LOG_INFO, CLIENT_NM, "Client disconnected");
     return NULL;
 }
 
