@@ -8,6 +8,7 @@ struct ss_list
     int ssToc_port;
     int ssTonms_port;
     int ssTonmnp_port;
+    int ssTonmred_port;
     struct ss_list *next;
     struct ss_list *prev;
     TrieNode *root;
@@ -108,7 +109,7 @@ void init_storage_servers()
     can_enter = 1;
 }
 
-void InsertNewSS(int ssTocPortNo, int ssTonmsPortNo, int ssToNMmpport, TrieNode *ssRoot)
+void InsertNewSS(int ssTocPortNo, int ssTonmsPortNo, int ssToNMmpport, int ssToNmRed_port, TrieNode *ssRoot)
 {
     struct ss_list *temp;
     temp = storage_servers->head;
@@ -123,6 +124,7 @@ void InsertNewSS(int ssTocPortNo, int ssTonmsPortNo, int ssToNMmpport, TrieNode 
     new->ssToc_port = ssTocPortNo;
     new->ssTonms_port = ssTonmsPortNo;
     new->ssTonmnp_port = ssToNMmpport;
+    new->ssTonmred_port = ssToNmRed_port;
     new->root = ssRoot;
     PrintTrieLIkeAnActualTRee(new->root, 4);
     return;
@@ -236,7 +238,7 @@ void *ss_port_worker(void *arg)
         printf("Port for nm_np: %d\n", message.port_for_nm_np);
 
         // PrintTrie(StringToTrie(message.buffer));
-        InsertNewSS(message.port_for_clients, message.port_for_naming_server, message.port_for_nm_np, StringToTrie(message.buffer));
+        InsertNewSS(message.port_for_clients, message.port_for_naming_server, message.port_for_nm_np, message.port_for_nm_red, StringToTrie(message.buffer));
     }
 }
 

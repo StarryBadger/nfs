@@ -36,6 +36,7 @@ typedef struct MessageSS2NM
     int port_for_clients;
     int port_for_naming_server;
     int port_for_nm_np;
+    int port_for_nm_red;
 } MessageSS2NM;
 
 typedef struct MessageFormat
