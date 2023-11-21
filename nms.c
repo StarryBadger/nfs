@@ -373,14 +373,18 @@ char *pathString(char **path_line, int size, int start)
 int lessgoRec_again(int port, char **path_line, int index, TrieNode *node, char *path, int flag, int port_flag)
 {
     if (node == NULL)
-        return FILE_ALREADY_EXISTS;
+        return UNABLE_TO_DELETE;
     strcpy(path_line[index], node->directory);
     printf("here node name: %s\n", node->directory);
     if (node->isFile == 0)
     {
         if (node->firstChild)
         {
-            lessgoRec_again(port, path_line, index + 1, node->firstChild, path, 0, port_flag);
+            int result = lessgoRec_again(port, path_line, index + 1, node->firstChild, path, 0, port_flag);
+            if (result == UNABLE_TO_DELETE)
+            {
+                return UNABLE_TO_DELETE;
+            }
         }
     }
     if (flag == 0)
@@ -389,8 +393,12 @@ int lessgoRec_again(int port, char **path_line, int index, TrieNode *node, char 
         {
             for (int i = 0; i < 100; i++)
                 path_line[index][i] = '\0';
-            lessgoRec_again(port, path_line, index, node->sibling, path, flag, port_flag);
+            int result = lessgoRec_again(port, path_line, index, node->sibling, path, flag, port_flag);
             strcpy(path_line[index], node->directory);
+            if (result == UNABLE_TO_DELETE)
+            {
+                return UNABLE_TO_DELETE;
+            }
         }
     }
     MessageFormat msg;
@@ -413,14 +421,14 @@ int lessgoRec_again(int port, char **path_line, int index, TrieNode *node, char 
         fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
         // if (close(sock) < 0)
         //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-        return NO_SUCH_PATH;
+        return UNABLE_TO_DELETE;
     }
 
     int err_code_about_to_send;
     if (recv(sock, &err_code_about_to_send, sizeof(err_code_about_to_send), 0) < 0)
     {
         fprintf(stderr, "[-]Receive time error: %s\n", strerror(errno));
-        // return;
+        return UNABLE_TO_DELETE;
     }
     printf("Error code received from storage server: %d\n", err_code_about_to_send);
     if (err_code_about_to_send == NO_ERROR)
@@ -469,10 +477,10 @@ int lessgoRec_again(int port, char **path_line, int index, TrieNode *node, char 
     return err_code_about_to_send;
 }
 
-void lessgoRec(int port, int port2, char **path_line, int index, TrieNode *node, int initial_index, char *dest_path, int level_flag, int port_flag)
+int lessgoRec(int port, int port2, char **path_line, int index, TrieNode *node, int initial_index, char *dest_path, int level_flag, int port_flag)
 {
     if (node == NULL)
-        return;
+        return UNABLE_TO_COPY;
     strcpy(path_line[index], node->directory);
     MessageClient2NM msg;
     memset(msg.buffer, '\0', PATH_MAX);
@@ -488,7 +496,7 @@ void lessgoRec(int port, int port2, char **path_line, int index, TrieNode *node,
             fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
             // if (close(sock) < 0)
             //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-            return;
+            return UNABLE_TO_COPY;
         }
         char buffer[PATH_MAX];
         // bzero(buffer, PATH_MAX);
@@ -517,14 +525,14 @@ void lessgoRec(int port, int port2, char **path_line, int index, TrieNode *node,
             fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
             // if (close(sock) < 0)
             //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-            return;
+            return UNABLE_TO_COPY;
         }
 
         int err_code_about_to_send;
         if (recv(sock2, &err_code_about_to_send, sizeof(err_code_about_to_send), 0) < 0)
         {
             fprintf(stderr, "[-]Receive time error: %s\n", strerror(errno));
-            // return;
+            return UNABLE_TO_COPY;
         }
         printf("Error code received from storage server: %d\n", err_code_about_to_send);
         if (err_code_about_to_send == NO_ERROR)
@@ -615,7 +623,7 @@ void lessgoRec(int port, int port2, char **path_line, int index, TrieNode *node,
                 fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
                 // if (close(sock) < 0)
                 //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-                return;
+                return UNABLE_TO_COPY;
             }
             close(sock2);
             // bzero(buffer, PATH_MAX);
@@ -628,14 +636,15 @@ void lessgoRec(int port, int port2, char **path_line, int index, TrieNode *node,
         }
         close(sock);
         // close(sock2);
-        if (bytesread <= 0)
+        if (bytesread < 0)
         {
             printf("atleasat its here\n");
+            return UNABLE_TO_COPY;
         }
     }
     else
     {
-        printf("here hahaha\n");
+        // printf("here hahaha\n");
         // strcpy(msg.buffer, pathString(path_line, index + 1,initial_index));
         char temp_dest_path[PATH_MAX];
         for (int i = 0; i < PATH_MAX; i++)
@@ -660,14 +669,14 @@ void lessgoRec(int port, int port2, char **path_line, int index, TrieNode *node,
             fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
             // if (close(sock) < 0)
             //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-            return;
+            return UNABLE_TO_COPY;
         }
 
         int err_code_about_to_send;
         if (recv(sock2, &err_code_about_to_send, sizeof(err_code_about_to_send), 0) < 0)
         {
             fprintf(stderr, "[-]Receive time error: %s\n", strerror(errno));
-            // return;
+            return UNABLE_TO_COPY;
         }
         printf("Error code received from storage server: %d\n", err_code_about_to_send);
         if (err_code_about_to_send == NO_ERROR)
@@ -722,17 +731,30 @@ void lessgoRec(int port, int port2, char **path_line, int index, TrieNode *node,
 
     if (node->firstChild)
     {
-        lessgoRec(port, port2, path_line, index + 1, node->firstChild, initial_index, dest_path, 0, port_flag);
+        int result = lessgoRec(port, port2, path_line, index + 1, node->firstChild, initial_index, dest_path, 0, port_flag);
+        if (result == UNABLE_TO_COPY)
+        {
+            return UNABLE_TO_COPY;
+        }
     }
     if (level_flag == 0)
     {
-        path_line[index][0] = '\0';
+        for (int i = 0; i < PATH_MAX; i++)
+            path_line[index][i] = '\0';
         if (node->sibling)
-            lessgoRec(port, port2, path_line, index, node->sibling, initial_index, dest_path, level_flag, port_flag);
+        {
+            int result = lessgoRec(port, port2, path_line, index, node->sibling, initial_index, dest_path, level_flag, port_flag);
+            if (result == UNABLE_TO_COPY)
+            {
+                return UNABLE_TO_COPY;
+            }
+        }
     }
     // printf("here with directory : %s\n",node->directory);
-    path_line[index][0] = '\0';
-    return;
+    for (int i = 0; i < PATH_MAX; i++)
+        path_line[index][0] = '\0';
+    // path_line[index][0] = '\0';
+    return NO_ERROR;
 }
 
 void *ss_is_alive_worker(void *arg)
@@ -754,7 +776,7 @@ void *ss_is_alive_worker(void *arg)
     return NULL;
 }
 
-void CopyPath2Path(char *src_path, char *dest_path)
+int CopyPath2Path(char *src_path, char *dest_path)
 {
     int port1, port2;
     port1 = searchPortForNMS(src_path);
@@ -782,7 +804,7 @@ void CopyPath2Path(char *src_path, char *dest_path)
     if (!node)
     {
         printf("invalid source path\n");
-        return;
+        return UNABLE_TO_COPY;
     }
     char temp_buff[PATH_MAX];
     strcpy(temp_buff, src_path);
@@ -800,7 +822,8 @@ void CopyPath2Path(char *src_path, char *dest_path)
     int initial_index = path_count - 1;
     path_line[path_count - 1][0] = '\0';
     // printf("hi1\n");
-    lessgoRec(port1, port2, path_line, path_count - 1, node, initial_index, dest_path, 1, 2);
+    int result_err_code = lessgoRec(port1, port2, path_line, path_count - 1, node, initial_index, dest_path, 1, 2);
+    return result_err_code;
 }
 
 void *client_handler(void *arg)
@@ -877,6 +900,37 @@ void *client_handler(void *arg)
                 continue;
             }
             printf("Port sent to client %d\n", port_to_send);
+            if (message.operation == WRITE)
+            {
+                int err_code;
+                if (recv(clientSocket, &err_code, sizeof(err_code), 0) < 0)
+                {
+                    fprintf(stderr, RED "[-]Receive error: %s\n" RESET, strerror(errno));
+                    logThis(logfile, LOG_ERROR, CLIENT_NM, "Receive initial Request: %s", strerror(errno));
+                    close(clientSocket);
+                    return NULL;
+                }
+                printf("error_code_recieved: %d\n", err_code);
+                if (err_code == NO_ERROR)
+                {
+                    struct ss_list *ite = storage_servers->head->next;
+                    while (ite != NULL)
+                    {
+                        if (ite->ssToc_port == port_to_send)
+                        {
+                            struct ss_list *first;
+                            struct ss_list *second;
+                            first = ite->my_red1_loc;
+                            second = ite->my_red2_loc;
+                            deleteRedundancy(first, 1);
+                            deleteRedundancy(second, 2);
+                            CreateRedundancy(ite, first, 1);
+                            CreateRedundancy(ite, second, 2);
+                            break;
+                        }
+                    }
+                }
+            }
         }
         else if (message.operation == CREATE || message.operation == DELETE)
         {
@@ -926,6 +980,7 @@ void *client_handler(void *arg)
 
                 if (message.operation == DELETE)
                 {
+
                     char **path_line = (char **)malloc(sizeof(char *) * 500);
                     for (int i = 0; i < 500; i++)
                     {
@@ -948,6 +1003,33 @@ void *client_handler(void *arg)
                             break;
                         }
                         temp = temp->next;
+                    }
+                    printf("err_code_about_to_send is %d\n",err_code_about_to_send);
+                    if (err_code_about_to_send == NO_ERROR)
+                    {
+                        struct ss_list *ite = storage_servers->head->next;
+                        while (ite != NULL)
+                        {
+                            if (ite->ssTonmnp_port == port_to_ss)
+                            {
+                                struct ss_list *first;
+                                struct ss_list *second;
+                                first = ite->my_red1_loc;
+                                second = ite->my_red2_loc;
+                                deleteRedundancy(first, 1);
+                                deleteRedundancy(second, 2);
+                                CreateRedundancy(ite, first, 1);
+                                CreateRedundancy(ite, second, 2);
+                                break;
+                            }
+                        }
+                    }
+                    printf("sending error code after delete: %d\n", err_code_about_to_send);
+                    if (send(clientSocket, &err_code_about_to_send, sizeof(err_code_about_to_send), 0) < 0)
+                    {
+                        fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+                        // exit(1);
+                        continue;
                     }
                 }
                 else
@@ -994,6 +1076,23 @@ void *client_handler(void *arg)
                                 InsertTrie(message.buffer, temp->root, (int)(!message.isADirectory), 1);
                                 PrintTrieLIkeAnActualTRee(temp->root, 4);
                             }
+                            temp = storage_servers->head->next;
+                            while (temp != NULL)
+                            {
+                                printf("hello after create\n");
+                                if (temp->ssTonmnp_port == port_to_ss)
+                                {
+                                    struct ss_list *first;
+                                    struct ss_list *second;
+                                    first=temp->my_red1_loc;
+                                    second=temp->my_red2_loc;
+                                    deleteRedundancy(first, 1);
+                                    deleteRedundancy(second, 2);
+                                    CreateRedundancy(temp, first, 1);
+                                    CreateRedundancy(temp, second, 2);
+                                    break;
+                                }
+                            }
                         }
                         else if (message.operation == DELETE)
                         {
@@ -1023,7 +1122,12 @@ void *client_handler(void *arg)
         }
         else if (message.operation == COPY)
         {
-            CopyPath2Path(message.buffer, message.msg);
+            int err_result = CopyPath2Path(message.buffer, message.msg);
+            if (send(clientSocket, &err_result, sizeof(err_result), 0) < 0)
+            {
+                fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+                continue;
+            }
         }
     }
     close(clientSocket);
@@ -1071,6 +1175,10 @@ void *client_connection_worker(void *arg)
 
 void CreateRedundancy(struct ss_list *source, struct ss_list *destination, int rednum_flag)
 {
+    if (destination == NULL || source == NULL)
+    {
+        return;
+    }
     // if (rednum_flag == 1)
     // {
     int sock2 = initialize_nms_as_client(destination->ssTonmred_port);

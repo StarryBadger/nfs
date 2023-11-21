@@ -25,9 +25,9 @@ struct storage_servers_node
 };
 
 int lessgoRec_again(int port, char **path_line, int index, TrieNode *node, char *path, int flag,int port_flag);
-void lessgoRec(int port, int port2, char **path_line, int index, TrieNode *node, int initial_index, char *dest_path, int level_flag,int port_flag);
+int lessgoRec(int port, int port2, char **path_line, int index, TrieNode *node, int initial_index, char *dest_path, int level_flag,int port_flag);
 void *ss_is_alive_worker(void *arg);
-void CopyPath2Path(char *src_path, char *dest_path);
+int CopyPath2Path(char *src_path, char *dest_path);
 void *client_handler(void *arg);
 void *client_connection_worker(void *arg);
 void CreateRedundancy(struct ss_list *source, struct ss_list *destination, int rednum_flag);
