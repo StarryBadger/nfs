@@ -58,9 +58,11 @@ int searchPortForClient(char *buffer, int operation)
     if (cachedEntry != NULL)
     {
         printf("Cache hit!\n");
+        logThis(logfile, LOG_INFO, NM_INTERNAL, "Cache hit for %s", buffer);
         return cachedEntry->portForClient;
     }
     printf("Cache miss!\n");
+    logThis(logfile, LOG_INFO, NM_INTERNAL, "Cache miss for %s", buffer);
     struct ss_list *temp;
     temp = storage_servers->head->next;
     TrieNode *searchResult;
@@ -74,6 +76,7 @@ int searchPortForClient(char *buffer, int operation)
                 if (operation != WRITE || (operation == WRITE && searchResult->isFile))
                 {
                     addToCache(cacheMe, buffer, ip_address, temp->ssToc_port, temp->ssTonmnp_port);
+                    logThis(logfile, LOG_INFO, NM_INTERNAL, "Added to cache for %s", buffer);
                     return temp->ssToc_port;
                 }
             }
@@ -88,9 +91,11 @@ int searchPortForNMS(char *buffer)
     if (cachedEntry != NULL)
     {
         printf("Cache hit!\n");
+        logThis(logfile, LOG_INFO, NM_INTERNAL, "Cache hit for %s", buffer);
         return cachedEntry->portForNM;
     }
     printf("Cache miss!\n");
+    logThis(logfile, LOG_INFO, NM_INTERNAL, "Cache miss for %s", buffer);
     struct ss_list *temp;
     temp = storage_servers->head->next;
     TrieNode *searchResult;
@@ -102,6 +107,7 @@ int searchPortForNMS(char *buffer)
             if (searchResult->isAccessible)
             {
                 addToCache(cacheMe, buffer, ip_address, temp->ssToc_port, temp->ssTonmnp_port);
+                logThis(logfile, LOG_INFO, NM_INTERNAL, "Added to cache for %s", buffer);
                 return temp->ssTonmnp_port;
             }
         }
@@ -240,6 +246,8 @@ void *ss_port_worker(void *arg)
     server_sock = socket(AF_INET, SOCK_STREAM, 0);
     if (server_sock < 0)
     {
+        // #################LOG
+        // ##
         fprintf(stderr, "[-]Socket creation error: %s\n", strerror(errno));
         exit(1);
     }
@@ -254,17 +262,21 @@ void *ss_port_worker(void *arg)
     if (n < 0)
     {
         fprintf(stderr, "[-]Bind error: %s\n", strerror(errno));
+        logThis(logfile, LOG_ERROR, NM_INTERNAL, "Bind error: %s", strerror(errno));
         close(server_sock);
         exit(1);
     }
     printf("[+]Bind to the port number: %d\n", nms_ss_port);
+    logThis(logfile, LOG_INFO, NM_INTERNAL, "Bind to the port number: %d", nms_ss_port);
     if (listen(server_sock, 5) < 0)
     {
         fprintf(stderr, "[-]Listen error: %s\n", strerror(errno));
+        logThis(logfile, LOG_ERROR, NM_INTERNAL, "Listen error: %s", strerror(errno));
         close(server_sock);
         exit(1);
     }
     printf("Listening...\n");
+    logThis(logfile, LOG_INFO, NM_INTERNAL, "Listening for storage servers");
     char buffer[PATH_MAX];
     while (1)
     {
@@ -273,30 +285,31 @@ void *ss_port_worker(void *arg)
         if (client_sock < 0)
         {
             fprintf(stderr, "[-]Accept error: %s\n", strerror(errno));
+            logThis(logfile, LOG_ERROR, SS_NM, "Accept error: %s", strerror(errno));
             if (close(server_sock) < 0)
                 fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
             exit(1);
         }
         printf("[+]Storage server connected.\n");
+        logThis(logfile, LOG_INFO, SS_NM, "Storage server connected");
 
         bzero(buffer, PATH_MAX);
         MessageSS2NM message;
         if (recv(client_sock, &message, sizeof(message), 0) < 0)
         {
             fprintf(stderr, "[-]Receive error: %s\n", strerror(errno));
-            if (close(client_sock) < 0)
-                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-            if (close(server_sock) < 0)
-                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-            exit(1);
+            logThis(logfile, LOG_ERROR, SS_NM, "Receive error: %s", strerror(errno));
+            close(client_sock);
         }
         printf("Message from storage server: %s\n", message.buffer);
         printf("Port for clients: %d\n", message.port_for_clients);
-        printf("Port for nms: %d\n", message.port_for_naming_server);
-        printf("Port for nm_np: %d\n", message.port_for_nm_np);
+        printf("Port for nms to ping: %d\n", message.port_for_naming_server);
+        printf("Port for nms to communicate: %d\n", message.port_for_nm_np);
+        logThis(logfile, LOG_INFO, SS_NM, "Path Encoding received. [PORT: for clients: %d; for NMS to ping: %d for NMS to communicate: %d", message.port_for_clients, message.port_for_naming_server, message.port_for_nm_np);
 
         // PrintTrie(StringToTrie(message.buffer));
         InsertNewSS(message.port_for_clients, message.port_for_naming_server, message.port_for_nm_np, message.port_for_nm_red, StringToTrie(message.buffer));
+        logThis(logfile, LOG_INFO, NM_INTERNAL, "Storage server added to the list");
     }
 }
 
@@ -367,7 +380,7 @@ int lessgoRec_again(int port, char **path_line, int index, TrieNode *node, char 
     {
         if (node->firstChild)
         {
-            lessgoRec_again(port, path_line, index + 1, node->firstChild, path, 0,port_flag);
+            lessgoRec_again(port, path_line, index + 1, node->firstChild, path, 0, port_flag);
         }
     }
     if (flag == 0)
@@ -376,7 +389,7 @@ int lessgoRec_again(int port, char **path_line, int index, TrieNode *node, char 
         {
             for (int i = 0; i < 100; i++)
                 path_line[index][i] = '\0';
-            lessgoRec_again(port, path_line, index, node->sibling, path, flag,port_flag);
+            lessgoRec_again(port, path_line, index, node->sibling, path, flag, port_flag);
             strcpy(path_line[index], node->directory);
         }
     }
@@ -709,13 +722,13 @@ void lessgoRec(int port, int port2, char **path_line, int index, TrieNode *node,
 
     if (node->firstChild)
     {
-        lessgoRec(port, port2, path_line, index + 1, node->firstChild, initial_index, dest_path, 0,port_flag);
+        lessgoRec(port, port2, path_line, index + 1, node->firstChild, initial_index, dest_path, 0, port_flag);
     }
     if (level_flag == 0)
     {
         path_line[index][0] = '\0';
         if (node->sibling)
-            lessgoRec(port, port2, path_line, index, node->sibling, initial_index, dest_path, level_flag,port_flag);
+            lessgoRec(port, port2, path_line, index, node->sibling, initial_index, dest_path, level_flag, port_flag);
     }
     // printf("here with directory : %s\n",node->directory);
     path_line[index][0] = '\0';
@@ -746,6 +759,7 @@ void CopyPath2Path(char *src_path, char *dest_path)
     int port1, port2;
     port1 = searchPortForNMS(src_path);
     port2 = searchPortForNMS(dest_path);
+    logThis(logfile, LOG_INFO, NM_INTERNAL, "Source port: %d Destination port: %d", port1, port2);
 
     char **path_line = (char **)malloc(sizeof(char *) * 500);
     for (int i = 0; i < 500; i++)
@@ -786,7 +800,7 @@ void CopyPath2Path(char *src_path, char *dest_path)
     int initial_index = path_count - 1;
     path_line[path_count - 1][0] = '\0';
     // printf("hi1\n");
-    lessgoRec(port1, port2, path_line, path_count - 1, node, initial_index, dest_path, 1,2);
+    lessgoRec(port1, port2, path_line, path_count - 1, node, initial_index, dest_path, 1, 2);
 }
 
 void *client_handler(void *arg)
@@ -853,15 +867,16 @@ void *client_handler(void *arg)
             if (send(clientSocket, &port_to_send, sizeof(port_to_send), 0) < 0)
             {
                 fprintf(stderr, "[-]Sendtime error: %s\n", strerror(errno));
+                logThis(logfile, LOG_ERROR, NM_CLIENT, "Send operation information: %s", strerror(errno));
             }
+            logThis(logfile, LOG_INFO, NM_CLIENT, "Port sent: %d", port_to_send);
             if (port_to_send == NO_SUCH_PATH)
             {
                 printf("Client entered an invalid/inaccessible path\n");
-                // logThis(logfile,)
+                logThis(logfile, LOG_ERROR, NM_INTERNAL, "Client entered an invalid/inaccessible path");
                 continue;
             }
             printf("Port sent to client %d\n", port_to_send);
-            // log
         }
         else if (message.operation == CREATE || message.operation == DELETE)
         {
@@ -898,9 +913,11 @@ void *client_handler(void *arg)
                 if (send(clientSocket, &err_code_about_to_send, sizeof(err_code_about_to_send), 0) < 0)
                 {
                     fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+                    logThis(logfile, LOG_ERROR, NM_CLIENT, "Send operation information: %s", strerror(errno));
                     // exit(1);
                     continue;
                 }
+                logThis(logfile, LOG_INFO, NM_CLIENT, "Error code sent: %d", err_code_about_to_send);
             }
             else
             {
@@ -924,10 +941,10 @@ void *client_handler(void *arg)
                         {
                             if (strcmp(message.buffer, PathParent(message.buffer)) == 0)
                             {
-                                err_code_about_to_send = lessgoRec_again(port_to_ss, path_line, 0, storing_search, NULL, 1,2);
+                                err_code_about_to_send = lessgoRec_again(port_to_ss, path_line, 0, storing_search, NULL, 1, 2);
                                 break;
                             }
-                            err_code_about_to_send = lessgoRec_again(port_to_ss, path_line, 0, storing_search, PathParent(message.buffer), 1,2);
+                            err_code_about_to_send = lessgoRec_again(port_to_ss, path_line, 0, storing_search, PathParent(message.buffer), 1, 2);
                             break;
                         }
                         temp = temp->next;
@@ -940,6 +957,7 @@ void *client_handler(void *arg)
 
                     if (send(nms_sock, &message, sizeof(message), 0) < 0)
                     {
+                        logThis(logfile, LOG_ERROR, NM_CLIENT, "Send operation information: %s", strerror(errno));
                         fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
                         if (close(nms_sock) < 0)
                             fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
@@ -948,6 +966,7 @@ void *client_handler(void *arg)
                     // int err_code_about_to_send;
                     if (recv(nms_sock, &err_code_about_to_send, sizeof(err_code_about_to_send), 0) < 0)
                     {
+                        logThis(logfile, LOG_ERROR, CLIENT_NM, "Receive operation information: %s", strerror(errno));
                         fprintf(stderr, "[-]Receive time error: %s\n", strerror(errno));
                         // return;
                     }
@@ -1106,9 +1125,9 @@ void CreateRedundancy(struct ss_list *source, struct ss_list *destination, int r
                 path_line[i][j] = '\0';
         }
         if (rednum_flag == 1)
-            lessgoRec(source->ssTonmred_port, destination->ssTonmred_port, path_line, 0, temp_red, 0, "red1", 1,3);
+            lessgoRec(source->ssTonmred_port, destination->ssTonmred_port, path_line, 0, temp_red, 0, "red1", 1, 3);
         else if (rednum_flag == 2)
-            lessgoRec(source->ssTonmred_port, destination->ssTonmred_port, path_line, 0, temp_red, 0, "red2", 1,3);
+            lessgoRec(source->ssTonmred_port, destination->ssTonmred_port, path_line, 0, temp_red, 0, "red2", 1, 3);
         temp_red = temp_red->sibling;
     }
 
@@ -1139,7 +1158,7 @@ void deleteRedundancy(struct ss_list *dest, int red_flag)
             for (int j = 0; j < 100; j++)
                 path_line[i][j] = '\0';
         }
-        lessgoRec_again(dest->ssTonmred_port, path_line, 0, SearchTrie("red1", dest->root), NULL, 1,3);
+        lessgoRec_again(dest->ssTonmred_port, path_line, 0, SearchTrie("red1", dest->root), NULL, 1, 3);
     }
     else if (red_flag == 2)
     {
@@ -1150,7 +1169,7 @@ void deleteRedundancy(struct ss_list *dest, int red_flag)
             for (int j = 0; j < 100; j++)
                 path_line[i][j] = '\0';
         }
-        lessgoRec_again(dest->ssTonmred_port, path_line, 0, SearchTrie("red2", dest->root), NULL, 1,3);
+        lessgoRec_again(dest->ssTonmred_port, path_line, 0, SearchTrie("red2", dest->root), NULL, 1, 3);
     }
 
     if (red_flag == 1)
@@ -1190,7 +1209,7 @@ void HandleRedundancy(struct ss_list *deleted_ss)
             for (int j = 0; j < 100; j++)
                 path_line[i][j] = '\0';
         }
-        lessgoRec(red1->ssTonmred_port, red1->ssTonmred_port, path_line, 0, ite, 0, NULL, 1,3);
+        lessgoRec(red1->ssTonmred_port, red1->ssTonmred_port, path_line, 0, ite, 0, NULL, 1, 3);
         ite = ite->sibling;
     }
     if (storage_servers->total_servers == 3)
