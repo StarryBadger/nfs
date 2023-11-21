@@ -268,34 +268,43 @@ char *pathString(char **path_line, int size, int start)
     }
     return p_string;
 }
-int lessgoRec_again(int sock, char **path_line, int index, TrieNode *node, char *path)
+int lessgoRec_again(int sock, char **path_line, int index, TrieNode *node, char *path, int flag)
 {
     if (node == NULL)
-        return;
+        return UNABLE_TO_DELETE;
     strcpy(path_line[index], node->directory);
+    printf("here node name: %s\n", node->directory);
     if (node->isFile == 0)
     {
         if (node->firstChild)
         {
-            lessgoRec_again(sock, path_line, index + 1, node->firstChild, path);
+            lessgoRec_again(sock, path_line, index + 1, node->firstChild, path, 0);
         }
     }
-    if (node->sibling)
+    if (flag == 0)
     {
-        path_line[index][0] = '\0';
-        lessgoRec_again(sock, path_line, index, node->sibling, path);
+        if (node->sibling)
+        {
+            for (int i = 0; i < 100; i++)
+                path_line[index][i] = '\0';
+            lessgoRec_again(sock, path_line, index, node->sibling, path, flag);
+            strcpy(path_line[index], node->directory);
+        }
     }
-
     MessageFormat msg;
     msg.operation = DELETE;
     char temp_dest_path[PATH_MAX];
-    if(path!=NULL)
+    for(int i=0;i<PATH_MAX;i++)
+    temp_dest_path[i]='\0';
+    if (path != NULL)
     {
         strcpy(temp_dest_path, path);
         strcat(temp_dest_path, "/");
     }
     strcat(temp_dest_path, pathString(path_line, index + 1, 0));
+    memset(msg.buffer,'\0',PATH_MAX);
     strcpy(msg.buffer, temp_dest_path);
+    printf("sending path to be deleted:%s\n",msg.buffer);
     if (send(sock, &msg, sizeof(msg), 0) < 0)
     {
         fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
@@ -327,7 +336,8 @@ int lessgoRec_again(int sock, char **path_line, int index, TrieNode *node, char 
         }
     }
 
-    path_line[index][0] = '\0';
+    for (int i = 0; i < 100; i++)
+        path_line[index][i] = '\0';
     return err_code_about_to_send;
 }
 void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node, int initial_index, char *dest_path, int level_flag)
@@ -714,7 +724,8 @@ void *client_handler(void *arg)
                     for (int i = 0; i < 500; i++)
                     {
                         path_line[i] = (char *)malloc(sizeof(char) * 100);
-                        path_line[i][0] = '\0';
+                        for (int j = 0; j < 100; j++)
+                            path_line[i][j] = '\0';
                     }
                     temp = storage_servers->head->next;
                     while (temp != NULL)
@@ -722,12 +733,12 @@ void *client_handler(void *arg)
                         TrieNode *storing_search = SearchTrie(message.buffer, temp->root);
                         if (storing_search != NULL)
                         {
-                            if(strcmp(message.buffer,PathParent(message.buffer))==0)
+                            if (strcmp(message.buffer, PathParent(message.buffer)) == 0)
                             {
-                                err_code_about_to_send = lessgoRec_again(nms_sock, path_line, 0, storing_search, NULL);
+                                err_code_about_to_send = lessgoRec_again(nms_sock, path_line, 0, storing_search, NULL, 1);
                                 break;
                             }
-                            err_code_about_to_send = lessgoRec_again(nms_sock, path_line, 0, storing_search, PathParent(message.buffer));
+                            err_code_about_to_send = lessgoRec_again(nms_sock, path_line, 0, storing_search, PathParent(message.buffer), 1);
                             break;
                         }
                         temp = temp->next;
