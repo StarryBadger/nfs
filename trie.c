@@ -89,7 +89,7 @@ TrieNode *SearchTrie(char *directory, TrieNode *root)
         while (temp != NULL)
         {
             // printf("comparing %s and %s\n",temp->directory,token);
-            if (strcmp(temp->directory, token) == 0)
+            if (strcmp(temp->directory, token) == 0 )
                 break;
             temp = temp->sibling;
         }

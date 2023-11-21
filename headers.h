@@ -33,3 +33,4 @@
 #include "communicationProtocols.h"
 #include "logging.h"
 #include "LRU.h"
+#include "nms.h"
