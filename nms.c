@@ -143,6 +143,41 @@ void InsertNewSS(int ssTocPortNo, int ssTonmsPortNo, int ssToNMmpport, int ssToN
     new->ssTonmred_port = ssToNmRed_port;
     new->root = ssRoot;
     PrintTrieLIkeAnActualTRee(new->root, 4);
+
+    if (storage_servers->total_servers == 2)
+    {
+        struct ss_list *first = storage_servers->head->next;
+        struct ss_list *second = first->next;
+        CreateRedundancy(first, second, 1);
+        CreateRedundancy(second, first, 1);
+    }
+    else if (storage_servers->total_servers == 3)
+    {
+        struct ss_list *first = storage_servers->head->next;
+        struct ss_list *second = first->next;
+        struct ss_list *third = second->next;
+        deleteRedundancy(first, 1);
+        CreateRedundancy(second, third, 1);
+        CreateRedundancy(second, first, 2);
+        CreateRedundancy(third, first, 1);
+        CreateRedundancy(third, second, 2);
+        CreateRedundancy(first, third, 2);
+    }
+    else if (storage_servers->total_servers >= 4)
+    {
+        struct ss_list *first = storage_servers->head->next;
+        struct ss_list *second = first->next;
+        struct ss_list *prev_first = new->prev;
+        struct ss_list *prev_second = prev_first->prev;
+        deleteRedundancy(second, 2);
+        deleteRedundancy(first, 1);
+        deleteRedundancy(first, 2);
+        CreateRedundancy(prev_second, new, 2);
+        CreateRedundancy(prev_first, new, 1);
+        CreateRedundancy(prev_first, first, 2);
+        CreateRedundancy(new, first, 1);
+        CreateRedundancy(new, second, 2);
+    }
     return;
 }
 void RemoveSS(int index)
@@ -932,12 +967,14 @@ void CreateRedundancy(struct ss_list *source, struct ss_list *destination, int r
     int sock2 = initialize_nms_as_client(destination->ssTonmred_port);
     MessageClient2NM msg;
     msg.operation = CREATE;
+    for (int i = 0; i < PATH_MAX; i++)
+        msg.buffer[i] = '\0';
     memset(msg.buffer, '\0', PATH_MAX);
-    if(rednum_flag==1)
+    if (rednum_flag == 1)
         strcpy(msg.buffer, "red1");
-    else if(rednum_flag==2)
+    else if (rednum_flag == 2)
         strcpy(msg.buffer, "red2");
-        
+
     msg.isADirectory = 1;
     if (send(sock2, &msg, sizeof(msg), 0) < 0)
     {
@@ -954,15 +991,20 @@ void CreateRedundancy(struct ss_list *source, struct ss_list *destination, int r
     // CopyPath2Path(source->root->directory, "red1");
     if (err_code_recvd == NO_ERROR)
     {
-        if(rednum_flag==1)
+        if (rednum_flag == 1)
             InsertTrie("red1", destination->root, 0, 1);
-        else if(rednum_flag==2)
+        else if (rednum_flag == 2)
             InsertTrie("red2", destination->root, 0, 1);
     }
     close(sock2);
     TrieNode *temp_red = source->root->firstChild;
     while (temp_red != NULL)
     {
+        if (strcmp(temp_red->directory, "red1") == 0 || strcmp(temp_red->directory, "red2") == 0)
+        {
+            temp_red=temp_red->sibling;
+            continue;
+        }
         char **path_line = (char **)malloc(sizeof(char *) * 500);
         for (int i = 0; i < 500; i++)
         {
@@ -970,14 +1012,14 @@ void CreateRedundancy(struct ss_list *source, struct ss_list *destination, int r
             for (int j = 0; j < 100; j++)
                 path_line[i][j] = '\0';
         }
-        if(rednum_flag==1)
+        if (rednum_flag == 1)
             lessgoRec(source->ssTonmred_port, destination->ssTonmred_port, path_line, 0, temp_red, 0, "red1", 1);
-        else if(rednum_flag==2)
+        else if (rednum_flag == 2)
             lessgoRec(source->ssTonmred_port, destination->ssTonmred_port, path_line, 0, temp_red, 0, "red2", 1);
+        temp_red = temp_red->sibling;
     }
     // }
 }
-
 
 void deleteRedundancy(struct ss_list *dest, int red_flag)
 {
@@ -992,7 +1034,7 @@ void deleteRedundancy(struct ss_list *dest, int red_flag)
         }
         lessgoRec_again(dest->ssTonmred_port, path_line, 0, SearchTrie("red1", dest->root), NULL, 1);
     }
-    else if(red_flag==2)
+    else if (red_flag == 2)
     {
         char **path_line = (char **)malloc(sizeof(char *) * 500);
         for (int i = 0; i < 500; i++)
@@ -1004,7 +1046,6 @@ void deleteRedundancy(struct ss_list *dest, int red_flag)
         lessgoRec_again(dest->ssTonmred_port, path_line, 0, SearchTrie("red2", dest->root), NULL, 1);
     }
 }
-
 
 int main(int argc, char *argv[])
 {
