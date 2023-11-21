@@ -66,7 +66,7 @@ void addToCache(LRUCache *cache, const char *path, const char *ip, int portForCl
     strncpy(newNode->path, path, PATH_LIMIT);
     strncpy(newNode->ip, ip, 16);
     newNode->portForClient = portForClient;
-    newNode->portForNM=portForNM;
+    newNode->portForNM = portForNM;
     newNode->next = cache->head;
     newNode->prev = NULL;
 
@@ -94,4 +94,40 @@ void freeCache(LRUCache *cache)
         current = next;
     }
     free(cache);
+}
+void deleteNodesWithPort(LRUCache *cache, int port)
+{
+    CacheNode *current = cache->head;
+    CacheNode *next;
+
+    while (current != NULL)
+    {
+        next = current->next;
+
+        if (current->portForClient == port)
+        {
+            if (current->prev != NULL)
+            {
+                current->prev->next = current->next;
+            }
+            else
+            {
+                cache->head = current->next;
+            }
+
+            if (current->next != NULL)
+            {
+                current->next->prev = current->prev;
+            }
+            else
+            {
+                cache->tail = current->prev;
+            }
+
+            free(current);
+            cache->currentSize--;
+        }
+
+        current = next;
+    }
 }

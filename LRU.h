@@ -20,3 +20,4 @@ LRUCache *initLRUCache();
 CacheNode *searchCache(LRUCache *cache, const char *path);
 void addToCache(LRUCache *cache, const char *path, const char *ip, int portForClient, int portForNM);
 void freeCache(LRUCache *cache);
+void deleteNodesWithPort(LRUCache *cache, int port);

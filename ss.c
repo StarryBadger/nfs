@@ -416,7 +416,7 @@ void *NMServerConnection(void *arg)
             // exit(1);
             continue;
         }
-        printf("doen recv00;\n");
+        // printf("doen recv00;\n");
         // fwrite(message.msg, 1, strlen(message.msg), this);
         // fclose(this);
         if (message.operation == 0 || bytes_read == 0)
@@ -767,7 +767,7 @@ void *NMServerREDConnection(void *arg)
             // exit(1);
             continue;
         }
-        printf("doen recv00;\n");
+        // printf("doen recv00;\n");
         // fwrite(message.msg, 1, strlen(message.msg), this);
         // fclose(this);
         if (message.operation == 0 || bytes_read == 0)

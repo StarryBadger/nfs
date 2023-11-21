@@ -20,8 +20,8 @@
 
 #define NO_SUCH_PATH -20
 
-#define nms_ss_port 10045
-#define nms_client_port 10065
+#define nms_ss_port 10043
+#define nms_client_port 10063
 #define ip_address "127.0.0.1"
 
 #define END_STRING "@@e@*"

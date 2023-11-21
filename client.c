@@ -22,7 +22,7 @@ void printOperationMessage(MessageClient2NM message)
     case DELETE:
         if (message.isADirectory)
         {
-            printf("Selected Operation: DELETE - Delete an empty directory\n");
+            printf("Selected Operation: DELETE - Delete a directory\n");
         }
         else
         {
@@ -30,11 +30,13 @@ void printOperationMessage(MessageClient2NM message)
         }
         break;
     case COPY:
-        printf("Selected Operation: COPY - Copy file from one directory to another\n");
+        printf("Selected Operation: COPY - Copy from one directory to another\n");
         break;
     case METADATA:
         printf("Selected Operation: METADATA - Get metadata information about a file\n");
         break;
+    case TERMINATE:
+        printf("Selected Operation: TERMINATE - Terminate Client\n");
     default:
         printf("Invalid Operation Number\n");
     }
