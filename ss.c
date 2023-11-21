@@ -805,6 +805,7 @@ void *NMServerREDConnection(void *arg)
         {
             // printf("one\n");
             int err_code;
+            err_code = NO_ERROR;
             int fd = open(message.buffer, O_CREAT | O_WRONLY, 0644);
             if (fd == -1)
             {
@@ -813,7 +814,6 @@ void *NMServerREDConnection(void *arg)
                 // return NULL;
             }
             // InsertTrie(message.buffer, ssTrie); //SHREYANSH
-            err_code = NO_ERROR;
 
             if (send(nms_sock, &err_code, sizeof(err_code), 0) < 0)
             {
@@ -834,6 +834,7 @@ void *NMServerREDConnection(void *arg)
         {
             // printf("two\n");
             int err_code;
+            err_code = NO_ERROR;
             if (mkdir(message.buffer, 0777) == -1)
             {
                 fprintf(stderr, "\x1b[31mCould not create %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
@@ -841,7 +842,6 @@ void *NMServerREDConnection(void *arg)
                 // return NULL;
             }
             // InsertTrie(message.buffer, ssTrie); // SHREYANSH
-            err_code = NO_ERROR;
 
             if (send(nms_sock, &err_code, sizeof(err_code), 0) < 0)
             {

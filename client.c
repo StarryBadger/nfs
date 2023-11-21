@@ -118,7 +118,7 @@ bool printErrorMessages(errcode errorStatus) // returns true if to close connect
     }
     else
     {
-        printf("Unknown error! Error code : %d\n",errorStatus);
+        printf("Unknown error!\n");
         return false;
     }
 }
