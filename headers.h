@@ -5,7 +5,7 @@
 #include <fcntl.h>
 #include <grp.h>
 #include <limits.h>
-#include <linux/limits.h> //check if complaint or even if needed
+#include <linux/limits.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <pthread.h>
