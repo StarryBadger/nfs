@@ -1,5 +1,4 @@
 #include "headers.h"
-#include "requestProtocols.h"
 void printOperationMessage(MessageClient2NM message)
 {
     switch (message.operation)
@@ -87,17 +86,31 @@ errcode handleReadCommunication(int socketSS)
     }
     return NO_ERROR;
 }
-errcode handleWriteCommunication(int socketSS)
+errcode handleWriteInput(MessageClient2NM *message)
 {
-    char toWrite[PATH_MAX];
-    printf("Enter text to be written: ");
-    // scanf("%s", toWrite);
-    scanf(" %[^\n]s", toWrite);
-    if (send(socketSS, &toWrite, sizeof(toWrite), 0) < 0)
+    getchar();
+    printf("Enter text to write into file (terminate by pressing enter twice!)\n");
+    char input = '\0';
+    char prevInput = '\0';
+    int currIndex = 0;
+    while (1)
     {
-        fprintf(stderr, RED "[-]Send error: %s\n" RESET, strerror(errno)); // ERROR HANDLING
-        return NETWORK_ERROR;
+        if (currIndex == SEND_SIZE - 1)
+        {
+            fprintf(stderr, "Input limit exceeded\n");
+            exit(1);
+        }
+        input = getchar();
+        message->msg[currIndex] = input;
+        if (input == '\n' && prevInput == '\n')
+        {
+            message->msg[currIndex] = '\0';
+            break;
+        }
+        currIndex++;
+        prevInput = input;
     }
+    message->bytesToRead=currIndex;
     return NO_ERROR;
 }
 errcode handleMetadataCommunication(int socketSS)
@@ -145,6 +158,10 @@ errcode handleSSCommunication(int socketNM, MessageClient2SS message)
         return NETWORK_ERROR;
     }
     printf("Connected to the storage server.\n");
+    if (message.operation == WRITE)
+    {
+        handleWriteInput(&message);
+    }
     if (send(socketSS, &message, sizeof(message), 0) < 0)
     {
         fprintf(stderr, RED "[-]Send error: %s\n" RESET, strerror(errno));
@@ -170,7 +187,7 @@ errcode handleSSCommunication(int socketNM, MessageClient2SS message)
     case READ:
         return handleReadCommunication(socketSS);
     case WRITE:
-        return handleWriteCommunication(socketSS);
+        return NO_ERROR;
     case METADATA:
         return handleMetadataCommunication(socketSS);
     default:
@@ -214,6 +231,7 @@ int main()
         exit(1);
     }
     printf("Connected to the server.\n");
+
     // initial request to server
     int initialRequest = INITIAL_MESSAGE;
     if (send(mySocket, &initialRequest, sizeof(initialRequest), 0) < 0)
@@ -223,6 +241,7 @@ int main()
             fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
         exit(1);
     }
+
     // acknowledgment
     int initialAck;
     if (recv(mySocket, &initialAck, sizeof(initialAck), 0) < 0)
@@ -237,6 +256,7 @@ int main()
         closeSocket(mySocket);
         return 0;
     }
+
     while (1)
     {
         // We prompt user for operation number (1 through 6)
@@ -253,21 +273,24 @@ int main()
             fprintf(stderr, "[-]Invalid operation number\n");
             continue;
         }
+
         if (message.operation == CREATE || message.operation == DELETE)
         {
             askFileOrDirectory(&message);
         }
+
         printOperationMessage(message);
+
         if (message.operation == COPY)
         {
-            printf("Source path: ");
+            printf("Enter source path: ");
             scanf("%s", message.buffer);
-            printf("Destination path: ");
+            printf("Enter destination path: ");
             scanf("%s", message.msg);
         }
         else if (message.operation != TERMINATE)
         {
-            printf("Enter file path: ");
+            printf("Enter path: ");
             scanf("%s", message.buffer);
         }
         // Send operation number to the server

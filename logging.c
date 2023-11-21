@@ -6,14 +6,16 @@ errcode initLog(char *filename)
     time(&rawtime);
     timeinfo = localtime(&rawtime);
     char timestamp[20];
-    strftime(timestamp, sizeof(timestamp), "%Y-%m-%d-%H:%M:%S", timeinfo);
+    char bigtimestamp[25];
+    strftime(timestamp, sizeof(timestamp), "%m-%d-%H:%M", timeinfo);
+    strftime(bigtimestamp, sizeof(bigtimestamp), "%Y-%m-%d-%H:%M:%S", timeinfo);
     snprintf(filename, 30, "logs/%s.log", timestamp);
     FILE *logFile = fopen(filename, "w");
     if (logFile == NULL)
     {
         return FILE_DESCRIPTOR_ERROR;
     }
-    fprintf(logFile, "Logfile created at %s\n", timestamp);
+    fprintf(logFile, "Logfile created at %s\n", bigtimestamp);
     fclose(logFile);
     return NO_ERROR;
 }

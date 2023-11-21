@@ -222,6 +222,17 @@ int Write_ss(int *err_code, int client_sock, MessageClient2SS message, FILE *fd,
 
     if (isCLient)
     {
+        
+        if (fwrite(message.msg, 1, strlen(message.msg), fd) < 0)
+        {
+            fprintf(stderr, "[-]Write error: %s\n", strerror(errno)); // ERROR HANDLING
+            if (close(client_sock) < 0)
+                fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+            // exit(1);
+        }
+        // write_count++;
+        // printf("write count: %d\n", write_count);
+
         if (send(client_sock, err_code, sizeof(*err_code), 0) < 0)
         {
             fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
@@ -305,6 +316,7 @@ void *CLientServerConnection(void *arg)
     {
         // int fd = open(message.buffer, O_WRONLY | O_TRUNC);
         FILE *fd = fopen(message.buffer, "w");
+        printf("enterd write in lcient %s",message.msg);
         int b_read = Write_ss(&err_code, client_sock, message, fd, 1);
         if (b_read < 0)
             closeSocket(client_sock);
