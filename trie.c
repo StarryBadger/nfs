@@ -21,6 +21,8 @@ TrieNode *createNode(char *directory, int checkFile, int checkAcc)
     newNode->sibling = NULL;
     newNode->isFile = checkFile;
     newNode->isAccessible = checkAcc;
+    newNode->isWriting = 0;
+    newNode->isReading=0;
     // sem_init(&newNode->file_lock,0,1);
     // pthread_rwlock_init(&newNode->rwlock, NULL);
     return newNode;

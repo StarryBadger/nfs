@@ -275,17 +275,55 @@ void *CLientServerConnection(void *arg)
     }
     if (message.operation == READ)
     {
+        TrieNode* temp_write = SearchTrie(message.buffer,ssTrie);
+        if(temp_write->isWriting==1)
+        {
+            int error_code = WRITER_EXISTS;
+            if (send(client_sock, &error_code, sizeof(error_code), 0) < 0)
+            {
+                fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
+                close(client_sock);
+                return NULL;
+            }
+            return NULL;
+        }
+        temp_write->isReading=1;
         FILE *file = fopen(message.buffer, "r");
         Read_ss(&err_code, client_sock, message, file, 1);
-
+        temp_write->isReading=0;
         closeSocket(client_sock);
         fclose(file);
     }
 
     if (message.operation == WRITE)
     {
+        TrieNode* temp_write = SearchTrie(message.buffer,ssTrie);
+        if(temp_write->isReading==1)
+        {
+            int error_code = READER_EXISTS;
+            if (send(client_sock, &error_code, sizeof(error_code), 0) < 0)
+            {
+                fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
+                close(client_sock);
+                return NULL;
+            }
+            return NULL;
+        }
+        if(temp_write->isWriting==1)
+        {
+            int error_code = WRITER_EXISTS;
+            if (send(client_sock, &error_code, sizeof(error_code), 0) < 0)
+            {
+                fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
+                close(client_sock);
+                return NULL;
+            }
+            return NULL;
+        }
+        temp_write->isWriting=1;
         FILE *fd = fopen(message.buffer, "w");
         Write_ss(&err_code, client_sock, message, fd, 1);
+        temp_write->isWriting=0;
         fclose(fd);
     }
     if (message.operation == METADATA)
@@ -520,7 +558,6 @@ void *NMServerConnection(void *arg)
 
         if (message.operation == WRITE)
         {
-            // int fd = open(message.buffer, O_WRONLY | O_TRUNC);
             FILE *fd = fopen(message.buffer, "a");
             Write_ss(&err_code, nms_sock, message, fd, 0);
             fclose(fd);
@@ -863,7 +900,7 @@ void *NMServerREDConnection(void *arg)
 
         if (message.operation == READ)
         {
-            // int fd = open(message.buffer, O_RDONLY);
+            
             FILE *file = fopen(message.buffer, "r");
             Read_ss(&err_code, nms_sock, message, file, 0);
             fclose(file);
@@ -871,7 +908,6 @@ void *NMServerREDConnection(void *arg)
 
         if (message.operation == WRITE)
         {
-            // int fd = open(message.buffer, O_WRONLY | O_TRUNC);
             FILE *fd = fopen(message.buffer, "a");
             Write_ss(&err_code, nms_sock, message, fd, 0);
             fclose(fd);

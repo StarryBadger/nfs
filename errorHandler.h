@@ -25,7 +25,9 @@ typedef int errcode;
 #define METADATA_INACESSIBLE 27
 #define DELETE_FAILED 28
 #define UNABLE_TO_DELETE 29
-#define UNABLE_TO_COPY 30
+#define UNABLE_TO_COPY 120
+#define WRITER_EXISTS 121
+#define READER_EXISTS 122
 
 
 // Client Request Errors

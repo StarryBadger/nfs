@@ -10,6 +10,8 @@ typedef struct TrieNode
     struct TrieNode *sibling;
     int isFile;
     int isAccessible;
+    int isWriting;
+    int isReading;
     // pthread_rw_lock_t rwlock; 
     // sem_t file_lock;
 }TrieNode;

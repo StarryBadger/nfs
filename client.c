@@ -320,7 +320,18 @@ int main()
             errorStatus = handleSSCommunication(mySocket, message);
             if (errorStatus == NETWORK_ERROR)
             {
+                printf("Network error!\n");
                 break;
+            }
+            else if (errorStatus==WRITER_EXISTS)
+            {
+                printf("Some client is writing to the same file!\n");
+                continue;
+            }
+            else if (errorStatus==READER_EXISTS)
+            {
+                printf("Some client is reading from the same file!\n");
+                continue;
             }
         }
         // priviledged
@@ -329,6 +340,7 @@ int main()
             errorStatus = receivePriviledgedConfirmation(mySocket);
             if (errorStatus == NETWORK_ERROR)
             {
+                printf("Network error!\n");
                 break;
             }
         }
