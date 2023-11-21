@@ -486,6 +486,7 @@ int lessgoRec(int port, int port2, char **path_line, int index, TrieNode *node, 
     memset(msg.buffer, '\0', PATH_MAX);
     if (node->isFile == 1)
     {
+        
         int sock = initialize_nms_as_client(port);
         strcpy(msg.buffer, pathString(path_line, index + 1, 0));
         msg.operation = READ;
@@ -1317,9 +1318,11 @@ void HandleRedundancy(struct ss_list *deleted_ss)
             for (int j = 0; j < 100; j++)
                 path_line[i][j] = '\0';
         }
-        lessgoRec(red1->ssTonmred_port, red1->ssTonmred_port, path_line, 0, ite, 0, NULL, 1, 3);
+        strcpy(path_line[0], "red1");
+        lessgoRec(red1->ssTonmred_port, red1->ssTonmred_port, path_line, 1, ite, 1, NULL, 1, 3);
         ite = ite->sibling;
     }
+    printf("came till here\n");
     if (storage_servers->total_servers == 3)
     {
         deleteRedundancy(red1, 1);
