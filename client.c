@@ -1,4 +1,123 @@
 #include "headers.h"
+
+bool printErrorMessages(errcode errorStatus) // returns true if to close connection
+{
+    if (errorStatus == NETWORK_ERROR)
+    {
+        printf("Network error!\n");
+        return true;
+    }
+    else if (errorStatus == WRITER_EXISTS)
+    {
+        printf("Some client is writing to the same file!\n");
+        return false;
+    }
+    else if (errorStatus == READER_EXISTS)
+    {
+        printf("Some client is reading from the same file!\n");
+        return false;
+    }
+    else if (errorStatus == FILE_NOT_FOUND)
+    {
+        printf("File not found!\n");
+        return false;
+    }
+    else if (errorStatus == UNEXPECTED_ERROR)
+    {
+        printf("Unexpected error!\n");
+        return true;
+    }
+    else if (errorStatus == FILE_ALREADY_EXISTS)
+    {
+        printf("File already exists!\n");
+        return false;
+    }
+    else if (errorStatus == FILE_NOT_WRITABLE)
+    {
+        printf("File not writable!\n");
+        return false;
+    }
+    else if (errorStatus == FILE_NOT_READABLE)
+    {
+        printf("File not readable!\n");
+        return false;
+    }
+    else if (errorStatus == FILE_SIZE_EXCEEDED)
+    {
+        printf("File size exceeded!\n");
+        return false;
+    }
+    else if (errorStatus == FILE_UNABLE_TO_CREATE)
+    {
+        printf("File unable to create!\n");
+        return false;
+    }
+    else if (errorStatus == DIRECTORY_UNABLE_TO_CREATE)
+    {
+        printf("Directory unable to create!\n");
+        return false;
+    }
+    else if (errorStatus == METADATA_INACESSIBLE)
+    {
+        printf("Metadata inaccessible!\n");
+        return false;
+    }
+    else if (errorStatus == DELETE_FAILED)
+    {
+        printf("Delete failed!\n");
+        return false;
+    }
+    else if (errorStatus == UNABLE_TO_DELETE)
+    {
+        printf("Unable to delete!\n");
+        return false;
+    }
+    else if (errorStatus == UNABLE_TO_COPY)
+    {
+        printf("Unable to copy!\n");
+        return false;
+    }
+    else if (errorStatus == INVALID_OPERATION)
+    {
+        printf("Invalid operation!\n");
+        return false;
+    }
+    else if (errorStatus == NO_SUCH_PATH)
+    {
+        printf("Invalid file path!\n");
+        return false;
+    }
+    else if (errorStatus == PERMISSION_DENIED)
+    {
+        printf("Permission denied!\n");
+        return false;
+    }
+    else if (errorStatus == INSUFFICIENT_STORAGE)
+    {
+        printf("Insufficient storage!\n");
+        return false;
+    }
+    else if (errorStatus == CLIENT_ALREADY_WRITING)
+    {
+        printf("Client already writing!\n");
+        return false;
+    }
+    else if (errorStatus == CONCURRENT_ACCESS_TIMEOUT)
+    {
+        printf("Concurrent access timeout!\n");
+        return false;
+    }
+    else if (errorStatus == FILE_IN_USE)
+    {
+        printf("File in use!\n");
+        return false;
+    }
+    else
+    {
+        printf("Unknown error!\n");
+        return false;
+    }
+}
 void printOperationMessage(MessageClient2NM message)
 {
     switch (message.operation)
@@ -318,19 +437,12 @@ int main()
         else if (message.operation == READ || message.operation == WRITE || message.operation == METADATA)
         {
             errorStatus = handleSSCommunication(mySocket, message);
-            if (errorStatus == NETWORK_ERROR)
+            if (printErrorMessages(errorStatus))
             {
-                printf("Network error!\n");
                 break;
             }
-            else if (errorStatus==WRITER_EXISTS)
+            else
             {
-                printf("Some client is writing to the same file!\n");
-                continue;
-            }
-            else if (errorStatus==READER_EXISTS)
-            {
-                printf("Some client is reading from the same file!\n");
                 continue;
             }
         }
@@ -338,10 +450,13 @@ int main()
         else if (message.operation == CREATE || message.operation == DELETE || message.operation == COPY)
         {
             errorStatus = receivePriviledgedConfirmation(mySocket);
-            if (errorStatus == NETWORK_ERROR)
+            if (printErrorMessages(errorStatus))
             {
-                printf("Network error!\n");
                 break;
+            }
+            else
+            {
+                continue;
             }
         }
     }
