@@ -123,7 +123,7 @@ void TrieToString(struct TrieNode *root, char *str)
 
 TrieNode *StringToTrie(char *string)
 {
-    char *temp = (char *)malloc(sizeof(char) * 500);
+    char *temp = (char *)malloc(sizeof(char) * SEND_SIZE);
     strcpy(temp, string);
     char *token;
     char *ptr_in = NULL;

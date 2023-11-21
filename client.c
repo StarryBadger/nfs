@@ -73,11 +73,11 @@ void printMetadata(metadata *metadata)
 }
 errcode handleReadCommunication(int socketSS)
 {
-    char buffer[SEND_SIZE];
+    MessageClient2SS message;
     int bytesRead;
-    while ((bytesRead = recv(socketSS, buffer, sizeof(buffer), 0)) > 0)
+    while (recv(socketSS, &message, sizeof(message), 0) > 0)
     {
-        fwrite(buffer, 1, bytesRead, stdout);
+        fwrite(message.msg, 1, message.bytesToRead, stdout);
     }
     if (bytesRead < 0)
     {
