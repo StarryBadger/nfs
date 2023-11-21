@@ -33,6 +33,34 @@ struct storage_servers_node
 
 struct storage_servers_node *storage_servers;
 
+int initialize_nms_as_client(int port)
+{
+    int ss_sock;
+    struct sockaddr_in addr;
+    socklen_t addr_size;
+    ss_sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (ss_sock < 0)
+    {
+        fprintf(stderr, "[-]Socket creation error: %s\n", strerror(errno));
+
+        exit(1);
+    }
+    printf("[+]TCP server socket created.\n");
+
+    memset(&addr, '\0', sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = port;
+    addr.sin_addr.s_addr = inet_addr(ip_address);
+
+    if (connect(ss_sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+    {
+        fprintf(stderr, "[-]Connection time error: %s\n", strerror(errno));
+        exit(1);
+    }
+    printf("Connected to the server.\n");
+    return ss_sock;
+}
+
 int search_port(char *buffer)
 {
     struct ss_list *temp;
@@ -52,6 +80,7 @@ int search_port(char *buffer)
     }
     return NO_SUCH_PATH;
 }
+
 int search_port2(char *buffer)
 {
     struct ss_list *temp;
@@ -268,7 +297,7 @@ char *pathString(char **path_line, int size, int start)
     }
     return p_string;
 }
-int lessgoRec_again(int sock, char **path_line, int index, TrieNode *node, char *path, int flag)
+int lessgoRec_again(int port, char **path_line, int index, TrieNode *node, char *path, int flag)
 {
     if (node == NULL)
         return UNABLE_TO_DELETE;
@@ -278,7 +307,7 @@ int lessgoRec_again(int sock, char **path_line, int index, TrieNode *node, char 
     {
         if (node->firstChild)
         {
-            lessgoRec_again(sock, path_line, index + 1, node->firstChild, path, 0);
+            lessgoRec_again(port, path_line, index + 1, node->firstChild, path, 0);
         }
     }
     if (flag == 0)
@@ -287,24 +316,25 @@ int lessgoRec_again(int sock, char **path_line, int index, TrieNode *node, char 
         {
             for (int i = 0; i < 100; i++)
                 path_line[index][i] = '\0';
-            lessgoRec_again(sock, path_line, index, node->sibling, path, flag);
+            lessgoRec_again(port, path_line, index, node->sibling, path, flag);
             strcpy(path_line[index], node->directory);
         }
     }
     MessageFormat msg;
     msg.operation = DELETE;
     char temp_dest_path[PATH_MAX];
-    for(int i=0;i<PATH_MAX;i++)
-    temp_dest_path[i]='\0';
+    for (int i = 0; i < PATH_MAX; i++)
+        temp_dest_path[i] = '\0';
     if (path != NULL)
     {
         strcpy(temp_dest_path, path);
         strcat(temp_dest_path, "/");
     }
     strcat(temp_dest_path, pathString(path_line, index + 1, 0));
-    memset(msg.buffer,'\0',PATH_MAX);
+    memset(msg.buffer, '\0', PATH_MAX);
     strcpy(msg.buffer, temp_dest_path);
-    printf("sending path to be deleted:%s\n",msg.buffer);
+    int sock = initialize_nms_as_client(port);
+    printf("sending path to be deleted:%s\n", msg.buffer);
     if (send(sock, &msg, sizeof(msg), 0) < 0)
     {
         fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
@@ -335,19 +365,22 @@ int lessgoRec_again(int sock, char **path_line, int index, TrieNode *node, char 
             temp = temp->next;
         }
     }
-
+    close(sock);
     for (int i = 0; i < 100; i++)
         path_line[index][i] = '\0';
     return err_code_about_to_send;
 }
-void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node, int initial_index, char *dest_path, int level_flag)
+
+void lessgoRec(int port, int port2, char **path_line, int index, TrieNode *node, int initial_index, char *dest_path, int level_flag)
 {
     if (node == NULL)
         return;
     strcpy(path_line[index], node->directory);
     MessageClient2NM msg;
+    memset(msg.buffer, '\0', PATH_MAX);
     if (node->isFile == 1)
     {
+        int sock = initialize_nms_as_client(port);
         strcpy(msg.buffer, pathString(path_line, index + 1, 0));
         msg.operation = READ;
         printf("Sending message to server to read: %s %d\n", msg.buffer, msg.operation);
@@ -360,8 +393,15 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node,
             return;
         }
         char buffer[PATH_MAX];
-        bzero(buffer, PATH_MAX);
+        // bzero(buffer, PATH_MAX);
+        // memset(buffer,'\0',PATH_MAX);
         char temp_dest_path[PATH_MAX];
+        for (int i = 0; i < PATH_MAX; i++)
+        {
+            temp_dest_path[i] = '\0';
+            buffer[i] = '\0';
+            msg.buffer[i] = '\0';
+        }
         strcpy(temp_dest_path, dest_path);
         strcat(temp_dest_path, "/");
         strcat(temp_dest_path, pathString(path_line, index + 1, initial_index));
@@ -370,7 +410,7 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node,
         msg.isADirectory = 0;
         msg.operation = CREATE;
         printf("Sending message to server to read: %s %d\n", msg.buffer, msg.operation);
-
+        int sock2 = initialize_nms_as_client(port2);
         if (send(sock2, &msg, sizeof(msg), 0) < 0)
         {
             fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
@@ -378,11 +418,45 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node,
             //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
             return;
         }
+
+        int err_code_about_to_send;
+        if (recv(sock2, &err_code_about_to_send, sizeof(err_code_about_to_send), 0) < 0)
+        {
+            fprintf(stderr, "[-]Receive time error: %s\n", strerror(errno));
+            // return;
+        }
+        printf("Error code received from storage server: %d\n", err_code_about_to_send);
+        if (err_code_about_to_send == NO_ERROR)
+        {
+            struct ss_list *temp;
+            temp = storage_servers->head->next;
+            while (temp != NULL)
+            {
+                if (SearchTrie(PathParent(temp_dest_path), temp->root) != NULL)
+                {
+                    printf("IN CREATE\n");
+                    InsertTrie(temp_dest_path, temp->root, (int)(!msg.isADirectory), 1);
+                    PrintTrieLIkeAnActualTRee(temp->root, 4);
+                    break;
+                }
+                temp = temp->next;
+            }
+            if (strcmp(temp_dest_path, PathParent(temp_dest_path)) == 0)
+            {
+                temp = storage_servers->head->next;
+                printf("IN CREATE\n");
+                InsertTrie(temp_dest_path, temp->root, (int)(!msg.isADirectory), 1);
+                PrintTrieLIkeAnActualTRee(temp->root, 4);
+            }
+        }
+        close(sock2);
         int bytesread;
         int send_cout = 0;
         // FILE* this = fopen("this_nm.txt","w");
         MessageFormat message_read;
-        bzero(message_read.msg, PATH_MAX);
+        for (int i = 0; i < PATH_MAX; i++)
+            buffer[i] = '\0';
+
         while ((bytesread = recv(sock, &message_read, sizeof(message_read), 0)) > 0)
         {
             // fwrite(buffer,1,bytesread,this);
@@ -409,7 +483,7 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node,
             // {
             //     break;
             // }            // printf("Sending message to server to write: %s  %s  %d\n", msg_to_send.buffer, msg_to_send.msg, msg_to_send.operation);
-
+            sock2 = initialize_nms_as_client(port2);
             if (send(sock2, &msg_to_send, sizeof(msg_to_send), 0) < 0)
             {
                 fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
@@ -417,12 +491,17 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node,
                 //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
                 return;
             }
-            bzero(buffer, PATH_MAX);
+            close(sock2);
+            // bzero(buffer, PATH_MAX);
+            for (int i = 0; i < PATH_MAX; i++)
+                buffer[i] = '\0';
             if (message_read.bytesToRead < SEND_SIZE)
             {
                 break;
             }
         }
+        close(sock);
+        // close(sock2);
         if (bytesread <= 0)
         {
             printf("atleasat its here\n");
@@ -432,6 +511,11 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node,
     {
         // strcpy(msg.buffer, pathString(path_line, index + 1,initial_index));
         char temp_dest_path[PATH_MAX];
+        for (int i = 0; i < PATH_MAX; i++)
+        {
+            temp_dest_path[i] = '\0';
+            msg.buffer[i] = '\0';
+        }
         strcpy(temp_dest_path, dest_path);
         strcat(temp_dest_path, "/");
         strcat(temp_dest_path, pathString(path_line, index + 1, initial_index));
@@ -440,7 +524,7 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node,
         msg.isADirectory = 1;
         msg.operation = CREATE;
         printf("Sending message to server to read: %s %d\n", msg.buffer, msg.operation);
-
+        int sock2 = initialize_nms_as_client(port2);
         if (send(sock2, &msg, sizeof(msg), 0) < 0)
         {
             fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
@@ -448,17 +532,49 @@ void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node,
             //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
             return;
         }
+
+        int err_code_about_to_send;
+        if (recv(sock2, &err_code_about_to_send, sizeof(err_code_about_to_send), 0) < 0)
+        {
+            fprintf(stderr, "[-]Receive time error: %s\n", strerror(errno));
+            // return;
+        }
+        printf("Error code received from storage server: %d\n", err_code_about_to_send);
+        if (err_code_about_to_send == NO_ERROR)
+        {
+            struct ss_list *temp;
+            temp = storage_servers->head->next;
+            while (temp != NULL)
+            {
+                if (SearchTrie(PathParent(temp_dest_path), temp->root) != NULL)
+                {
+                    printf("IN CREATE\n");
+                    InsertTrie(temp_dest_path, temp->root, (int)(!msg.isADirectory), 1);
+                    PrintTrieLIkeAnActualTRee(temp->root, 4);
+                    break;
+                }
+                temp = temp->next;
+            }
+            if (strcmp(temp_dest_path, PathParent(temp_dest_path)) == 0)
+            {
+                temp = storage_servers->head->next;
+                printf("IN CREATE\n");
+                InsertTrie(temp_dest_path, temp->root, (int)(!msg.isADirectory), 1);
+                PrintTrieLIkeAnActualTRee(temp->root, 4);
+            }
+        }
+        close(sock2);
     }
 
     if (node->firstChild)
     {
-        lessgoRec(sock, sock2, path_line, index + 1, node->firstChild, initial_index, dest_path, 0);
+        lessgoRec(port, port2, path_line, index + 1, node->firstChild, initial_index, dest_path, 0);
     }
     if (level_flag == 0)
     {
         path_line[index][0] = '\0';
         if (node->sibling)
-            lessgoRec(sock, sock2, path_line, index, node->sibling, initial_index, dest_path, level_flag);
+            lessgoRec(port, port2, path_line, index, node->sibling, initial_index, dest_path, level_flag);
     }
     // printf("here with directory : %s\n",node->directory);
     path_line[index][0] = '\0';
@@ -486,49 +602,10 @@ void *ss_is_alive_worker(void *arg)
 
 void CopyPath2Path(char *src_path, char *dest_path)
 {
-    int sock, sock2;
     int port1, port2;
     port1 = search_port2(src_path);
     port2 = search_port2(dest_path);
-    struct sockaddr_in addr, addr2;
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-    sock2 = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock < 0)
-    {
-        fprintf(stderr, "[-]Socket creation error: %s\n", strerror(errno));
 
-        exit(1);
-    }
-    if (sock2 < 0)
-    {
-        fprintf(stderr, "[-]Socket creation error: %s\n", strerror(errno));
-
-        exit(1);
-    }
-
-    // printf("[+]TCP server socket created.\n");
-
-    memset(&addr, '\0', sizeof(addr));
-    addr.sin_family = AF_INET;
-    // printf("%d\n",temp->ssTonms_port);
-    addr.sin_port = port1;
-    addr.sin_addr.s_addr = inet_addr(ip_address);
-
-    memset(&addr2, '\0', sizeof(addr2));
-    addr2.sin_family = AF_INET;
-    // printf("%d\n",temp->ssTonms_port);
-    addr2.sin_port = port2;
-    addr2.sin_addr.s_addr = inet_addr(ip_address);
-    if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
-    {
-        fprintf(stderr, "[-]Couldn't connect to storage server 1: %s\n", strerror(errno));
-        exit(1);
-    }
-    if (connect(sock2, (struct sockaddr *)&addr2, sizeof(addr2)) < 0)
-    {
-        fprintf(stderr, "[-]Couldn't connect to storage server 2: %s\n", strerror(errno));
-        exit(1);
-    }
     char **path_line = (char **)malloc(sizeof(char *) * 500);
     for (int i = 0; i < 500; i++)
     {
@@ -568,7 +645,7 @@ void CopyPath2Path(char *src_path, char *dest_path)
     int initial_index = path_count - 1;
     path_line[path_count - 1][0] = '\0';
     // printf("hi1\n");
-    lessgoRec(sock, sock2, path_line, path_count - 1, node, initial_index, dest_path, 1);
+    lessgoRec(port1, port2, path_line, path_count - 1, node, initial_index, dest_path, 1);
 }
 
 void *client_handler(void *arg)
@@ -696,27 +773,6 @@ void *client_handler(void *arg)
             {
                 printf("valid path\n");
                 printf("port to send: %d\n", port_to_ss);
-                int nms_sock;
-                struct sockaddr_in addr;
-                socklen_t addr_size;
-                int n;
-                nms_sock = socket(AF_INET, SOCK_STREAM, 0);
-                if (nms_sock < 0)
-                {
-                    fprintf(stderr, "[-]Socket creation error: %s\n", strerror(errno));
-                }
-                printf("[+]TCP server socket created.\n");
-
-                memset(&addr, '\0', sizeof(addr));
-                addr.sin_family = AF_INET;
-                addr.sin_port = port_to_ss;
-                addr.sin_addr.s_addr = inet_addr(ip_address);
-
-                if (connect(nms_sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
-                {
-                    fprintf(stderr, "[-]Connection time error: %s\n", strerror(errno));
-                }
-                printf("Connected to the SS.\n");
 
                 if (message.operation == DELETE)
                 {
@@ -735,10 +791,10 @@ void *client_handler(void *arg)
                         {
                             if (strcmp(message.buffer, PathParent(message.buffer)) == 0)
                             {
-                                err_code_about_to_send = lessgoRec_again(nms_sock, path_line, 0, storing_search, NULL, 1);
+                                err_code_about_to_send = lessgoRec_again(port_to_ss, path_line, 0, storing_search, NULL, 1);
                                 break;
                             }
-                            err_code_about_to_send = lessgoRec_again(nms_sock, path_line, 0, storing_search, PathParent(message.buffer), 1);
+                            err_code_about_to_send = lessgoRec_again(port_to_ss, path_line, 0, storing_search, PathParent(message.buffer), 1);
                             break;
                         }
                         temp = temp->next;
@@ -746,6 +802,7 @@ void *client_handler(void *arg)
                 }
                 else
                 {
+                    int nms_sock=initialize_nms_as_client(port_to_ss);
                     printf("Sending message to server: %d %s\n", message.operation, message.buffer);
 
                     if (send(nms_sock, &message, sizeof(message), 0) < 0)
