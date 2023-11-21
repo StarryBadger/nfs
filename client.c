@@ -110,7 +110,7 @@ errcode handleWriteInput(MessageClient2NM *message)
         currIndex++;
         prevInput = input;
     }
-    message->bytesToRead=currIndex;
+    message->bytesToRead = currIndex;
     return NO_ERROR;
 }
 errcode handleMetadataCommunication(int socketSS)
@@ -172,6 +172,14 @@ errcode handleSSCommunication(int socketNM, MessageClient2SS message)
     {
         fprintf(stderr, RED "[-]Receive error: %s\n" RESET, strerror(errno));
         return NETWORK_ERROR;
+    }
+    if (message.operation == WRITE)
+    {
+        if (send(socketSS, &err_code, sizeof(err_code), 0) < 0)
+        {
+            fprintf(stderr, RED "[-]Send error: %s\n" RESET, strerror(errno));
+            return NETWORK_ERROR;
+        }
     }
     if (err_code != NO_ERROR)
     {
