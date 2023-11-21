@@ -10,6 +10,10 @@ struct ss_list
     int ssTonms_port;
     int ssTonmnp_port;
     int ssTonmred_port;
+    struct ss_list *my_red1_loc;
+    struct ss_list *my_red2_loc;
+    struct ss_list *prev_red1;
+    struct ss_list *prev_red2;
     struct ss_list *next;
     struct ss_list *prev;
     TrieNode *root;
@@ -22,8 +26,14 @@ struct ss_list *init_server_list_head()
     head->prev = NULL;
     head->ssToc_port = -1;
     head->ssTonms_port = -1;
+    head->ssTonmnp_port = -1;
+    head->ssTonmred_port = -1;
     head->index = -1;
     head->root = NULL;
+    head->my_red1_loc = NULL;
+    head->my_red2_loc = NULL;
+    head->prev_red1 = NULL;
+    head->prev_red2 = NULL;
     return head;
 }
 
@@ -63,7 +73,7 @@ int initialize_nms_as_client(int port)
     return ss_sock;
 }
 
-int searchPortForClient(char *buffer)
+int searchPortForClient(char *buffer, int operation)
 {
     CacheNode *cachedEntry = searchCache(cacheMe, buffer);
     if (cachedEntry != NULL)
@@ -82,8 +92,11 @@ int searchPortForClient(char *buffer)
         {
             if (searchResult->isAccessible)
             {
-                addToCache(cacheMe, buffer, ip_address, temp->ssToc_port, temp->ssTonmnp_port);
-                return temp->ssToc_port;
+                if (operation != WRITE || (operation == WRITE && searchResult->isFile))
+                {
+                    addToCache(cacheMe, buffer, ip_address, temp->ssToc_port, temp->ssTonmnp_port);
+                    return temp->ssToc_port;
+                }
             }
         }
         temp = temp->next;
@@ -142,6 +155,10 @@ void InsertNewSS(int ssTocPortNo, int ssTonmsPortNo, int ssToNMmpport, int ssToN
     new->ssTonmnp_port = ssToNMmpport;
     new->ssTonmred_port = ssToNmRed_port;
     new->root = ssRoot;
+    new->my_red1_loc = NULL;
+    new->my_red2_loc = NULL;
+    new->prev_red1 = NULL;
+    new->prev_red2 = NULL;
     PrintTrieLIkeAnActualTRee(new->root, 4);
 
     if (storage_servers->total_servers == 2)
@@ -149,6 +166,10 @@ void InsertNewSS(int ssTocPortNo, int ssTonmsPortNo, int ssToNMmpport, int ssToN
         struct ss_list *first = storage_servers->head->next;
         struct ss_list *second = first->next;
         CreateRedundancy(first, second, 1);
+        // first->my_red1_loc = second;
+        // first->my_red2_loc = NULL;
+        // second->prev_red1 = first;
+        // second->prev_red2 = NULL;
         CreateRedundancy(second, first, 1);
     }
     else if (storage_servers->total_servers == 3)
@@ -196,6 +217,7 @@ void RemoveSS(int index)
                 temp->next->prev = temp->prev;
             storage_servers->total_servers--;
             struct ss_list *temp2;
+            HandleRedundancy(temp);
             temp2 = temp;
             temp = temp->next;
             free(temp2);
@@ -453,8 +475,11 @@ void lessgoRec(int port, int port2, char **path_line, int index, TrieNode *node,
             buffer[i] = '\0';
             msg.buffer[i] = '\0';
         }
-        strcpy(temp_dest_path, dest_path);
-        strcat(temp_dest_path, "/");
+        if (dest_path != NULL)
+        {
+            strcpy(temp_dest_path, dest_path);
+            strcat(temp_dest_path, "/");
+        }
         strcat(temp_dest_path, pathString(path_line, index + 1, initial_index));
 
         strcpy(msg.buffer, temp_dest_path);
@@ -567,8 +592,11 @@ void lessgoRec(int port, int port2, char **path_line, int index, TrieNode *node,
             temp_dest_path[i] = '\0';
             msg.buffer[i] = '\0';
         }
-        strcpy(temp_dest_path, dest_path);
-        strcat(temp_dest_path, "/");
+        if (dest_path != NULL)
+        {
+            strcpy(temp_dest_path, dest_path);
+            strcat(temp_dest_path, "/");
+        }
         strcat(temp_dest_path, pathString(path_line, index + 1, initial_index));
 
         strcpy(msg.buffer, temp_dest_path);
@@ -759,7 +787,7 @@ void *client_handler(void *arg)
         int port_to_send;
         if (message.operation == READ || message.operation == WRITE || message.operation == METADATA)
         {
-            port_to_send = searchPortForClient(message.buffer);
+            port_to_send = searchPortForClient(message.buffer, message.operation);
             if (send(clientSocket, &port_to_send, sizeof(port_to_send), 0) < 0)
             {
                 fprintf(stderr, "[-]Sendtime error: %s\n", strerror(errno));
@@ -1002,7 +1030,7 @@ void CreateRedundancy(struct ss_list *source, struct ss_list *destination, int r
     {
         if (strcmp(temp_red->directory, "red1") == 0 || strcmp(temp_red->directory, "red2") == 0)
         {
-            temp_red=temp_red->sibling;
+            temp_red = temp_red->sibling;
             continue;
         }
         char **path_line = (char **)malloc(sizeof(char *) * 500);
@@ -1018,11 +1046,25 @@ void CreateRedundancy(struct ss_list *source, struct ss_list *destination, int r
             lessgoRec(source->ssTonmred_port, destination->ssTonmred_port, path_line, 0, temp_red, 0, "red2", 1);
         temp_red = temp_red->sibling;
     }
-    // }
+
+    if (rednum_flag == 1)
+    {
+        source->my_red1_loc = destination;
+        destination->prev_red1 = source;
+    }
+    else if (rednum_flag == 2)
+    {
+        source->my_red2_loc = destination;
+        destination->prev_red2 = source;
+    }
 }
 
 void deleteRedundancy(struct ss_list *dest, int red_flag)
 {
+    if (dest == NULL)
+    {
+        return;
+    }
     if (red_flag == 1)
     {
         char **path_line = (char **)malloc(sizeof(char *) * 500);
@@ -1045,6 +1087,57 @@ void deleteRedundancy(struct ss_list *dest, int red_flag)
         }
         lessgoRec_again(dest->ssTonmred_port, path_line, 0, SearchTrie("red2", dest->root), NULL, 1);
     }
+
+    if (red_flag == 1)
+    {
+        dest->prev_red1 = NULL;
+    }
+    else if (red_flag == 2)
+    {
+        dest->prev_red2 = NULL;
+    }
+}
+
+void HandleRedundancy(struct ss_list *deleted_ss)
+{
+    if(deleted_ss==NULL)
+    return ;
+    struct ss_list *red1 = deleted_ss->my_red1_loc;
+    struct ss_list *red2 = deleted_ss->my_red2_loc;
+    struct ss_list *pred1 = deleted_ss->prev_red1;
+    struct ss_list *pred2 = deleted_ss->prev_red2;
+    char **path_line = (char **)malloc(sizeof(char *) * 500);
+    for (int i = 0; i < 500; i++)
+    {
+        path_line[i] = (char *)malloc(sizeof(char) * 100);
+        for (int j = 0; j < 100; j++)
+            path_line[i][j] = '\0';
+    }
+    TrieNode *ite = SearchTrie("red1", red1->root)->firstChild;
+    while (ite != NULL)
+    {
+        char **path_line = (char **)malloc(sizeof(char *) * 500);
+        for (int i = 0; i < 500; i++)
+        {
+            path_line[i] = (char *)malloc(sizeof(char) * 100);
+            for (int j = 0; j < 100; j++)
+                path_line[i][j] = '\0';
+        }
+        lessgoRec(red1->ssTonmred_port, red1->ssTonmred_port, path_line, 0,ite,0,NULL,1);
+        ite = ite->sibling;
+    }
+    deleteRedundancy(red1,1);
+    deleteRedundancy(red1,2);
+    deleteRedundancy(red2,2);
+    CreateRedundancy(pred1,red1,1);
+    CreateRedundancy(pred2,red1,2);
+    CreateRedundancy(pred1,red2,2);
+    struct ss_list* newUp1=red1->my_red1_loc;
+    struct ss_list* newUp2=red1->my_red2_loc;
+    deleteRedundancy(newUp1,1);
+    deleteRedundancy(newUp2,2);
+    CreateRedundancy(red1,newUp1,1);
+    CreateRedundancy(red1,newUp2,2);
 }
 
 int main(int argc, char *argv[])
