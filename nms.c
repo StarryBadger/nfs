@@ -927,6 +927,7 @@ void *client_handler(void *arg)
                             CreateRedundancy(ite, second, 2);
                             break;
                         }
+                        ite=ite->next;
                     }
                 }
             }
@@ -1021,6 +1022,7 @@ void *client_handler(void *arg)
                                 CreateRedundancy(ite, second, 2);
                                 break;
                             }
+                            ite=ite->next;
                         }
                     }
                     printf("sending error code after delete: %d\n", err_code_about_to_send);
@@ -1030,6 +1032,7 @@ void *client_handler(void *arg)
                         // exit(1);
                         continue;
                     }
+                    printf("sent error code after delete: %d\n",err_code_about_to_send);
                 }
                 else
                 {
@@ -1091,6 +1094,7 @@ void *client_handler(void *arg)
                                     CreateRedundancy(temp, second, 2);
                                     break;
                                 }
+                                temp=temp->next;
                             }
                         }
                         else if (message.operation == DELETE)
