@@ -451,6 +451,7 @@ void *NMServerConnection(void *arg)
 
         if (message.operation == CREATE && !message.isADirectory)
         {
+            printf("one\n");
             int err_code;
             int fd = open(message.buffer, O_CREAT | O_WRONLY, 0644);
             if (fd == -1)
@@ -461,24 +462,25 @@ void *NMServerConnection(void *arg)
             }
             // InsertTrie(message.buffer, ssTrie); //SHREYANSH
             err_code = NO_ERROR;
+            
+            if (send(nms_sock, &err_code, sizeof(err_code), 0) < 0)
+            {
+                fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+                if (close(nms_sock) < 0)
+                    fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+                // exit(1);
+                continue;
+            }
 
-            // if (send(nms_sock, &err_code, sizeof(err_code), 0) < 0)
-            // {
-            //     fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
-            //     if (close(nms_sock) < 0)
-            //         fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
-            //     // exit(1);
-            //     continue;
-            // }
-
-            // if (err_code == FILE_UNABLE_TO_CREATE)
-            //     return NULL;
+            if (err_code == FILE_UNABLE_TO_CREATE)
+                return NULL;
 
             close(fd);
         }
 
         if (message.operation == CREATE && message.isADirectory)
         {
+            printf("two\n");
             int err_code;
             if (mkdir(message.buffer, 0777) == -1)
             {
@@ -503,20 +505,33 @@ void *NMServerConnection(void *arg)
 
         if (message.operation == DELETE)
         {
-            int fd = open(message.buffer, O_RDONLY);
-            if (fd == -1)
-            {
-                fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
-                return NULL;
-            }
-            close(fd);
+            // int fd = open(message.buffer, O_RDONLY);
+            // if (fd == -1)
+            // {
+            //     fprintf(stderr, "\x1b[31mCould not open %s. Permission denied\n\n\x1b[0m", message.buffer); // ERROR HANDLING
+            //     return NULL;
+            // }
+            // close(fd);
+            int err_code = NO_ERROR;
+            printf("to be deleted: %s\n", message.buffer); 
             if (remove(message.buffer) == 0)
             {
                 printf("\x1b[32mDeleted %s successfully\n\n\x1b[0m", message.buffer);
-                DeleteTrie(message.buffer, ssTrie);
+                // DeleteTrie(message.buffer, ssTrie);
             }
             else
+            {
                 printf("\x1b[31mCould not delete %s\n\n\x1b[0m", message.buffer);
+                err_code = UNABLE_TO_DELETE;
+            }
+
+            if (send(nms_sock, &err_code, sizeof(err_code), 0) < 0)
+            {
+                fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+                if (close(nms_sock) < 0)
+                    fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno)); // ERROR HANDLING
+                exit(1);
+            }
         }
 
         int err_code = NO_ERROR;

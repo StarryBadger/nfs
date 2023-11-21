@@ -24,6 +24,7 @@ typedef int errcode;
 #define DIRECTORY_UNABLE_TO_CREATE 26
 #define METADATA_INACESSIBLE 27
 #define DELETE_FAILED 28
+#define UNABLE_TO_DELETE 29
 
 
 // Client Request Errors

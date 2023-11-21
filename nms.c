@@ -268,7 +268,7 @@ char *pathString(char **path_line, int size, int start)
     }
     return p_string;
 }
-void lessgoRec_again(int sock, char **path_line, int index, TrieNode *node, char *path)
+int lessgoRec_again(int sock, char **path_line, int index, TrieNode *node, char *path)
 {
     if (node == NULL)
         return;
@@ -289,18 +289,46 @@ void lessgoRec_again(int sock, char **path_line, int index, TrieNode *node, char
     MessageFormat msg;
     msg.operation = DELETE;
     char temp_dest_path[PATH_MAX];
-    strcpy(temp_dest_path, path);
-    strcat(temp_dest_path, "/");
+    if(path!=NULL)
+    {
+        strcpy(temp_dest_path, path);
+        strcat(temp_dest_path, "/");
+    }
     strcat(temp_dest_path, pathString(path_line, index + 1, 0));
+    strcpy(msg.buffer, temp_dest_path);
     if (send(sock, &msg, sizeof(msg), 0) < 0)
     {
         fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
         // if (close(sock) < 0)
         //     fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-        return;
+        return NO_SUCH_PATH;
     }
+
+    int err_code_about_to_send;
+    if (recv(sock, &err_code_about_to_send, sizeof(err_code_about_to_send), 0) < 0)
+    {
+        fprintf(stderr, "[-]Receive time error: %s\n", strerror(errno));
+        // return;
+    }
+    printf("Error code received from storage server: %d\n", err_code_about_to_send);
+    if (err_code_about_to_send == NO_ERROR)
+    {
+        struct ss_list *temp = storage_servers->head->next;
+        temp = storage_servers->head->next;
+        while (temp != NULL)
+        {
+            if (SearchTrie(temp_dest_path, temp->root) != NULL)
+            {
+                DeleteTrie(temp_dest_path, temp->root);
+                PrintTrieLIkeAnActualTRee(temp->root, 4);
+                break;
+            }
+            temp = temp->next;
+        }
+    }
+
     path_line[index][0] = '\0';
-    return;
+    return err_code_about_to_send;
 }
 void lessgoRec(int sock, int sock2, char **path_line, int index, TrieNode *node, int initial_index, char *dest_path, int level_flag)
 {
@@ -593,8 +621,8 @@ void *client_handler(void *arg)
             // CacheNode *current = searchCache(&cacheMe, message.buffer);
             // if (current == NULL)
             // {
-                port_to_send = search_port(message.buffer);
-                // addToCache(cacheMe, message.buffer, ip_address, port_to_send);
+            port_to_send = search_port(message.buffer);
+            // addToCache(cacheMe, message.buffer, ip_address, port_to_send);
             //     printf("Cache Hit!\n");
             // }
             // else
@@ -621,6 +649,7 @@ void *client_handler(void *arg)
             int validpath = 0;
             int port_to_ss;
             temp = storage_servers->head->next;
+            int err_code_about_to_send = NO_ERROR;
             while (temp != NULL)
             {
                 if (((message.operation == CREATE) && SearchTrie(PathParent(message.buffer), temp->root) != NULL) || (message.operation == DELETE && SearchTrie(message.buffer, temp->root) != NULL))
@@ -656,6 +685,7 @@ void *client_handler(void *arg)
             else
             {
                 printf("valid path\n");
+                printf("port to send: %d\n", port_to_ss);
                 int nms_sock;
                 struct sockaddr_in addr;
                 socklen_t addr_size;
@@ -677,67 +707,97 @@ void *client_handler(void *arg)
                     fprintf(stderr, "[-]Connection time error: %s\n", strerror(errno));
                 }
                 printf("Connected to the SS.\n");
-                printf("Sending message to server: %d %s\n", message.operation, message.buffer);
 
-                if (send(nms_sock, &message, sizeof(message), 0) < 0)
+                if (message.operation == DELETE)
                 {
-                    fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
-                    if (close(nms_sock) < 0)
-                        fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
-                }
-
-                int err_code_about_to_send;
-                if (recv(nms_sock, &err_code_about_to_send, sizeof(err_code_about_to_send), 0) < 0)
-                {
-                    fprintf(stderr, "[-]Receive time error: %s\n", strerror(errno));
-                    // return;
-                }
-                printf("Error code received from storage server: %d\n", err_code_about_to_send);
-                if (err_code_about_to_send == NO_ERROR)
-                {
-                    if (message.operation == CREATE)
+                    char **path_line = (char **)malloc(sizeof(char *) * 500);
+                    for (int i = 0; i < 500; i++)
                     {
-                        temp = storage_servers->head->next;
-                        while (temp != NULL)
+                        path_line[i] = (char *)malloc(sizeof(char) * 100);
+                        path_line[i][0] = '\0';
+                    }
+                    temp = storage_servers->head->next;
+                    while (temp != NULL)
+                    {
+                        TrieNode *storing_search = SearchTrie(message.buffer, temp->root);
+                        if (storing_search != NULL)
                         {
-                            if (SearchTrie(PathParent(message.buffer), temp->root) != NULL)
+                            if(strcmp(message.buffer,PathParent(message.buffer))==0)
                             {
+                                err_code_about_to_send = lessgoRec_again(nms_sock, path_line, 0, storing_search, NULL);
+                                break;
+                            }
+                            err_code_about_to_send = lessgoRec_again(nms_sock, path_line, 0, storing_search, PathParent(message.buffer));
+                            break;
+                        }
+                        temp = temp->next;
+                    }
+                }
+                else
+                {
+                    printf("Sending message to server: %d %s\n", message.operation, message.buffer);
+
+                    if (send(nms_sock, &message, sizeof(message), 0) < 0)
+                    {
+                        fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
+                        if (close(nms_sock) < 0)
+                            fprintf(stderr, "[-]Error closing socket: %s\n", strerror(errno));
+                    }
+
+                    // int err_code_about_to_send;
+                    if (recv(nms_sock, &err_code_about_to_send, sizeof(err_code_about_to_send), 0) < 0)
+                    {
+                        fprintf(stderr, "[-]Receive time error: %s\n", strerror(errno));
+                        // return;
+                    }
+                    printf("Error code received from storage server: %d\n", err_code_about_to_send);
+                    if (err_code_about_to_send == NO_ERROR)
+                    {
+                        if (message.operation == CREATE)
+                        {
+                            temp = storage_servers->head->next;
+                            while (temp != NULL)
+                            {
+                                if (SearchTrie(PathParent(message.buffer), temp->root) != NULL)
+                                {
+                                    printf("IN CREATE\n");
+                                    InsertTrie(message.buffer, temp->root, (int)(!message.isADirectory), 1);
+                                    PrintTrieLIkeAnActualTRee(temp->root, 4);
+                                    break;
+                                }
+                                temp = temp->next;
+                            }
+                            if (strcmp(message.buffer, PathParent(message.buffer)) == 0)
+                            {
+                                temp = storage_servers->head->next;
                                 printf("IN CREATE\n");
                                 InsertTrie(message.buffer, temp->root, (int)(!message.isADirectory), 1);
                                 PrintTrieLIkeAnActualTRee(temp->root, 4);
-                                break;
                             }
-                            temp = temp->next;
                         }
-                        if (strcmp(message.buffer, PathParent(message.buffer)) == 0)
+                        else if (message.operation == DELETE)
                         {
                             temp = storage_servers->head->next;
-                            printf("IN CREATE\n");
-                            InsertTrie(message.buffer, temp->root, (int)(!message.isADirectory), 1);
-                            PrintTrieLIkeAnActualTRee(temp->root, 4);
-                        }
-                    }
-                    else if (message.operation == DELETE)
-                    {
-                        temp = storage_servers->head->next;
-                        while (temp != NULL)
-                        {
-                            if (SearchTrie(message.buffer, temp->root) != NULL)
+                            while (temp != NULL)
                             {
-                                DeleteTrie(message.buffer, temp->root);
-                                PrintTrieLIkeAnActualTRee(temp->root, 4);
-                                break;
+                                if (SearchTrie(message.buffer, temp->root) != NULL)
+                                {
+                                    DeleteTrie(message.buffer, temp->root);
+                                    PrintTrieLIkeAnActualTRee(temp->root, 4);
+                                    break;
+                                }
+                                temp = temp->next;
                             }
-                            temp = temp->next;
                         }
                     }
-                }
-                close(nms_sock);
-                if (send(clientSocket, &err_code_about_to_send, sizeof(err_code_about_to_send), 0) < 0)
-                {
-                    fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
-                    // exit(1);
-                    continue;
+
+                    close(nms_sock);
+                    if (send(clientSocket, &err_code_about_to_send, sizeof(err_code_about_to_send), 0) < 0)
+                    {
+                        fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
+                        // exit(1);
+                        continue;
+                    }
                 }
             }
         }
