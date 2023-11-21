@@ -2,6 +2,7 @@
 char logfile[30];
 LRUCache *cacheMe;
 int can_enter = 0;
+int close_signal = 0;
 struct ss_list
 {
     int index;
@@ -62,8 +63,15 @@ int initialize_nms_as_client(int port)
     return ss_sock;
 }
 
-int search_port(char *buffer)
+int searchPortForClient(char *buffer)
 {
+    CacheNode *cachedEntry = searchCache(cacheMe, buffer);
+    if (cachedEntry != NULL)
+    {
+        printf("Cache hit!\n");
+        return cachedEntry->portForClient;
+    }
+    printf("Cache miss!\n");
     struct ss_list *temp;
     temp = storage_servers->head->next;
     TrieNode *searchResult;
@@ -74,6 +82,7 @@ int search_port(char *buffer)
         {
             if (searchResult->isAccessible)
             {
+                addToCache(cacheMe, buffer, ip_address, temp->ssToc_port, temp->ssTonmnp_port);
                 return temp->ssToc_port;
             }
         }
@@ -81,9 +90,15 @@ int search_port(char *buffer)
     }
     return NO_SUCH_PATH;
 }
-
-int search_port2(char *buffer)
+int searchPortForNMS(char *buffer)
 {
+    CacheNode *cachedEntry = searchCache(cacheMe, buffer);
+    if (cachedEntry != NULL)
+    {
+        printf("Cache hit!\n");
+        return cachedEntry->portForNM;
+    }
+    printf("Cache miss!\n");
     struct ss_list *temp;
     temp = storage_servers->head->next;
     TrieNode *searchResult;
@@ -94,6 +109,7 @@ int search_port2(char *buffer)
         {
             if (searchResult->isAccessible)
             {
+                addToCache(cacheMe, buffer, ip_address, temp->ssToc_port, temp->ssTonmnp_port);
                 return temp->ssTonmnp_port;
             }
         }
@@ -158,8 +174,6 @@ void RemoveSS(int index)
     }
     return;
 }
-
-int close_signal = 0;
 
 void *ss_port_worker(void *arg)
 {
@@ -605,8 +619,8 @@ void *ss_is_alive_worker(void *arg)
 void CopyPath2Path(char *src_path, char *dest_path)
 {
     int port1, port2;
-    port1 = search_port2(src_path);
-    port2 = search_port2(dest_path);
+    port1 = searchPortForNMS(src_path);
+    port2 = searchPortForNMS(dest_path);
 
     char **path_line = (char **)malloc(sizeof(char *) * 500);
     for (int i = 0; i < 500; i++)
@@ -652,6 +666,7 @@ void CopyPath2Path(char *src_path, char *dest_path)
 
 void *client_handler(void *arg)
 {
+    logThis(logfile, LOG_INFO, CLIENT_NM, "Client established connection on on [PORT: %d IP:%d]", nms_client_port, ip_address);
     int clientSocket = *((int *)arg);
     int initialRequest, initialAck;
     MessageClient2NM message;
@@ -659,30 +674,31 @@ void *client_handler(void *arg)
     if (recv(clientSocket, &initialRequest, sizeof(initialRequest), 0) < 0)
     {
         fprintf(stderr, RED "[-]Receive error: %s\n" RESET, strerror(errno));
-        logThis(logfile, LOG_ERROR, CLIENT_NM, "Initial Request: %s", strerror(errno));
-        if (closeSocket(clientSocket) == NO_ERROR)
-        {
-        }
+        logThis(logfile, LOG_ERROR, CLIENT_NM, "Receive initial Request: %s", strerror(errno));
+        close(clientSocket);
+        return NULL;
     }
-    printf("Initial Request received from client: %d\n", initialRequest);
-    logThis(logfile, LOG_INFO, CLIENT_NM, "Initial Request %d [PORT: %d IP:%d]", initialRequest, nms_client_port, ip_address);
     if (initialRequest == INITIAL_MESSAGE)
     {
+        printf("Correct Initial Request from client!\n");
+        logThis(logfile, LOG_INFO, CLIENT_NM, "Correct initial Request %d on [PORT: %d IP:%d]", initialRequest, nms_client_port, ip_address);
         initialAck = INITIAL_ACK_ACCEPT;
     }
     else
     {
+        printf("Incorrect Initial Request from client!\n");
+        logThis(logfile, LOG_INFO, CLIENT_NM, "Incorrect initial Request %d on [PORT: %d IP:%d]", initialRequest, nms_client_port, ip_address);
         initialAck = INITIAL_ACK_UNSUPPORTED_CLIENT;
         terminateConnectionFlag = 1;
     }
-    // add no ss case
     if (send(clientSocket, &initialAck, sizeof(initialAck), 0) < 0)
     {
         fprintf(stderr, "[-]Send error: %s\n", strerror(errno));
+        logThis(logfile, LOG_ERROR, NM_CLIENT, "Initial Acknowledgement: %s", strerror(errno));
         close(clientSocket);
         return NULL;
     }
-    logThis(logfile, LOG_INFO, NM_CLIENT, "Initial Acknowledgement %d [PORT: %d IP: %d]", initialAck, nms_client_port, ip_address);
+    logThis(logfile, LOG_INFO, NM_CLIENT, "Initial Acknowledgement Code %d [PORT: %d IP: %d]", initialAck, nms_client_port, ip_address);
     printf("Acknowledgment sent to client: %d\n", initialAck);
     while (1)
     {
@@ -690,6 +706,7 @@ void *client_handler(void *arg)
         if (recv(clientSocket, &message, sizeof(message), 0) < 0)
         {
             fprintf(stderr, "[-]Receive error: %s\n", strerror(errno));
+            logThis(logfile, LOG_ERROR, CLIENT_NM, "Receive operation information: %s", strerror(errno));
             close(clientSocket);
             return NULL;
         }
@@ -707,18 +724,7 @@ void *client_handler(void *arg)
         int port_to_send;
         if (message.operation == READ || message.operation == WRITE || message.operation == METADATA)
         {
-            // CacheNode *current = searchCache(&cacheMe, message.buffer);
-            // if (current == NULL)
-            // {
-            port_to_send = search_port(message.buffer);
-            // addToCache(cacheMe, message.buffer, ip_address, port_to_send);
-            //     printf("Cache Hit!\n");
-            // }
-            // else
-            // {
-            //     port_to_send = current->port;
-            //     printf("Cache Miss!\n");
-            // }
+            port_to_send = searchPortForClient(message.buffer);
             if (send(clientSocket, &port_to_send, sizeof(port_to_send), 0) < 0)
             {
                 fprintf(stderr, "[-]Sendtime error: %s\n", strerror(errno));
@@ -804,7 +810,7 @@ void *client_handler(void *arg)
                 }
                 else
                 {
-                    int nms_sock=initialize_nms_as_client(port_to_ss);
+                    int nms_sock = initialize_nms_as_client(port_to_ss);
                     printf("Sending message to server: %d %s\n", message.operation, message.buffer);
 
                     if (send(nms_sock, &message, sizeof(message), 0) < 0)

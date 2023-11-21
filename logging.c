@@ -92,6 +92,8 @@ errcode logOperation(const char *filename, MessageClient2NM message)
         return logThis(filename, LOG_INFO, CLIENT_NM, "Operation: OPEN - Open a file for reading/writing. Buffer: %s", message.buffer);
     case METADATA:
         return logThis(filename, LOG_INFO, CLIENT_NM, "Operation: METADATA - Get metadata information about a file. Buffer: %s", message.buffer);
+    case TERMINATE:
+        return logThis(filename, LOG_INFO, CLIENT_NM, "Operation: TERMINATE - Terminate connection");
     default:
         return logThis(filename, LOG_INFO, CLIENT_NM, "Unknown operation. Buffer: %s", message.buffer);
     }

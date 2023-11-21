@@ -15,35 +15,36 @@ CacheNode *searchCache(LRUCache *cache, const char *path)
     {
         if (strcmp(current->path, path) == 0)
         {
-            if (current != cache->head)
+            if (current == cache->head)
             {
-                if (current->prev != NULL)
-                {
-                    current->prev->next = current->next;
-                }
-                if (current->next != NULL)
-                {
-                    current->next->prev = current->prev;
-                }
-
-                if (current == cache->tail)
-                {
-                    cache->tail = current->prev;
-                }
-
-                current->next = cache->head;
-                current->prev = NULL;
-                cache->head->prev = current;
-                cache->head = current;
+                return current;
             }
+
+            if (current->prev != NULL)
+            {
+                current->prev->next = current->next;
+            }
+            if (current->next != NULL)
+            {
+                current->next->prev = current->prev;
+            }
+
+            if (current == cache->tail)
+            {
+                cache->tail = current->prev;
+            }
+
+            current->next = cache->head;
+            current->prev = NULL;
+            cache->head->prev = current;
+            cache->head = current;
             return current;
         }
         current = current->next;
     }
-
     return NULL;
 }
-void addToCache(LRUCache *cache, const char *path, const char *ip, int port)
+void addToCache(LRUCache *cache, const char *path, const char *ip, int portForClient, int portForNM)
 {
     if (cache->currentSize >= cache->maxSize)
     {
@@ -64,8 +65,8 @@ void addToCache(LRUCache *cache, const char *path, const char *ip, int port)
     CacheNode *newNode = (CacheNode *)malloc(sizeof(CacheNode));
     strncpy(newNode->path, path, PATH_MAX);
     strncpy(newNode->ip, ip, 16);
-    newNode->port = port;
-
+    newNode->portForClient = portForClient;
+    newNode->portForNM=portForNM;
     newNode->next = cache->head;
     newNode->prev = NULL;
 
