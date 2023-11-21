@@ -927,7 +927,7 @@ void *client_handler(void *arg)
                             CreateRedundancy(ite, second, 2);
                             break;
                         }
-                        ite=ite->next;
+                        ite = ite->next;
                     }
                 }
             }
@@ -1022,7 +1022,7 @@ void *client_handler(void *arg)
                                 CreateRedundancy(ite, second, 2);
                                 break;
                             }
-                            ite=ite->next;
+                            ite = ite->next;
                         }
                     }
                     printf("sending error code after delete: %d\n", err_code_about_to_send);
@@ -1032,7 +1032,7 @@ void *client_handler(void *arg)
                         // exit(1);
                         continue;
                     }
-                    printf("sent error code after delete: %d\n",err_code_about_to_send);
+                    printf("sent error code after delete: %d\n", err_code_about_to_send);
                 }
                 else
                 {
@@ -1094,7 +1094,7 @@ void *client_handler(void *arg)
                                     CreateRedundancy(temp, second, 2);
                                     break;
                                 }
-                                temp=temp->next;
+                                temp = temp->next;
                             }
                         }
                         else if (message.operation == DELETE)
@@ -1130,6 +1130,27 @@ void *client_handler(void *arg)
             {
                 fprintf(stderr, "[-]Send time error: %s\n", strerror(errno)); // ERROR HANDLING
                 continue;
+            }
+            if (err_result == NO_ERROR)
+            {
+                struct ss_list *ite = storage_servers->head->next;
+                int port_to_red_copy=searchPortForNMS(message.msg);
+                while (ite != NULL)
+                {
+                    if (ite->ssTonmnp_port == port_to_red_copy)
+                    {
+                        struct ss_list *first;
+                        struct ss_list *second;
+                        first = ite->my_red1_loc;
+                        second = ite->my_red2_loc;
+                        deleteRedundancy(first, 1);
+                        deleteRedundancy(second, 2);
+                        CreateRedundancy(ite, first, 1);
+                        CreateRedundancy(ite, second, 2);
+                        break;
+                    }
+                    ite = ite->next;
+                }
             }
         }
     }
