@@ -927,82 +927,55 @@ void *client_connection_worker(void *arg)
 
 void CreateRedundancy(struct ss_list *source, struct ss_list *destination, int rednum_flag)
 {
-    if (rednum_flag == 1)
-    {
-        int sock2 = initiatemp_redlize_nms_as_client(destination->ssTonmred_port);
-        MessageClient2NM msg;
-        msg.operation = CREATE;
+    // if (rednum_flag == 1)
+    // {
+    int sock2 = initialize_nms_as_client(destination->ssTonmred_port);
+    MessageClient2NM msg;
+    msg.operation = CREATE;
+    memset(msg.buffer, '\0', PATH_MAX);
+    if(rednum_flag==1)
         strcpy(msg.buffer, "red1");
-        msg.isADirectory = 1;
-        if (send(sock2, &msg, sizeof(msg), 0) < 0)
-        {
-            fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
-            return;
-        }
-        int err_code_recvd;
-        if (recv(sock2, &err_code_recvd, sizeof(err_code_recvd), 0) < 0)
-        {
-            fprintf(stderr, "[-]Receive time error: %s\n", strerror(errno));
-            return;
-        }
-
-        // CopyPath2Path(source->root->directory, "red1");
-        if (err_code_recvd == NO_ERROR)
-        {
-            InsertTrie("red1", destination->root, 0, 1);
-        }
-        close(sock2);
-        TrieNode *temp_red = source->root->firstChild;
-        while (temp_red != NULL)
-        {
-            char **path_line = (char **)malloc(sizeof(char *) * 500);
-            for (int i = 0; i < 500; i++)
-            {
-                path_line[i] = (char *)malloc(sizeof(char) * 100);
-                for (int j = 0; j < 100; j++)
-                    path_line[i][j] = '\0';
-            }
-            lessgoRec(source->ssTonmred_port, destination->ssTonmred_port, path_line, 0, temp_red, 0, "red1", 1);
-        }
-    }
-    else if (rednum_flag == 2)
-    {
-        int sock2 = initiatemp_redlize_nms_as_client(destination->ssTonmred_port);
-        MessageClient2NM msg;
-        msg.operation = CREATE;
+    else if(rednum_flag==2)
         strcpy(msg.buffer, "red2");
-        msg.isADirectory = 1;
-        if (send(sock2, &msg, sizeof(msg), 0) < 0)
-        {
-            fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
-            return;
-        }
-        int err_code_recvd;
-        if (recv(sock2, &err_code_recvd, sizeof(err_code_recvd), 0) < 0)
-        {
-            fprintf(stderr, "[-]Receive time error: %s\n", strerror(errno));
-            return;
-        }
-
-        // CopyPath2Path(source->root->directory, "red1");
-        if (err_code_recvd == NO_ERROR)
-        {
-            InsertTrie("red2", destination->root, 0, 1);
-        }
-        close(sock2);
-        TrieNode *temp_red = source->root->firstChild;
-        while (temp_red != NULL)
-        {
-            char **path_line = (char **)malloc(sizeof(char *) * 500);
-            for (int i = 0; i < 500; i++)
-            {
-                path_line[i] = (char *)malloc(sizeof(char) * 100);
-                for (int j = 0; j < 100; j++)
-                    path_line[i][j] = '\0';
-            }
-            lessgoRec(source->ssTonmred_port, destination->ssTonmred_port, path_line, 0, temp_red, 0, "red2", 1);
-        }
+        
+    msg.isADirectory = 1;
+    if (send(sock2, &msg, sizeof(msg), 0) < 0)
+    {
+        fprintf(stderr, "[-]Send time error: %s\n", strerror(errno));
+        return;
     }
+    int err_code_recvd;
+    if (recv(sock2, &err_code_recvd, sizeof(err_code_recvd), 0) < 0)
+    {
+        fprintf(stderr, "[-]Receive time error: %s\n", strerror(errno));
+        return;
+    }
+
+    // CopyPath2Path(source->root->directory, "red1");
+    if (err_code_recvd == NO_ERROR)
+    {
+        if(rednum_flag==1)
+            InsertTrie("red1", destination->root, 0, 1);
+        else if(rednum_flag==2)
+            InsertTrie("red2", destination->root, 0, 1);
+    }
+    close(sock2);
+    TrieNode *temp_red = source->root->firstChild;
+    while (temp_red != NULL)
+    {
+        char **path_line = (char **)malloc(sizeof(char *) * 500);
+        for (int i = 0; i < 500; i++)
+        {
+            path_line[i] = (char *)malloc(sizeof(char) * 100);
+            for (int j = 0; j < 100; j++)
+                path_line[i][j] = '\0';
+        }
+        if(rednum_flag==1)
+            lessgoRec(source->ssTonmred_port, destination->ssTonmred_port, path_line, 0, temp_red, 0, "red1", 1);
+        else if(rednum_flag==2)
+            lessgoRec(source->ssTonmred_port, destination->ssTonmred_port, path_line, 0, temp_red, 0, "red2", 1);
+    }
+    // }
 }
 
 
